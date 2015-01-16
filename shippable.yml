@@ -3,10 +3,10 @@ python:
  - 2.7
 install:
  - pip install -r requirements.txt
+env:
+ - AWS_KEY_ID=SIBYMATHEW
 script:
  - uname -a
  - which python
+ - export
  - python src/application.py&
-env:
- - AWS_KEY_ID=SIBYMATHEW
-commit_container: sibymath/siby_test_project
