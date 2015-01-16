@@ -1,4 +1,4 @@
-n1=3
+n1=4
 
 if n1:
 	print n1
