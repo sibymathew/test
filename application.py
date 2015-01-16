@@ -1,4 +1,4 @@
-n1=6
+n1=7
 
 if n1:
 	print n1
