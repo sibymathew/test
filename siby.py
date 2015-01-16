@@ -1,4 +1,4 @@
-n1=1
+n1=2
 
 if n1:
 	print n1
