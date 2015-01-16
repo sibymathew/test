@@ -1,4 +1,4 @@
-n1=5
+n1=6
 
 if n1:
 	print n1
