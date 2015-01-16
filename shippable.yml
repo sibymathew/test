@@ -7,3 +7,4 @@ script:
  - uname -a
  - which python
  - python src/application.py&
+commit_container: sibymath/siby_test_project
