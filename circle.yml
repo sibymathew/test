@@ -8,4 +8,9 @@ dependencies:
   pre:
     - pip install requirements.txt
     - pip intall awscli
-    - docker build -t 
+    - docker build -t siby/circletest:v1 .
+
+test:
+  post:
+    - docker run -d -P siby/circletest:v1; sleep 10
+    - curl http://localhost:5000/1/ping
