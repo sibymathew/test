@@ -6,7 +6,7 @@ machine:
 
 dependencies:
   pre:
-    - pip install requirements.txt
+    - pip install requirements-txt
     - docker build -t siby/circletest:v1 .
 
 test:
