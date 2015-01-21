@@ -2,7 +2,7 @@ box: wercker/python
 build:
 	steps:
 		- pip install -r requirements.txt
-script:
-	- uname -a
-	- which python
-	- python src/application.py&
+		- script:
+			uname -a
+			which python
+			python src/application.py&
