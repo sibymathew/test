@@ -3,6 +3,4 @@ build:
 	steps:
 		- pip install -r requirements.txt
 		- script:
-			uname -a
-			which python
-			python src/application.py&
+			code: python src/application.py&
