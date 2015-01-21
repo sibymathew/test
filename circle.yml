@@ -11,5 +11,5 @@ dependencies:
 
 test:
   post:
-    - docker run -d -P siby/circletest:v1; sleep 10
+    - docker run -d -p 5000:5000 siby/circletest:v1; sleep 10
     - curl http://localhost:5000/1/ping
