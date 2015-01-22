@@ -2,8 +2,9 @@
 
 docker push sibymath/circletest:v2
 
-cp /home/ubuntu/.aws/credentials /home/ubuntu/.awssecret
-chmod 400 /home/ubuntu/.awssecret
+#cp /home/ubuntu/.aws/credentials /home/ubuntu/.awssecret
+#chmod 400 /home/ubuntu/.awssecret
+rm -rf /home/ubuntu/.aws/config
 echo "[default]" >> /home/ubuntu/.aws/config
 echo "us-west-2" >> /home/ubuntu/.aws/config
 chmod 400 /home/ubuntu/.aws/config
