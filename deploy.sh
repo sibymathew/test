@@ -2,6 +2,8 @@
 
 docker push sibymath/circletest:v2
 
+cp /home/ubuntu/.aws/credentials /home/ubuntu/.awssecret
+
 EB_S3_BUCKET=siby-circletest-s3
 aws s3 cp Dockerrun.aws.json s3://$EB_S3_BUCKET/Dockerrun.aws.json
 
