@@ -1,0 +1,17 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Authentication": {
+    "Bucket": "siby-circletest-s3",
+    "Key": "dockercfg"
+  },
+  "Image": {
+    "Name": "siby/circletest:$version",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": "80"
+    }
+  ],
+  "Logging": "/var/log"
+}
