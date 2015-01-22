@@ -10,7 +10,7 @@ RUN apt-get install -y python-setuptools curl
 RUN easy_install pip
 
 # Add and install python modules
-ADD requirements-txt /docker/requirements-txt
+ADD requirements1-txt /docker/requirements-txt
 RUN cd /docker; pip install -r requirements-txt
 
 # Bundle app source
