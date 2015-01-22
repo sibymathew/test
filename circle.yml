@@ -7,6 +7,7 @@ machine:
 dependencies:
   pre:
     - pip install requirements-txt
+    - easy_install awscli
     - docker build -t sibymath/circletest:v2 .
 
 test:
