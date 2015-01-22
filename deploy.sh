@@ -2,7 +2,7 @@
 
 version=$1
 
-docker push siby/circletest:$version
+docker push sibymath/circletest:$version
 
 EB_S3_BUCKET=siby-circletest-s3
 aws s3 cp Dockerrun.aws.json s3://$EB_S3_BUCKET/Dockerrun.aws.json
