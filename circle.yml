@@ -4,15 +4,18 @@ machine:
   services:
     - docker
 
+environment:
+  do_version: v3
+
 dependencies:
   pre:
     - pip install requirements-txt
     - easy_install awscli
-    - docker build -t sibymath/circletest:v2 .
+    - docker build -t sibymath/circletest:$do_version .
 
 test:
   post:
-    - docker run -d -p 5000:5000 sibymath/circletest:v2; sleep 10
+    - docker run -d -p 5000:5000 sibymath/circletest:$do_version; sleep 10
     - curl http://localhost:5000/1/ping
 
 deployment:
