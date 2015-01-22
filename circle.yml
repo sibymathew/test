@@ -7,11 +7,11 @@ machine:
 dependencies:
   pre:
     - pip install requirements-txt
-    - docker build -t siby/circletest:v1 .
+    - docker build -t sibymath/circletest:v2 .
 
 test:
   post:
-    - docker run -d -p 5000:5000 siby/circletest:v1; sleep 10
+    - docker run -d -p 5000:5000 sibymath/circletest:v2; sleep 10
     - curl http://localhost:5000/1/ping
 
 deployment:
@@ -19,4 +19,4 @@ deployment:
     branch: master
     commands:
       - docker login -e siby.math@gmail.com -u sibymath -p Ruckus2015
-      - ./deploy.sh v1
+      - ./deploy.sh
