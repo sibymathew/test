@@ -1,7 +1,8 @@
 #!/bin/sh
 
-docker push sibymath/circletest:v2
-version=v1
+version=v3
+
+docker push sibymath/circletest:$version
 
 #cp /home/ubuntu/.aws/credentials /home/ubuntu/.awssecret
 #chmod 400 /home/ubuntu/.awssecret
