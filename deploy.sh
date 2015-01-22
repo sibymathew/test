@@ -4,10 +4,8 @@ docker push sibymath/circletest:v2
 
 #cp /home/ubuntu/.aws/credentials /home/ubuntu/.awssecret
 #chmod 400 /home/ubuntu/.awssecret
-rm -rf /home/ubuntu/.aws/config
-echo "[default]" >> /home/ubuntu/.aws/config
-echo "us-west-2" >> /home/ubuntu/.aws/config
-chmod 400 /home/ubuntu/.aws/config
+#rm -rf /home/ubuntu/.aws/config
+aws configure set region us-west-2
 
 EB_S3_BUCKET=siby-circletest-s3
 aws s3 cp Dockerrun.aws.json s3://$EB_S3_BUCKET/Dockerrun.aws.json
