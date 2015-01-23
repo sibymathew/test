@@ -1,0 +1,11 @@
+[
+  {"Namespace": "aws:autoscaling:launchconfiguration",
+   "OptionName": "InstanceType",
+   "Value": "t1.micro"},
+  {"Namespace": "aws:autoscaling:launchconfiguration",
+   "OptionName": "EC2KeyName",
+   "Value": "siby-aws-ssh"},
+   {"Namespace": "aws:autoscaling:launchconfiguration",
+   "OptionName": "IamInstanceProfile",
+   "Value": "aws-elasticbeanstalk-ec2-role"}
+   ]
