@@ -1,8 +1,8 @@
 #!/bin/sh
 
 VERSION=v1
-APP_NAME=siby-circletest1
-ENV_NAME=siby-circletest1-env
+APP_NAME=siby-circletest2
+ENV_NAME=siby-circletest2-env
 
 docker push sibymath/circletest:$version
 
@@ -19,6 +19,6 @@ sleep 10
 
 aws elasticbeanstalk create-environment --environment-name $ENV_NAME --application-name $APP_NAME --solution-stack-name "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3" --cname $ENV_NAME --option-settings file://options.txt
 
-sleep 120
+sleep 400
 
 aws elasticbeanstalk update-environment --environment-name $ENV_NAME --version-label $VERSION
