@@ -1,8 +1,8 @@
 #!/bin/sh
 
 VERSION=v1
-APP_NAME=xcloud-circletest3
-ENV_NAME=xcloud-circletest3-env
+APP_NAME=siby-circletest3
+ENV_NAME=siby-circletest3-env
 
 docker push sibymath/circletest:$version
 
