@@ -17,14 +17,14 @@ from  logging.handlers import SysLogHandler
 application= Flask(__name__)
 app = application
 
-@app.route("/1/ping/srv", methods=['GET'])
-def ping():
+@app.route("/1/ping/server", methods=['GET'])
+def pingsrv():
     """test server"""
     app.logger.debug("ping from DINESH")
     return "SRV Alive at time %s\n" % time.time()
 
-@app.route("/1/ping/cli", methods=['GET'])
-def ping():
+@app.route("/1/ping/client", methods=['GET'])
+def pingcli():
     """test server"""
     app.logger.debug("ping from DINESH")
     return "CLI Alive at time %s\n" % time.time()
