@@ -6,7 +6,7 @@ machine:
 
 dependencies:
   pre:
-    - pip install requirements-txt
+    - apt-get install python-setuptools
     - easy_install awscli
     - docker build -t sibymath/circletest:v1 .
 
@@ -19,5 +19,5 @@ deployment:
   elasticbeanstalk:
     branch: master
     commands:
-      - docker login -e siby.math@gmail.com -u sibymath -p Ruckus2015
+      - docker login -e siby.math@gmail.com -u sibymath -p siby2005
       - ./deploy.sh
