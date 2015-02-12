@@ -21,5 +21,4 @@ EXPOSE 5000
 
 # Run
 
-CMD ["bash", "docker/test.sh"]
 CMD ["python", "docker/src/application.py"]
