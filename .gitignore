@@ -5,4 +5,4 @@
 !.elasticbeanstalk/*.global.yml
 
 Dockerrun.aws.json
-.ebextensions
+.ebextensions/*
