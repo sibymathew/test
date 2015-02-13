@@ -9,7 +9,7 @@ docker push sibymath/circletest:$version
 aws configure set region us-west-2
 
 EB_S3_BUCKET=siby-circletest-s3
-aws s3 cp Dockerrun.aws.json s3://$EB_S3_BUCKET/content.zip
+aws s3 cp content.zip s3://$EB_S3_BUCKET/content.zip
 aws s3 cp dockercfg s3://$EB_S3_BUCKET/docker/dockercfg
 
 aws elasticbeanstalk create-application --application-name $APP_NAME
