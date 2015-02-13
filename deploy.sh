@@ -27,6 +27,6 @@ sleep 150
 
 aws elasticbeanstalk describe-environments
 
-sleep 100
+sleep 125
 
 aws elasticbeanstalk update-environment --environment-name $ENV_NAME --version-label $VERSION
