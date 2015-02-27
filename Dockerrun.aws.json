@@ -1,17 +1,1 @@
-{
-  "AWSEBDockerrunVersion": "1",
-  "Authentication": {
-    "Bucket": "siby-circletest-s3",
-    "Key": "docker/dockercfg"
-  },
-  "Image": {
-    "Name": "sibymath/circletest:v1",
-    "Update": "true"
-  },
-  "Ports": [
-    {
-      "ContainerPort": "5000"
-    }
-  ],
-  "Logging": "/var/log"
-}
+{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "xcloudakiajxuxr6rsnwu3v6eabucket200us-west-2","Key": "docker/dockercfg"},"Image": {"Name": "sibymath/circletest:v1","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}

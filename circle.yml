@@ -13,11 +13,11 @@ dependencies:
 test:
   post:
     - docker run -d -p 5000:5000 sibymath/circletest:v1; sleep 10
-    - curl http://localhost:5000/1/ping/server
+    - curl http://localhost:5000/1/ping
 
 deployment:
   elasticbeanstalk:
     branch: master
     commands:
       - docker login -e siby.math@gmail.com -u sibymath -p siby2005
-      - ./deploy.sh
+      - docker push sibymath/circletest:v1
