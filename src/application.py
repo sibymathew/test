@@ -30,7 +30,7 @@ from  logging.handlers import SysLogHandler
 app = Flask(__name__)
 
 
-def config_logging():
+'''def config_logging():
     if sys.platform == "darwin":
         address = "/var/run/syslog"
     else:
@@ -43,7 +43,7 @@ def config_logging():
     app.logger.addHandler(syslog_handler)
     app.logger.setLevel(logging.DEBUG)
 
-config_logging()
+config_logging()'''
 
 
 # load stormpath credentials
