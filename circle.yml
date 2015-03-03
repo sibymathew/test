@@ -12,7 +12,7 @@ dependencies:
 
 test:
   post:
-    - docker run -d -p 5000:5000 sibymath/circletest:v4; sleep 10
+    - docker run -d -p 5000:5000 -e "STORMPATH_ID=$STORMPATH_ID" -e "STORMPATH_SECRET=$STORMPATH_SECRET" -e "PUBNUB_PUBLISH=$PUBNUB_PUBLISH" -e "PUBNUB_SUBSCRIBE=$PUBNUB_SUBSCRIBE" sibymath/circletest:v4; sleep 10
     - curl http://localhost:5000/1/ping
 
 deployment:
