@@ -1,24 +1,8 @@
 machine:
   python:
     version: 2.7.3
-  services:
-    - docker
 
 dependencies:
   pre:
     - sudo apt-get install python-setuptools
     - easy_install awscli
-    - docker build -t sibymath/circletest:v4 .
-
-test:
-  post:
-    - docker run -d -p 5000:5000 sibymath/circletest:v4; sleep 10
-    - curl http://localhost:5000/1/ping
-
-deployment:
-  elasticbeanstalk:
-    branch: master
-    commands:
-      - docker login -e siby.math@gmail.com -u sibymath -p siby2005
-      - docker push sibymath/circletest:v4
-      - python xcloud_deploy.py -bbucket400 -asiby-400-test -vv1 -esiby-400-test-env
