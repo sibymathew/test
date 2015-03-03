@@ -8,6 +8,7 @@ dependencies:
   pre:
     - sudo apt-get install python-setuptools
     - easy_install awscli
+    - pip install -r requirements-txt
     - docker build -t sibymath/circletest:v4 .
 
 test:
