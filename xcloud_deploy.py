@@ -36,7 +36,7 @@ def get_env():
 def create_content_zip(bucket):
 
 	#Create Dockerrun.aws.json
-	content = '{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "' + bucket + '","Key": "docker/dockercfg"},"Image": {"Name": "' + 'sibymath/circletest:v1' + '","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}'
+	content = '{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "' + bucket + '","Key": "docker/dockercfg"},"Image": {"Name": "' + 'sibymath/circletest:v4' + '","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}'
 	with open("Dockerrun.aws.json", "w") as file_write:
 		file_write.write(content)
 	file_write.close()
@@ -215,14 +215,20 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 	else:
 		lc = 'aws:autoscaling:launchconfiguration'
 		elb = 'aws:elb:loadbalancer'
+		denv = 'aws:elasticbeanstalk:application:environment'
 
-		namespace = [lc,lc,lc]
-		optionname = ['EC2KeyName','IamInstanceProfile','InstanceType']
-		value = ['siby-aws-ssh',role,'t1.micro']
+		namespace = [lc,lc,lc,denv,denv,denv,denv]
+		optionname = ['EC2keyName','IamInstanceProfile','InstanceType','STORMPATH_ID','STORMPATH_SECRET','PUBNUB_PUBLISH','PUBNUB_SUBSCRIBE']
+		value = ['siby-aws-ssh',role,'t1.micro','D0XWX5WA2LEK23RMOJCW4WCVX','TaZArb/euHstvE+lElB/9uukMc/xfeK189cDhFkKwhE','pub-c-05b142b0-92ae-4f54-9f30-2e251fee4621','sub-c-fb516be8-7995-11e4-af64-02ee2ddab7fe']
 		options = zip(namespace, optionname, value)
 
+		print options
+		resp = ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
+		print resp
+		print "mathew"
 		try:
-			ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
+			print "try"
+			#ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
 		except:
 			print "Environment %s already exists"%(env)
 		else:
@@ -282,7 +288,7 @@ def main():
 	iam_role_name = create_iam_role(aws_id, aws_key, aws_region, role)
 	create_content_zip(bucket)
 	push_to_s3(aws_id, aws_key, aws_region, bucket)
-	#iam_role_name = "test"
+	#iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
 	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, iam_role_name, appname, envname, version, bucket)
 
 def usage():

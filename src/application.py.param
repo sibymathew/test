@@ -48,9 +48,9 @@ config_logging()'''
 
 # load stormpath credentials
 try:
-    if 'STORMPATH_ID' in os.environ:
-        key_id = os.environ['STORMPATH_ID']
-        secret = os.environ['STORMPATH_SECRET']
+    if 'PARAM1' in os.environ:
+        key_id = os.environ['PARAM1']
+        secret = os.environ['PARAM2']
         client = Client(id=key_id, secret=secret)
     else:
         client = Client(api_key_file_location=expanduser('~/.stormpath/apiKey.properties'))
@@ -65,9 +65,9 @@ application = client.applications.search('xcloud')[0]
 
 # load pubnub credentials
 try:
-    if 'PUBNUB_SUBSCRIBE' in os.environ:
-        pubnub_publish_key   = os.environ['PUBNUB_SUBSCRIBE']
-        pubnub_subscribe_key = os.environ['PUBNUB_PUBLISH']
+    if 'PARAM4' in os.environ:
+        pubnub_publish_key   = os.environ['PARAM4']
+        pubnub_subscribe_key = os.environ['PARAM3']
     else:
         api_key_file_location=expanduser('~/.pubnub/pubnub.properties')
         pubnub = dict([x.strip() for x in line.split('=')] for line in open(api_key_file_location))
