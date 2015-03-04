@@ -22,4 +22,4 @@ deployment:
     commands:
       - docker login -e siby.math@gmail.com -u sibymath -p siby2005
       - docker push sibymath/circletest:v4
-      - python xcloud_deploy.py -bbucket600 -axcloud-app-600 -vv1 -excloud--env-600
+      - python xcloud_deploy.py -bbucket600 -axcloud-app-600 -vv1 -excloud-env-600

@@ -174,8 +174,8 @@ def apply_route53(id, key, cname):
 		change.add_value(cname)
 		changes.commit()
 	except boto.route53.exception.DNSServerError, err:
-		print err.message
-	
+		print err.message + ". Deleting and Creating a new CNAME"
+
 def push_to_s3(id, key, region, bucket):
 
 	from boto.s3.connection import S3Connection
