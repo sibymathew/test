@@ -126,7 +126,7 @@ def apply_security_groups(id, key, region, ec2_sg_name):
 		ec2_conn.authorize_security_group(elb_sg_name, ip_protocol='tcp', from_port='80', to_port='80', cidr_ip='0.0.0.0/0')
 	except boto.exception.EC2ResponseError, err:
 		if err.code == "InvalidGroup.Duplicate":
-			print err.message
+			print err.message + "........  Using it."
 
 	resp = ec2_conn.get_all_security_groups()
 	for res in resp:
@@ -134,7 +134,8 @@ def apply_security_groups(id, key, region, ec2_sg_name):
 			elb_sg_id = res.id
 
 	ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='443', to_port='443', src_security_group_group_id=elb_sg_id)
-
+	ec2_conn.revoke_security_group(ec2_sg_name, ip_protocol='tcp', from_port='80', to_port='80', src_security_group_group_id='sg-83176ae6')
+	ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='80', to_port='80', src_security_group_group_id=elb_sg_id)
 	#ec2_conn.revoke_security_group('awseb-e-9rbuj5r6ug-stack-AWSEBSecurityGroup-1ICIXVN1UKVG', ip_protocol='tcp', from_port='8443', to_port='8443', cidr_ip='0.0.0.0/0')
 	return elb_sg_id
 
@@ -220,6 +221,7 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 	ebs_conn = boto.connect_beanstalk(aws_access_key_id = id, aws_secret_access_key = key, region=region_info)
 
 	try:
+		print "Creating ElasticBeanStalk Application %s Version %s"%(app,ver)
 		ebs_conn.create_application_version(app, ver, s3_bucket=bucket, s3_key='content.zip', auto_create_application='true')
 	except boto.exception.BotoServerError, err:
 		err.match = "Application Version " + ver + " already exists."
@@ -236,16 +238,19 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 		options = zip(namespace, optionname, value)
 
 		try:
+			print "Creating EC2 Environment %s"%(env)
 			ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
 		except:
 			print "Environment %s already exists"%(env)
 		else:
+			print "Sleeping for few minutes... zzzz..zzzzz."
 			time.sleep(60)
 			resp = ebs_conn.describe_environments(environment_names=env)
 			env_status = resp['DescribeEnvironmentsResponse']['DescribeEnvironmentsResult']['Environments'][0]['Status']
 			r53_url =  resp['DescribeEnvironmentsResponse']['DescribeEnvironmentsResult']['Environments'][0]['EndpointURL']
 
 			time.sleep(60)
+			print "Deploying the application"
 			resp = ebs_conn.describe_environment_resources(environment_name=env)
 			resp = resp['DescribeEnvironmentResourcesResponse']['DescribeEnvironmentResourcesResult']['EnvironmentResources']['Resources']
 			for res in resp:
