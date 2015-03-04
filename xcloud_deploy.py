@@ -96,14 +96,19 @@ def create_iam_role(id, key, region, role):
 }"""
 
 	role_policy = role + "_policy"
-	iam_conn = boto.connect_iam()
-	iam_conn.create_instance_profile(role, path='/')
-	iam_conn.create_role(role, path='/')
-	
-	iam_conn.add_role_to_instance_profile(role, role)
-	iam_conn.put_role_policy(role, role_policy, role_policy_template)
 
-	return role
+	print "Creating IAM Role"
+	try:
+		iam_conn = boto.connect_iam()
+		iam_conn.create_instance_profile(role, path='/')
+		iam_conn.create_role(role, path='/')
+		iam_conn.add_role_to_instance_profile(role, role)
+		iam_conn.put_role_policy(role, role_policy, role_policy_template)
+	except boto.exception.BotoServerError, err:
+		if err.code == "EntityAlreadyExists":
+			print "IAM role %s already exists. "%(role_policy)
+	finally:
+		return role
 
 def apply_security_groups(id, key, region, ec2_sg_name):
 
@@ -113,16 +118,21 @@ def apply_security_groups(id, key, region, ec2_sg_name):
 	ec2_region = ec2.get_region(aws_access_key_id=id, aws_secret_access_key=key, region_name=region)
 	ec2_conn = boto.ec2.connection.EC2Connection(aws_access_key_id=id, aws_secret_access_key=key, region=ec2_region)
 
-	elb_sg_name = "xcloud-elb-sg"
-	ec2_conn.create_security_group(elb_sg_name, elb_sg_name)
+	print "Creating ELB Security Group"
+	try:
+		elb_sg_name = "xcloud-elb-sg"
+		ec2_conn.create_security_group(elb_sg_name, elb_sg_name)
+		ec2_conn.authorize_security_group(elb_sg_name, ip_protocol='tcp', from_port='443', to_port='443', cidr_ip='0.0.0.0/0')
+		ec2_conn.authorize_security_group(elb_sg_name, ip_protocol='tcp', from_port='80', to_port='80', cidr_ip='0.0.0.0/0')
+	except boto.exception.EC2ResponseError, err:
+		if err.code == "InvalidGroup.Duplicate":
+			print err.message
 
 	resp = ec2_conn.get_all_security_groups()
 	for res in resp:
 		if res.name == "xcloud-elb-sg":
 			elb_sg_id = res.id
 
-	ec2_conn.authorize_security_group(elb_sg_name, ip_protocol='tcp', from_port='443', to_port='443', cidr_ip='0.0.0.0/0')
-	ec2_conn.authorize_security_group(elb_sg_name, ip_protocol='tcp', from_port='80', to_port='80', cidr_ip='0.0.0.0/0')
 	ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='443', to_port='443', src_security_group_group_id=elb_sg_id)
 
 	#ec2_conn.revoke_security_group('awseb-e-9rbuj5r6ug-stack-AWSEBSecurityGroup-1ICIXVN1UKVG', ip_protocol='tcp', from_port='8443', to_port='8443', cidr_ip='0.0.0.0/0')
@@ -139,8 +149,6 @@ def apply_listener(id, key, region, elb_name, elb_sg_id):
 
 	elb_conn.create_load_balancer_listeners(elb_name, [(['443', '443', 'tcp'])])
 	elb_conn.apply_security_groups_to_lb(elb_name, elb_sg_id)
-	#elb_conn.create_load_balancer_listeners('awseb-e-3-AWSEBLoa-JVE5MO96IPJ7')
-	#elb_conn.create_load_balancer_listeners('awseb-e-3-AWSEBLoa-JVE5MO96IPJ7', listeners=[{"LoadBalancerPort":"443", "InstancePort":"443", "Protocol":"tcp"}])
 
 def apply_route53(id, key, cname):
 
@@ -159,10 +167,13 @@ def apply_route53(id, key, cname):
 	from boto.route53.record import ResourceRecordSets
 
 	conn = boto.connect_route53(aws_access_key_id=id, aws_secret_access_key=key)
-	changes = ResourceRecordSets(conn, zone_id)
-	change = changes.add_change("CREATE", "api-prod.xcloud-ops.net" ,"CNAME")
-	change.add_value(cname)
-	changes.commit()
+	try:
+		changes = ResourceRecordSets(conn, zone_id)
+		change = changes.add_change("CREATE", "api.xcloud-ops.net" ,"CNAME")
+		change.add_value(cname)
+		changes.commit()
+	except boto.route53.exception.DNSServerError, err:
+		print err.message
 	
 def push_to_s3(id, key, region, bucket):
 
@@ -210,8 +221,10 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 
 	try:
 		ebs_conn.create_application_version(app, ver, s3_bucket=bucket, s3_key='content.zip', auto_create_application='true')
-	except:
-		print "Application Version %s already exists for Application %s"%(ver, app)
+	except boto.exception.BotoServerError, err:
+		err.match = "Application Version " + ver + " already exists."
+		if err.message == err.match:
+			print "Application Version %s already exists for Application %s"%(ver, app)
 	else:
 		lc = 'aws:autoscaling:launchconfiguration'
 		elb = 'aws:elb:loadbalancer'
@@ -222,13 +235,8 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 		value = ['siby-aws-ssh',role,'t1.micro','D0XWX5WA2LEK23RMOJCW4WCVX','TaZArb/euHstvE+lElB/9uukMc/xfeK189cDhFkKwhE','pub-c-05b142b0-92ae-4f54-9f30-2e251fee4621','sub-c-fb516be8-7995-11e4-af64-02ee2ddab7fe']
 		options = zip(namespace, optionname, value)
 
-		print options
-		resp = ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
-		print resp
-		print "mathew"
 		try:
-			print "try"
-			#ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
+			ebs_conn.create_environment(app, env, version_label=ver, solution_stack_name='64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3', cname_prefix=env, option_settings=options)
 		except:
 			print "Environment %s already exists"%(env)
 		else:
@@ -249,11 +257,7 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 			elb_sg_id = apply_security_groups(id, key, region, env_sg_name)
 			apply_listener(id, key, region, elb_name, elb_sg_id)
 			apply_route53(r53_id, r53_key, r53_url)
-			print env_status
-			print r53_url
-			print env_sg_name
-			print elb_name
-			print elb_sg_id
+			print "Environment Status : %s"%(env_status)
 			#time.sleep(400)
 			#ebs_conn.update_environment(environment_name=env, version_label=ver)
 
