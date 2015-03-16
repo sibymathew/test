@@ -162,6 +162,9 @@ def apply_route53(id, key, new_url, domainname):
 	from boto.route53.record import ResourceRecordSets
 	import re
 
+	print new_url
+	print domainname
+
 	r53_conn = boto.route53.connection.Route53Connection(aws_access_key_id=id, aws_secret_access_key=key)
 	resp = r53_conn.get_all_hosted_zones()
 	resp = resp['ListHostedZonesResponse']['HostedZones']
@@ -176,11 +179,14 @@ def apply_route53(id, key, new_url, domainname):
 		print resp[0].resource_records[0]'''
 	
 	internet_facing_url = "api." + domainname
+	print internet_facing_url
 	try:
 		resp = r53_conn.get_zone(domainname)
 		for res in resp.get_records():
 			if (res.type == "CNAME" and res.name == internet_facing_url):
 				old_url = res.resource_records[0]
+				print inside
+				print old_url
 		if not old_url:
 			raise
 	except:
@@ -287,9 +293,9 @@ def deploy_app(id, key, region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secre
 
 			r53_url = env + ".elasticbeanstalk.com"
 			if mode == "stage":
-				domain = "xcloud-stage.net"
+				domain = "xcloud-stage.net."
 			elif mode == "production":
-				domain = "xcloud-ops.net"
+				domain = "xcloud-ops.net."
 		
 			apply_route53(r53_id, r53_key, r53_url, domain)
 
