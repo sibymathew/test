@@ -8,7 +8,7 @@ dependencies:
   pre:
     - sudo apt-get install python-setuptools
     - easy_install awscli
-    - pip install -r requirements-txt
+    - pip install -r ops/requirements-txt
     - docker build -t "$DOCKER_BRANCH":"$CIRCLE_SHA1" .
 
 test:
