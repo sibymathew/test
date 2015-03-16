@@ -9,17 +9,17 @@ dependencies:
     - sudo apt-get install python-setuptools
     - easy_install awscli
     - pip install -r requirements-txt
-    - docker build -t sibymath/circletest:v4 .
+    - docker build -t $DOCKER_BRANCH:$CIRCLE_SHA1 .
 
 test:
   post:
-    - docker run -d -p 5000:5000 -e "STORMPATH_ID=$STORMPATH_ID" -e "STORMPATH_SECRET=$STORMPATH_SECRET" -e "PUBNUB_PUBLISH=$PUBNUB_PUBLISH" -e "PUBNUB_SUBSCRIBE=$PUBNUB_SUBSCRIBE" sibymath/circletest:v4; sleep 10
+    - docker run -d -p 5000:5000 -e "STORMPATH_ID=$STORMPATH_ID" -e "STORMPATH_SECRET=$STORMPATH_SECRET" -e "PUBNUB_PUBLISH=$PUBNUB_PUBLISH" -e "PUBNUB_SUBSCRIBE=$PUBNUB_SUBSCRIBE" $DOCKER_BRANCH:$CIRCLE_SHA1; sleep 10
     - curl http://localhost:5000/1/ping
 
 deployment:
   elasticbeanstalk:
     branch: master
     commands:
-      - docker login -e siby.math@gmail.com -u sibymath -p siby2005
-      - docker push sibymath/circletest:v4
-      - python xcloud_deploy.py -bbucket600 -axcloud-app-600 -vv1 -excloud-env-600
+      - docker login -e siby.math@gmail.com -u $DOCKER_USER -p $DOCKER_PASSWORD
+      - docker push $DOCKER_BRANCH:$CIRCLE_SHA1
+      - python xcloud_deploy.py -b$CIRCLE_SHA1 -axcloud-app -v$CIRCLE_SHA1 -excloud-env

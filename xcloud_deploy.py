@@ -27,10 +27,14 @@ def get_env():
 		key=os.environ['AWS_SECRET_ACCESS_KEY']
 		r53_id=os.environ['R53_AWS_ACCESS_KEY_ID']
 		r53_key=os.environ['R53_AWS_SECRET_ACCESS_KEY']
+		pubnub_pub=os.environ['PUBNUB_PUBLISH']
+		pubnub_sub=os.environ['PUBNUB_SUBSCRIBE']
+		stormpath_id=os.environ['STORMPATH_ID']
+		stormpath_secret=os.environ['STORMPATH_SECRET']
 	except:
-		print ("AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, R53_AWS_ACCESS_KEY_ID, R53_AWS_SECRET_KEY_ID_ should be set as an environment variable")
+		print ("AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, R53_AWS_ACCESS_KEY_ID, R53_AWS_SECRET_KEY_ID, PUBNUB_PUBLISH, PUBNUB_SUBSCRIBE, STORMPATH_ID, STORMPATH_SECRET should be set as an environment variable")
 	else:
-		return region, id, key, r53_id, r53_key
+		return region, id, key, r53_id, r53_key, pubnub_pub, pubnub_sub, stormpath_id, stormpath_secret, docker_user, docker_password
 	sys.exit(2)
 
 def create_content_zip(bucket):
@@ -211,7 +215,7 @@ def push_to_s3(id, key, region, bucket):
 			cmd = "aws s3 cp dockercfg s3://%s/docker/dockercfg"%(bucket)
 			os.system(cmd)
 
-def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
+def deploy_app(id, key, region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, role, app, env, ver, bucket):
 
 	from boto.beanstalk.layer1 import Layer1
 	import boto.beanstalk.response
@@ -232,9 +236,9 @@ def deploy_app(id, key, region, r53_id, r53_key, role, app, env, ver, bucket):
 		elb = 'aws:elb:loadbalancer'
 		denv = 'aws:elasticbeanstalk:application:environment'
 
-		namespace = [lc,lc,lc,denv,denv,denv,denv]
-		optionname = ['EC2keyName','IamInstanceProfile','InstanceType','STORMPATH_ID','STORMPATH_SECRET','PUBNUB_PUBLISH','PUBNUB_SUBSCRIBE']
-		value = ['siby-aws-ssh',role,'t1.micro','D0XWX5WA2LEK23RMOJCW4WCVX','TaZArb/euHstvE+lElB/9uukMc/xfeK189cDhFkKwhE','pub-c-05b142b0-92ae-4f54-9f30-2e251fee4621','sub-c-fb516be8-7995-11e4-af64-02ee2ddab7fe']
+		namespace = [lc,lc,lc,denv,denv,denv,denv,denv,denv]
+		optionname = ['EC2keyName','IamInstanceProfile','InstanceType','STORMPATH_ID','STORMPATH_SECRET','PUBNUB_PUBLISH','PUBNUB_SUBSCRIBE','AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY']
+		value = ['siby-aws-ssh',role,'t1.micro',sp_id,sp_secret,pb_pub,pb_sub,id,key]
 		options = zip(namespace, optionname, value)
 
 		try:
@@ -290,7 +294,7 @@ def main():
 			usage()
 			sys.exit(2)
 
-	aws_region, aws_id, aws_key, r53_id, r53_key = get_env()
+	aws_region, aws_id, aws_key, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret = get_env()
 	bucket = "xcloud" + aws_id.lower() + s3bucket + aws_region
 	role = "xcloud_" + aws_id.lower() + "_" + s3bucket
 
@@ -298,7 +302,7 @@ def main():
 	create_content_zip(bucket)
 	push_to_s3(aws_id, aws_key, aws_region, bucket)
 	#iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
-	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, iam_role_name, appname, envname, version, bucket)
+	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, iam_role_name, appname, envname, version, bucket)
 
 def usage():
 	print ("Error")
