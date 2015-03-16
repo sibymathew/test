@@ -22,4 +22,4 @@ deployment:
     commands:
       - docker login -e siby.math@gmail.com -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
       - docker push "$DOCKER_BRANCH":"$CIRCLE_SHA1"
-      - python xcloud_deploy.py -b"$CIRCLE_SHA1" -axcloud-app -v"$CIRCLE_SHA1" -excloud-env -mstage
+      - python xcloud_deploy.py -bbucket -axcloud-app -v"$CIRCLE_SHA1" -excloud-env -mstage
