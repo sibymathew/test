@@ -42,12 +42,12 @@ def create_content_zip(bucket):
 
 	#Create Dockerrun.aws.json
 	content = '{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "' + bucket + '","Key": "docker/dockercfg"},"Image": {"Name": "' + 'sibymath/circletest:v4' + '","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}'
-	with open("Dockerrun.aws.json", "w") as file_write:
+	with open("ops/Dockerrun.aws.json", "w") as file_write:
 		file_write.write(content)
 	file_write.close()
 
 	#Create content.zip Dockerun.aws.json and .ebextensions/*
-	cmd = "zip content.zip Dockerrun.aws.json .ebextensions/*"
+	cmd = "zip ops/content.zip ops/Dockerrun.aws.json ops/.ebextensions/*"
 	os.system(cmd)
 
 def create_iam_role(id, key, region, role):
@@ -220,7 +220,7 @@ def push_to_s3(id, key, region, bucket):
 	elif region == 'us-west-2':
 		loc = Location.USWest2
 
-	if not os.path.isfile("dockercfg") or not os.path.isfile("content.zip"):
+	if not os.path.isfile("ops/dockercfg") or not os.path.isfile("ops/content.zip"):
 		print ("dockercfg and content.zip should be present in the folder where this script is executed")
 	else:
 		s3_conn = boto.connect_s3(aws_access_key_id = id, aws_secret_access_key = key)
@@ -236,9 +236,9 @@ def push_to_s3(id, key, region, bucket):
 			s3_conn.delete_bucket(bucket)
 			s3_conn.create_bucket(bucket, location=loc)
 		finally:
-			cmd = "aws s3 cp content.zip s3://%s/content.zip"%(bucket)
+			cmd = "aws s3 cp ops/content.zip s3://%s/content.zip"%(bucket)
 			os.system(cmd)
-			cmd = "aws s3 cp dockercfg s3://%s/docker/dockercfg"%(bucket)
+			cmd = "aws s3 cp ops/dockercfg s3://%s/docker/dockercfg"%(bucket)
 			os.system(cmd)
 
 def deploy_app(id, key, region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, role, app, env, ver, bucket, mode):
