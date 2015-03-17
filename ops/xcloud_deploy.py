@@ -47,7 +47,7 @@ def create_content_zip(bucket):
 	file_write.close()
 
 	#Create content.zip Dockerun.aws.json and .ebextensions/*
-	cmd = "zip ops/content.zip ops/Dockerrun.aws.json ops/.ebextensions/*"
+	cmd = "cd ops " + "&&" + " zip content.zip Dockerrun.aws.json .ebextensions/*"
 	os.system(cmd)
 
 def create_iam_role(id, key, region, role):
