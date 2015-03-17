@@ -9,10 +9,7 @@ dependencies:
     - sudo apt-get install python-setuptools
     - easy_install awscli
     - pip install -r ops/requirements-txt
-    - $GIT_SHORT_COMMIT_ID = "$CIRCLE_SHA1" | cut -b 1-8
-  environment:
-    - GIT_SHORT_COMMIT_ID: "$GIT_SHORT_COMMIT_ID"
-  post:
+    -  ops/git_short_commit_id.sh
     - docker build -t "$DOCKER_BRANCH":"$GIT_SHORT_COMMIT_ID" .
 
 test:

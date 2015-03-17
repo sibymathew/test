@@ -32,16 +32,19 @@ def get_env():
 		stormpath_id=os.environ['STORMPATH_ID']
 		stormpath_secret=os.environ['STORMPATH_SECRET']
 		docker_branch=os.environ['DOCKER_BRANCH']
+		commit_id=os.environ['CIRCLE_SHA1']
 	except:
 		print ("AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, R53_AWS_ACCESS_KEY_ID, R53_AWS_SECRET_KEY_ID, PUBNUB_PUBLISH, PUBNUB_SUBSCRIBE, STORMPATH_ID, STORMPATH_SECRET should be set as an environment variable")
 	else:
-		return region, id, key, r53_id, r53_key, pubnub_pub, pubnub_sub, stormpath_id, stormpath_secret, docker_branch
+		return region, id, key, r53_id, r53_key, pubnub_pub, pubnub_sub, stormpath_id, stormpath_secret, docker_branch, commit_id
 	sys.exit(2)
 
-def create_content_zip(bucket):
+def create_content_zip(bucket, commit_id, docker_branch):
 
 	#Create Dockerrun.aws.json
-	content = '{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "' + bucket + '","Key": "docker/dockercfg"},"Image": {"Name": "' + 'sibymath/circletest:v4' + '","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}'
+	docker_image = docker_branch + ":" + commit_id
+	print docker_image
+	content = '{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "' + bucket + '","Key": "docker/dockercfg"},"Image": {"Name": "' + docker_image + '","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}'
 	with open("ops/Dockerrun.aws.json", "w") as file_write:
 		file_write.write(content)
 	file_write.close()
@@ -324,12 +327,12 @@ def main():
 			usage()
 			sys.exit(2)
 
-	aws_region, aws_id, aws_key, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, dock_branch = get_env()
+	aws_region, aws_id, aws_key, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, dock_branch, commit_id = get_env()
 	bucket = "xcloud" + aws_id.lower() + s3bucket + aws_region
 	role = "xcloud_" + aws_id.lower() + "_" + s3bucket
 
 	iam_role_name = create_iam_role(aws_id, aws_key, aws_region, role)
-	create_content_zip(bucket)
+	create_content_zip(bucket, commit_id)
 	push_to_s3(aws_id, aws_key, aws_region, bucket)
 	#iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
 	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, iam_role_name, appname, envname, version, bucket, mode)
