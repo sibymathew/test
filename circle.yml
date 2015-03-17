@@ -9,8 +9,7 @@ dependencies:
     - sudo apt-get install python-setuptools
     - easy_install awscli
     - pip install -r ops/requirements-txt
-    - $GIT_COMMIT="$CIRCLE_SHA1" | cut -b 1-8
-    - echo 'export AWS_SECRET_KEY=$GIT_COMMIT' >> ~/.circlerc
+    - echo 'export GIT_COMMIT=$CIRCLE_SHA1 | cut -b 1-8' >> ~/.circlerc
     - docker build -t "$DOCKER_BRANCH":"$CIRCLE_SHA1" .
 
 test:
