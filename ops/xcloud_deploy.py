@@ -173,7 +173,7 @@ def apply_route53(id, key, new_url, domainname):
 
 	internet_facing_url = "api." + domainname
 	print new_url
-	print domainame
+	print domainname
 	print internet_facing_url
 	try:
 		resp = r53_conn.get_zone(domainname)
