@@ -244,8 +244,8 @@ def deploy_app(id, key, region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secre
 	import random
 
 	rand = "".join([random.sample(string.digits+string.ascii_letters,1)[0] for i in range(8)])
-	app = app + "_" + rand
-	env = env + "_" + rand
+	app = app + "-" + rand
+	env = env + "-" + rand
 
 	endpoint = "elasticbeanstalk." + region + ".amazonaws.com"
 	region_info = boto.regioninfo.RegionInfo(None, region, endpoint)
