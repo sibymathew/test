@@ -332,7 +332,7 @@ def main():
 	role = "xcloud_" + aws_id.lower() + "_" + s3bucket
 
 	iam_role_name = create_iam_role(aws_id, aws_key, aws_region, role)
-	create_content_zip(bucket, commit_id)
+	create_content_zip(bucket, commit_id, dock_branch)
 	push_to_s3(aws_id, aws_key, aws_region, bucket)
 	#iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
 	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, iam_role_name, appname, envname, version, bucket, mode)
