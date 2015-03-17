@@ -241,6 +241,11 @@ def deploy_app(id, key, region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secre
 
 	from boto.beanstalk.layer1 import Layer1
 	import boto.beanstalk.response
+	import random
+
+	rand = "".join([random.sample(string.digits+string.ascii_letters,1)[0] for i in range(8)])
+	app = app + "_" + rand
+	env = env + "_" + rand
 
 	endpoint = "elasticbeanstalk." + region + ".amazonaws.com"
 	region_info = boto.regioninfo.RegionInfo(None, region, endpoint)
@@ -331,12 +336,11 @@ def main():
 	bucket = "xcloud" + aws_id.lower() + s3bucket + aws_region
 	role = "xcloud_" + aws_id.lower() + "_" + s3bucket
 
-	iam_role_name = create_iam_role(aws_id, aws_key, aws_region, role)
-	create_content_zip(bucket, commit_id, dock_branch)
-	push_to_s3(aws_id, aws_key, aws_region, bucket)
-	#iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
+	#iam_role_name = create_iam_role(aws_id, aws_key, aws_region, role)
+	#create_content_zip(bucket, commit_id, dock_branch)
+	#push_to_s3(aws_id, aws_key, aws_region, bucket)
+	iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
 	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, iam_role_name, appname, envname, version, bucket, mode)
-	#apply_route53('AKIAJ572DMEWB3MRNHZQ', 'iOZGQmlqZlkVK3A4vCsTAHfFC/v9FXUhB4C4Xb1X', 'xcloud-tadasest.elasticbeanstalk.com', 'xcloud-ops.net.')
 
 def usage():
 	print ("Error")
