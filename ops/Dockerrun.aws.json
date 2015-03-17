@@ -1,1 +1,0 @@
-{"AWSEBDockerrunVersion": "1","Authentication": {"Bucket": "xcloudakiajxuxr6rsnwu3v6eabucket100us-west-2","Key": "docker/dockercfg"},"Image": {"Name": "sibymath/circletest:v4","Update": "true"},"Ports": [{"ContainerPort": "5000"}],"Logging": "/var/log"}
