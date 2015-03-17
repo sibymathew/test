@@ -9,7 +9,7 @@ dependencies:
     - sudo apt-get install python-setuptools
     - easy_install awscli
     - pip install -r ops/requirements-txt
-    - docker build -t "$DOCKER_BRANCH":"$GIT_SHORT_COMMIT_ID" .
+    - docker build -t "$DOCKER_BRANCH":"$CIRCLE_SHA1" .
 
 test:
   post:
