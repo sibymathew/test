@@ -5,7 +5,7 @@ Copyright (C) 2014-2015 Ruckus Wireless, Inc.
  All Rights Reserved.
 
 Provides a minimal system for managing AP's via AWS DynamoDB.
-
+xxxxx
 Manage xcloud tenants, tenant aws credentials, claims on AP's by tenants, and AP AWS credentials
 
 """
