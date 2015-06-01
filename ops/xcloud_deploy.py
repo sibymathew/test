@@ -32,7 +32,8 @@ def get_env():
 		stormpath_id=os.environ['STORMPATH_ID']
 		stormpath_secret=os.environ['STORMPATH_SECRET']
 		docker_branch=os.environ['DOCKER_BRANCH']
-		commit_id=os.environ['CIRCLE_SHA1']
+		#commit_id=os.environ['CIRCLE_SHA1']
+		commit_id="12345678"
 	except:
 		print ("AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, R53_AWS_ACCESS_KEY_ID, R53_AWS_SECRET_KEY_ID, PUBNUB_PUBLISH, PUBNUB_SUBSCRIBE, STORMPATH_ID, STORMPATH_SECRET should be set as an environment variable")
 	else:
@@ -59,44 +60,7 @@ def create_iam_role(id, key, region, role):
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Action": [
-                "dynamodb:*",
-                "cloudwatch:DeleteAlarms",
-                "cloudwatch:DescribeAlarmHistory",
-                "cloudwatch:DescribeAlarms",
-                "cloudwatch:DescribeAlarmsForMetric",
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:ListMetrics",
-                "cloudwatch:PutMetricAlarm",
-                "datapipeline:ActivatePipeline",
-                "datapipeline:CreatePipeline",
-                "datapipeline:DeletePipeline",
-                "datapipeline:DescribeObjects",
-                "datapipeline:DescribePipelines",
-                "datapipeline:GetPipelineDefinition",
-                "datapipeline:ListPipelines",
-                "datapipeline:PutPipelineDefinition",
-                "datapipeline:QueryObjects",
-                "iam:ListRoles",
-                "sns:CreateTopic",
-                "sns:DeleteTopic",
-                "sns:ListSubscriptions",
-                "sns:ListSubscriptionsByTopic",
-                "sns:ListTopics",
-                "sns:Subscribe",
-                "sns:Unsubscribe",
-                "elasticbeanstalk:*",
-                "ec2:*",
-                "elasticloadbalancing:*",
-                "autoscaling:*",
-                "cloudwatch:*",
-                "s3:*",
-                "sns:*",
-                "cloudformation:*",
-                "rds:*",
-                "sqs:*",
-                "iam:PassRole"
-            ],
+            "Action": "*",
             "Effect": "Allow",
             "Resource": "*"
         }
@@ -122,11 +86,12 @@ def apply_security_groups(id, key, region, ec2_sg_name):
 
 	from boto.regioninfo import RegionInfo
 	from boto import ec2
+	import re
 
 	ec2_region = ec2.get_region(aws_access_key_id=id, aws_secret_access_key=key, region_name=region)
 	ec2_conn = boto.ec2.connection.EC2Connection(aws_access_key_id=id, aws_secret_access_key=key, region=ec2_region)
 
-	print "Creating ELB Security Group"
+	print "Creating ELB Security Group --> xcloud-elb-sg"
 	try:
 		elb_sg_name = "xcloud-elb-sg"
 		ec2_conn.create_security_group(elb_sg_name, elb_sg_name)
@@ -141,10 +106,39 @@ def apply_security_groups(id, key, region, ec2_sg_name):
 		if res.name == "xcloud-elb-sg":
 			elb_sg_id = res.id
 
-	ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='443', to_port='443', src_security_group_group_id=elb_sg_id)
-	ec2_conn.revoke_security_group(ec2_sg_name, ip_protocol='tcp', from_port='80', to_port='80', src_security_group_group_id='sg-83176ae6')
-	ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='80', to_port='80', src_security_group_group_id=elb_sg_id)
-	#ec2_conn.revoke_security_group('awseb-e-9rbuj5r6ug-stack-AWSEBSecurityGroup-1ICIXVN1UKVG', ip_protocol='tcp', from_port='8443', to_port='8443', cidr_ip='0.0.0.0/0')
+	is_rule_exist = False
+	for res in resp:
+		if res.name == ec2_sg_name:
+			for rule in res.rules:
+				if rule.ip_protocol == "tcp" and rule.from_port == "80" and rule.to_port == "80":
+					is_rule_exist = True
+					match = re.match(r'\[sg-(.+)-\d+\]', str(rule.grants))
+					if match:
+						default_elb_sg_id =  "sg-" + match.groups()[0]
+						print "Deleting the TCP 80 80 rule pointing to default ELB SG as source in the EC2 SG"
+						try:
+							ec2_conn.revoke_security_group(ec2_sg_name, ip_protocol='tcp', from_port='80', to_port='80', src_security_group_group_id=default_elb_sg_id)
+						except boto.exception.EC2ResponseError, err:
+							if err.code == "InvalidGroupId.Malformed":
+								print err.message
+					else:
+						print "Not able to obtain the security group id of default elb. Proceeding anyways. Delete it manually if it is present"
+			if not is_rule_exist:
+					print "TCP 80 80 rule for EC2SG pointing to default ELB SG doesnot exists"
+
+	print "Creating TCP 80 80 and TCP 443 443 for EC2 SG pointing to xcloud-elb-sg as source"
+	try:
+		ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='80', to_port='80', src_security_group_group_id=elb_sg_id)
+	except boto.exception.EC2ResponseError, err:
+		if err.code == "InvalidPermission.Duplicate":
+			print err.message
+
+	try:
+		ec2_conn.authorize_security_group(ec2_sg_name, ip_protocol='tcp', from_port='443', to_port='443', src_security_group_group_id=elb_sg_id)
+	except boto.exception.EC2ResponseError, err:
+		if err.code == "InvalidPermission.Duplicate":
+			print err.message
+
 	return elb_sg_id
 
 def apply_listener(id, key, region, elb_name, elb_sg_id):
@@ -275,9 +269,6 @@ def deploy_app(id, key, region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secre
 			print "Environment %s already exists"%(env)
 		else:
 			print "Sleeping for few minutes... zzzz..zzzzz."
-			#resp = ebs_conn.describe_environments(environment_names=env)
-			#env_status = resp['DescribeEnvironmentsResponse']['DescribeEnvironmentsResult']['Environments'][0]['Status']
-			#r53_url =  resp['DescribeEnvironmentsResponse']['DescribeEnvironmentsResult']['Environments'][0]['EndpointURL']
 
 			time.sleep(120)
 			print "Deploying the application"
@@ -339,8 +330,9 @@ def main():
 	#iam_role_name = create_iam_role(aws_id, aws_key, aws_region, role)
 	#create_content_zip(bucket, commit_id, dock_branch)
 	#push_to_s3(aws_id, aws_key, aws_region, bucket)
-	iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
-	deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, iam_role_name, appname, envname, version, bucket, mode)
+	#iam_role_name = "xcloud_akiajxuxr6rsnwu3v6ea_bucket400"
+	#deploy_app(aws_id, aws_key, aws_region, r53_id, r53_key, pb_pub, pb_sub, sp_id, sp_secret, iam_role_name, appname, envname, version, bucket, mode)
+	apply_security_groups(aws_id, aws_key, aws_region, "aweselbshflkahflh-fabfjklaf;l")
 
 def usage():
 	print ("Error")
