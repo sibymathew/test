@@ -1,0 +1,91 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          VRIOT
+# Required-Start:    $syslog $remote_fs docker
+# Required-Stop:     $syslog $remote_fs
+# Default-Start:     2 3 4 5 
+# Default-Stop:      0 1 6
+# Description:       Vriot Services
+### END INIT INFO
+
+
+# This script is init script for binary installer based installation.
+
+# Creating Regex Path to match the config file.
+path_re="^DB-Storage-Path:(.*)$"
+e_cont_id_re="^Existing-Container-ID:(.*)$"
+HAS_E_CONT=0
+DB_VOLUME_PATH=0
+VRIOT_CONFIG_PATH=/vriot.conf
+
+# Make sure we have a config file to work with.
+if [ ! -f /vriot.conf ]; then
+    echo " Configuration File missing ! "
+    exit 0
+fi
+
+# Parse Config file
+while read -r; do
+    if [[ $REPLY =~ $path_re ]]; then
+        DB_VOLUME_PATH=${BASH_REMATCH[1]}
+    
+    fi
+    if [[ $REPLY =~ $e_cont_id_re ]]; then
+    HAS_E_CONT=1
+    E_CONT_ID=${BASH_REMATCH[1]}
+    fi
+done < $VRIOT_CONFIG_PATH
+
+# Start Services according to the configuration
+function start {
+    if [ $DB_VOLUME_PATH = 0 ]; then
+    echo Corrupt Configuration file !
+    echo No DB Volume Path.
+    echo Exiting....
+    exit 0
+    fi
+    if [ $HAS_E_CONT = 1 ]; then
+    echo container exists with id : "$E_CONT_ID"
+    sudo docker start "$E_CONT_ID"
+    echo will be starting pre existing container..
+    else
+    echo "$DB_VOLUME_PATH"
+    VOL_STR="/data/db:${DB_VOLUME_PATH}"
+    DOCKER_IMG_TAG=$(docker images | grep "comprehensive" | awk -F" " '{print $2}' | head -n 1)
+    DOCKER_ID=$(sudo docker run -d -p 8000:8000 -p 5216:5216 -p 9001:9001 -p 8883:8883 -p 1883:1883 "vriothub/comprehensive:$DOCKER_IMG_TAG")
+    echo starting a new docker container..
+    sudo echo "Existing-Container-ID:$DOCKER_ID" >> $VRIOT_CONFIG_PATH
+    fi
+}
+
+function stop {
+
+    echo 'Stopping container: ' "$E_CONT_ID"
+    sudo docker stop "$E_CONT_ID"
+}
+
+function reset {
+    # Remove all the container that matches $E_CONT_ID
+    sudo docker rm "$E_CONT_ID"
+
+    # Remove the container line from the config file.
+    # Currently doing by overwriting the file with
+    # just the existing DB line. Can be improved by grep -v
+    # see http://stackoverflow.com/a/28280003/3185502 when ready to improve.
+    echo "DB-Storage-Path:$DB_VOLUME_PATH" > $VRIOT_CONFIG_PATH
+}
+
+case "$1" in
+  start)
+      start
+      ;;
+  stop)
+      stop
+      ;;
+  reset)
+      reset
+      ;;
+  *)
+    echo "Usage: $0 {start|stop|reset}"
+esac

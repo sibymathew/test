@@ -1,0 +1,51 @@
+/* Custom CSS written to override styles of Material Admin*/
+#content {
+    padding-top: 0px !important;
+}
+
+.menubar-scroll-panel, #menubar {
+    display: block !important;
+}
+.anchor{
+    cursor: pointer;
+}
+.on_off_icons{
+    margin-left: 32%;
+}
+.bold_big{
+    font-weight: bold;
+    font-size: large;
+}
+.bold{
+    font-weight: bold;
+}
+.no_results{
+    display: none;
+}
+a[ng-click]{
+    cursor: pointer;
+}
+.font-success{
+    color: green;
+    font-weight: bold;
+}
+.font-danger{
+    color: red;
+    font-weight: bold;
+}
+
+#draggable { width: 150px; height: 150px; padding: 0.5em; }
+  #draggable p { cursor: move; }
+  #wrapper {
+  padding: 25px 15px 10px 60px;
+  font-size:24px;
+  font-weight:bold;
+background: url('../img/img_forest.jpg') repeat;
+  opacity:0.7;
+  width:600px;
+  height: 400px;
+}
+
+  .ui-draggable, .ui-droppable {
+	background-position: top;
+}

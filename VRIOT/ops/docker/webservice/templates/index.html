@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VRIOT Service Runner</title>
+</head>
+<link rel="stylesheet" type="text/css" href="/static/sytle.css" >
+<body>
+    <section class="titleBar">
+        
+        <img src="/static/Ruckus_logo.png" height="75" width="100">
+        <h2>Vriot Service Runner</h2>
+    </div>
+    </section> 
+
+    <p>Please select the services to run. </p>
+    <form action="/start" method='post'>
+
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="mongo_db_dummy" checked value="on" disabled>
+            Mongo DB
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="mongo_db" checked value="on" >
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="nginx_dummy" checked value="on" disabled>
+            Nginx
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="nginx" checked value="on" >
+
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="celery_dummy" checked value="on"  disabled="">
+            Celery
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="celery" checked value="on" >
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="rabbitmq_dummy" checked value="on"  disabled="">
+            Rabbit Message Queue
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="rabbitmq" checked value="on" >
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="dm_api_dummy" checked value="on"  disabled="">
+            VRIOT Device Manager API
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="dm_api" checked value="on" >
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="mqtt_broker_dummy" checked value="on"  disabled="">
+            MQTT Broker
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="mqtt_broker" checked value="on" >
+
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="mqtt_listner_dummy" checked value="on"  disabled="">
+            VRIOT Device Manager API
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="mqtt_listner" checked value="on" >
+
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="auth_api" value="on">
+            VRIOT User Manager API
+          </label>
+        </div>
+<!--         <input type="checkbox" style="display: none;" name="auth_api"  value="on" >
+-->
+        <div class="checkbox disabled">
+          <label>
+            <input type="checkbox" name="mongo_defaults_dummy" checked value="on"  disabled="">
+            Mongo DB Default
+          </label>
+        </div>
+        <input type="checkbox" style="display: none;" name="mongo_defaults" checked value="on" >
+
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" name="aa_listner" value="on">
+                Assa Abloy
+                <input type="text" name="aa_ip" value="0.0.0.0">
+            </label>
+        </div>
+
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" name="create_ssl" value="on">
+                Turn On SSL.
+                <span>.Provide CN for the  certificate. ex. *.domain.com
+                    <input type="text" name="ssl_cn" value="mqtt.video54.local">
+                </span>
+            </label>
+        </div>
+
+        <div class="submit">
+          <label>
+            <button>Start</button> 
+          </label>
+        </div>
+
+
+<!--         
+        <ul id="checkboxes">
+            <li>
+                <input type="checkbox" name="aa_listner">Assa Abloy Service.
+                <input type="text" name="aa_ip" value="0.0.0.0">
+            </li>
+            <li>
+                <input class="onlyAAChecked" type="submit" value="Submit">
+            </li>
+        </ul> 
+-->
+
+    </form>
+    </div>
+
+</body>
+</html>

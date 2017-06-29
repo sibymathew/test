@@ -1,0 +1,239 @@
+{
+  "variables": [],
+  "info": {
+    "name": "VRIoT API Postman Collection",
+    "_postman_id": "2b4545ea-787c-a88b-0b0d-5a94b244cece",
+    "description": "",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Device",
+      "description": "",
+      "item": [
+        {
+          "name": "Devices: Read",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Device: Read",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/58fdef468c2c7b006f542fe1",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Device: Create",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_euid\":\"00:17:7A:01:06:03:EB:B5\",\n  \"device_type\":1,\n  \"device_name\":\"Yee Light - Full Test\",\n  \"gateway_euid\":\"D8:38:FC:25:BB:60\",\n  \"tags\":[\"Yee Light\"]\n}"
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Device: Update",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/58d9f97f9d4d69009cfb773d",
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_name\": \"Demo Test Device\",\n  \"gateway\": \"EC:8C:A2:33:B5:90\",\n  \"tags\":[\"121\",\"some-tag\"],\n    \"device_sensors\":[{\n        \"sensor_id\":\"58d9f9819d4d6900c7727591\",\n        \"capability\":{\n            \"58d9f8ab9d4d690010bb3ece\":{\n                \"configured_value\":{\n                    \"on\": 1\n                },\n                \"user_command\":\"STATE\"\n            },\n            \"58d9f8ab9d4d690010bb3ecd\":{\n                \"configured_value\":{\n                    \"level\": 255\n                },\n                \"user_command\":\"BRIGHTNESS\"\n            },\n            \"58d9f8ab9d4d690010bb3ecc\":{\n                \"configured_value\":{\n                    \"red\": 255,\n                    \"green\": 255,\n                    \"blue\": 255\n                },\n                \"user_command\":\"COLOR\"\n            }\n        }\n    }]\n\n}"
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Device: Delete",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/58da3359aba09f007cd162d4",
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gateway",
+      "description": "",
+      "item": [
+        {
+          "name": "Gateways: Read",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/gateway/",
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": "Get Specific gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway: Read",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/gateway/58b55ce4877b1308c28fe8e2",
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": "Get Specific gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway: Create",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/gateway/",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gateway_name\": \"Gateway BDC\",\n  \"tags\": [\"Gateway BDC\"],\n  \"gateway_euid\": \"11:22:33:44:55:66\"\n}"
+            },
+            "description": "Get Specific gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway: Update",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/gateway/58b55652877b1357e6d6561f",
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gateway_name\": \"Karthik Gateway\",\n  \"tags\": [\"Demo Karthik Gateway\"],\n  \"gateway_euid\": \"EC:8C:A2:33:B5:90\",\n  \"gateway_ip_networks\": [{\n      \"network_mac\": \"EC:8C:A2:33:B5:90\",\n      \"network_gateway\": \"192.168.100.1dsvasd\"\n    }]\n}"
+            },
+            "description": "Get Specific gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway: Delete",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/gateway/58b1667cab34110f90132544",
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": "Get Specific gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway: Device Scan",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/window?gateway_euid=D8:38:fc:25:BB:60",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway: Device Join",
+          "request": {
+            "url": "http://127.0.0.1:8000/app/v1/device/window",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "description": ""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"interval\":100,\n  \"gateway_euid\":\"D8:38:FC:25:BB:60\"\n}"
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

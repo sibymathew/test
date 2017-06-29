@@ -1,0 +1,146 @@
+<!-- BEGIN BASE-->
+<div id="base">
+
+    <!-- BEGIN OFFCANVAS LEFT -->
+    <div class="offcanvas">
+    </div><!--end .offcanvas-->
+    <!-- END OFFCANVAS LEFT -->
+
+    <!-- BEGIN CONTENT-->
+    <div id="content">
+        <section>
+            <div class="section-header ">
+                <ol class="breadcrumb">
+                    <li class="active">Gateway</li>
+                </ol>
+            </div>
+            <div class="section-body contain-lg">
+
+                <!-- BEGIN VERTICAL FORM -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="text-primary">Add Gateway</h1>
+                    </div><!--end .col -->
+                    <div class="col-lg-3 col-md-4">
+                        <article class="margin-bottom-xxl">
+                            <p class="lead">
+                                Please enter your Gateway details and your gateway will be up and running in no
+                                time!
+                            </p>
+                        </article>
+                    </div><!--end .col -->
+                    <div class="col-lg-offset-1 col-md-8">
+                        <form class="form">
+                            <div class="card">
+                                <div class="card-head style-primary">
+                                    <header>Add Gateway</header>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <input type="text" class="form-control" id="name" ng-model="gatewayName">
+                                                <label for="name">Gateway Name</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" id="macaddress"
+                                               ng-model="gatewayMacAddress">
+                                        <label for="macaddress">Gateway MAC Address</label>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" id="tags" data-role="tagsinput"
+                                               ng-model="gatewayTags">
+                                        <label for="tags">Tags</label>
+                                    </div>
+                                </div><!--end .card-body -->
+                                <div class="card-actionbar">
+                                    <div class="card-actionbar-row">
+                                        <a href="/gateway" class="btn btn-flat btn-default ink-reaction">Cancel</a>
+                                        <button type="submit" ng-click="addGateway()" class="btn btn-flat btn-primary
+                                         ink-reaction">Add Gateway
+                                        </button>
+                                    </div>
+                                </div>
+                            </div><!--end .card -->
+                        </form>
+                    </div><!--end .col -->
+                </div><!--end .row -->
+                <!-- END VERTICAL FORM -->
+
+            </div>
+        </section>
+    </div><!--end #content-->
+    <!-- END CONTENT -->
+
+    <!-- BEGIN MENUBAR-->
+    <div id="menubar" class="menubar-inverse ">
+        <div class="menubar-fixed-panel">
+            <div>
+                <a class="btn btn-icon-toggle btn-default menubar-toggle"
+                   data-toggle="menubar" href="javascript:void(0);">
+                    <i class="fa fa-bars"></i>
+                </a>
+            </div>
+            <div class="expanded">
+                <a href="/dashboard">
+                    <span class="text-lg text-bold text-primary ">MATERIAL&nbsp;ADMIN</span>
+                </a>
+            </div>
+        </div>
+        <div class="menubar-scroll-panel">
+
+            <!-- BEGIN MAIN MENU -->
+            <ul id="main-menu" class="gui-controls">
+
+                <!-- BEGIN DASHBOARD -->
+                <li>
+                    <a href="/dashboard">
+                        <div class="gui-icon"><i class="md md-home"></i></div>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END DASHBOARD -->
+
+                <!-- BEGIN Gateway -->
+                <li class="gui-folder">
+                    <a href="/gateway" class="active">
+                        <div class="gui-icon"><i
+                                class="fa fa-puzzle-piece fa-fw"></i></div>
+                        <span class="title">Gateway</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END UI -->
+                <!-- BEGIN Devices -->
+                <li class="gui-folder">
+                    <a href="/device">
+                        <div class="gui-icon"><i class="md md-computer"></i>
+                        </div>
+                        <span class="title">Devices</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END FORMS -->
+                <!-- BEGIN floormap -->
+                <li>
+                    <a href="/floormap">
+                        <div class="gui-icon"><i class="md md-3d-rotation"></i>
+                        </div>
+                        <span class="title">Floormap</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END floormap -->
+
+            </ul><!--end .main-menu -->
+            <!-- END MAIN MENU -->
+        </div><!--end .menubar-scroll-panel-->
+    </div><!--end #menubar-->
+    <!-- END MENUBAR -->
+
+</div><!--end #base-->
+<!-- END BASE -->
+
+<!-- BEGIN JAVASCRIPT -->
+<script src="assets/js/libs/bootstrap-tagsinput/bootstrap-tagsinput.min.js"></script>
+<script src="assets/js/core/source/AppNavigation.js"></script>
+<!-- END JAVASCRIPT -->

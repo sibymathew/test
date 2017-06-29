@@ -1,0 +1,177 @@
+<!-- BEGIN BASE-->
+<div id="base">
+    <!-- BEGIN CONTENT-->
+    <div id="content" ng-controller="DeviceController">
+        <section>
+            <div class="section-header">
+                <ol class="breadcrumb">
+                    <li class="active">Device</li>
+                </ol>
+            </div>
+            <div class="section-body">
+
+                <!-- BEGIN INTRO -->
+                <div class="row">
+                    <div class="col-xs-8">
+                        <h1 class="text-primary">Device</h1>
+                    </div><!--end .col -->
+                    <div class="col-xs-4 text-right">
+                        <h1 class="text-light text-default-light">
+                            <button type="button" onclick="location.href='/adddevice'" class="btn ink-reaction btn-raised
+                    btn-primary">Add Device</button>
+                        </h1>
+                    </div>
+                    <div class="col-lg-8">
+                        <article class="margin-bottom-xxl">
+                            <p class="lead">
+                            </p>
+                        </article>
+                    </div><!--end .col -->
+                </div><!--end .row -->
+                <!-- END INTRO -->
+
+                 <!--BEGIN RESPONSIVE TABLE 2-->
+                <div class="row">
+                <div class="col-lg-12">
+                <div class="card">
+                <div class="card-body no-padding">
+                <div class="table-responsive no-margin">
+                <table class="table table-striped no-margin">
+                <thead>
+                <tr>
+                <th>Device Name</th>
+                <th>MAC Address</th>
+                <th>Tags</th>
+                <th>State</th>
+                <th>Edit</th>
+                <th>Control Device</th>
+                <th>Delete</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="device in devices">
+                <td>{{ device.device_name }}</td>
+                <td>{{ device.device_euid }}</td>
+                <td>office</td>
+                <td>{{ device.is_enabled }}</td>
+                <td><a href="/editdevice/{{ device._id }}">Edit</a></td>
+                <td><a href="/controldevice/{{ device._id }}">Device Operations</a></td>
+                <td ng-class="{anchor: hover}" ng-mouseenter="hover = true"
+                ng-mouseleave="hover = false"ng-click="
+                deleteDevice(device._id);">Delete</a></td>
+                </tr>
+                </tbody>
+                </table>
+                </div><!--end .table-responsive -->
+                </div><!--end .card-body -->
+                </div><!--end .card -->
+                </div><!--end .col -->
+                </div><!--end .row -->
+                 <!--END RESPONSIVE TABLE 1 -->
+                <div class="row">
+                    <!--<div ng-repeat="device in devices" class="col-lg-4">-->
+                    <!--<div class="card style-default-bright">-->
+                    <!--<div class="card-head"><header>{{ device.device_name }}</header></div>-->
+                    <!--<div class="on_off_icons">-->
+                    <!--<img width="64" height="32" src="../assets/img/on.png" alt="Switch it on" text="Switch it on"/>-->
+                    <!--<img width="64" height="32"  src="../assets/img/off.jpg" alt="Switch it on" text="Switch it off" />-->
+                    <!--</div>-->
+                    <!--<table class="table device_details no-margin">-->
+                    <!--<thead>-->
+                    <!--<tr>-->
+                    <!--<th class="table_head">Device Details</th>-->
+                    <!--</tr>-->
+                    <!--</thead>-->
+                    <!--<tbody>-->
+                    <!--<tr>-->
+                    <!--<td class="bold">MAC Address</td>-->
+                    <!--<td>{{ device.device_euid }}</td>-->
+                    <!--</tr>-->
+                    <!--<tr>-->
+                    <!--<td class="bold">Device Name</td>-->
+                    <!--<td>{{ device.device_name }}</td>-->
+                    <!--</tr>-->
+                    <!--<tr>-->
+                    <!--<td class="bold">State</td>-->
+                    <!--<td>{{ device.is_enabled }}</td>-->
+                    <!--</tr>-->
+                    <!--<tr>-->
+                    <!--<td class="bold">Tags</td>-->
+                    <!--<td>{{ device.device_name }}</td>-->
+                    <!--</tr>-->
+                    <!--<tr>-->
+                    <!--<td><a href="/editdevice/{{ device._id }}">Edit</a></td>-->
+                    <!--<td><a href="/controldevice/{{ device._id }}">Device Operations</a></td>-->
+                    <!--<td ng-class="{anchor: hover}" ng-mouseenter="hover = true"-->
+                    <!--ng-mouseleave="hover = false"ng-click="deleteDevice(device._id);">Delete</a></td>-->
+                    <!--</tr>-->
+                    <!--</tbody>-->
+                    <!--</table>-->
+                    <!--</div>-->
+                    <!--</div>-->
+
+                </div>
+
+            </div>
+        </section>
+    </div><!--end #content-->
+    <!-- END CONTENT -->
+
+    <!-- BEGIN MENUBAR-->
+    <div id="menubar" class="menubar-inverse ">
+        <div class="menubar-fixed-panel">
+            <div>
+                <a class="btn btn-icon-toggle btn-default menubar-toggle"
+                   data-toggle="menubar" href="javascript:void(0);">
+                    <i class="fa fa-bars"></i>
+                </a>
+            </div>
+            <div class="expanded">
+                <a href="/dashboard">
+                    <span class="text-lg text-bold text-primary ">MATERIAL&nbsp;ADMIN</span>
+                </a>
+            </div>
+        </div>
+        <div class="menubar-scroll-panel">
+
+            <!-- BEGIN MAIN MENU -->
+            <ul id="main-menu" class="gui-controls">
+
+                <!-- BEGIN DASHBOARD -->
+                <li>
+                    <a href="/dashboard">
+                        <div class="gui-icon"><i class="md md-home"></i></div>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END DASHBOARD -->
+
+                <!-- BEGIN Gateway -->
+                <li class="gui-folder">
+                    <a href="/gateway">
+                        <div class="gui-icon"><i
+                                class="fa fa-puzzle-piece fa-fw"></i></div>
+                        <span class="title">Gateway</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END UI -->
+                <!-- BEGIN Devices -->
+                <li class="gui-folder">
+                    <a href="/device" class="active">
+                        <div class="gui-icon"><i class="md md-computer"></i>
+                        </div>
+                        <span class="title">Devices</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END FORMS -->
+
+
+            </ul><!--end .main-menu -->
+            <!-- END MAIN MENU -->
+        </div><!--end .menubar-scroll-panel-->
+    </div><!--end #menubar-->
+    <!-- END MENUBAR -->
+
+</div><!--end #base-->
+<!-- END BASE -->
+<script src="assets/js/core/source/AppNavigation.js"></script>

@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "device_info",
+  "description": "Details of the device/gateway added by the account",
+  "type": "object",
+  "properties": {
+    "_id": {
+      "description": "Unique mongodb id for a document. Auto generated",
+      "type": "string",
+      "index": {
+        "$ref": "/indexes/_id"
+      }
+    },
+    "device_name": {
+      "description": "Name of the device",
+      "type": "string",
+      "default": null
+    },
+    "device_identifier": {
+      "description": "MAC id or device id of the device",
+      "type": "string",
+      "index": {
+        "$ref": "/indexes/device_identifier"
+      }
+    },
+    "device_gateway": {
+      "description": "MAC id of the gateway under which the device is mapped",
+      "type": "string"
+    },
+    "device_details": {
+      "description": "device details like brand, serial number. etc",
+      "type": "object",
+      "properties": {
+        "device_brand": {
+          "description": "Manufacturer name for device",
+          "type": "string",
+          "default": ""
+        },
+        "device_model": {
+          "description": "Model of the device",
+          "type": "string",
+          "default": ""
+        },
+        "device_serial": {
+          "description": "serial number for the device",
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "device_iot_network": {
+      "description": "IoT Network supported by the device",
+      "type": "array",
+      "items": {
+        "description": "Zigbee/Bluetooth Network for the device",
+        "type": "object",
+        "properties": {
+          "network_type": {
+            "description": "Type of network. Zigbee/Bluetooth",
+            "type": "string"
+          },
+          "network_id": {
+            "description": "PAN ID or Bluetooth network ID",
+            "type": "string",
+            "default": "0000"
+          },
+          "network_mac": {
+            "description": "MAC address of the dongle/device",
+            "type": "string"
+          },
+          "network_radio_power": {
+            "description": "Power in which the radio is operating",
+            "type": "object",
+            "properties": {
+              "tx_power": {
+                "type": "number"
+              },
+              "rx_power": {
+                "type": "number"
+              }
+            }
+          },
+          "network_radio_channel": {
+            "description": "Channel in which the radio is operating",
+            "type": "number",
+            "default": 0
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "device_attributes": {
+      "description": "Attributes set/received on/from the device. This field available only if 'is_gateway' is false",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "<attribute_name>": {
+            "description": "Device attribute document mongodb '_id' field value",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "device_tags": {
+      "type": "array",
+      "description": "Tags to the device by the account. By default, device_name, device_identifier will be added to the tags, but can be edited by the account",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "account_id": {
+      "description": "Account to which the device is mapped",
+      "type": "array",
+      "items": {
+        "description": "Account mongodb '_id' field value",
+        "type": "string",
+        "index": {
+          "$ref": "/indexes/account_id"
+        }
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "is_deleted": {
+      "description": "Device is deleted from db or not",
+      "type": "boolean",
+      "default": false
+    },
+    "is_blacklisted": {
+      "description": "Device is blacklisted by admin or not",
+      "type": "boolean",
+      "default": false
+    },
+    "is_authenticated": {
+      "description": "Device is authenticated or not",
+      "type": "boolean",
+      "default": false
+    },
+    "last_authenticated": {
+      "description": "Timestamp when device is authenticated or not",
+      "type": "string",
+      "default": "Datetime object from python"
+    },
+    "created_on": {
+      "description": "Document created time",
+      "type": "string",
+      "default": "Datetime object from python"
+    },
+    "updated_on": {
+      "description": "Document updated time",
+      "type": "string",
+      "default": "Datetime object from python"
+    }
+  },
+  "required": [
+    "is_gateway",
+    "device_name",
+    "device_attributes",
+    "gateway_identifier",
+    "device_identifier",
+    "account_id"
+  ],
+  "indexes": {
+    "_id": {
+      "description": "Mongo DB default index on document",
+      "type": "string"
+    },
+    "gateway_identifier": {
+      "description": "For faster search on gateway identifier when  device authentication happens",
+      "type": "string"
+    },
+    "device_identifier": {
+      "description": "For faster search on device identifier when  device authentication happens",
+      "type": "string"
+    },
+    "account_id": {
+      "description": "For faster search on account and device mapping",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+
+# 1:
+# gateway publishes all the devices that are associated to itself on this channel
+# when triggered by controller/gateway/state
+mosquitto_sub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'gateway/scan_list'
+
+# 2:
+# this message needs to be published to retrieve the list of devices connected.
+# Do command 1: before this command.
+mosquitto_pub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'controller/gateway/state' -m '{"gateway_euid":"EC:8C:A2:33:B2:60"}'
+
+# 3:
+# vriot listens to this, when device join happens this channel will get a message
+# gateway seeks authentication of a device through this channel
+# Do this command before 4:
+mosquitto_sub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'gateway/device/authentication'
+
+# 4: 
+# the device join command. vriot is asking gateway to scan for devices
+mosquitto_pub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'controller/gateway/commands' -m '{"gateway_id":"1:1:1:1:1:1:1:1","commands":[{"command":"DEVICE_JOIN","duration":"60"}]}'
+
+# 5:
+# the permission granting channel. vriot grants permission through this channel
+mosquitto_pub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'controller/gateway/commands' -m '{"gateway_euid":"EC:8C:A2:33:B2:60","commands":[{"command":"PERMITTED","device_euid":"00:00:EC:24:B8:2A:A4:86"}]}'
+
+# 6:
+# gateway publishes one device settings whihc includes capabilites
+# vriot listens to this
+mosquitto_sub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'gateway/device/settings'
+
+# 7:
+# vriot asks about a device connected to gateway using this.
+# gateway responds, listen using 6: before this command.
+mosquitto_pub --cafile ~/Desktop/ca  -h 172.19.150.99 -p 8883 -t 'controller/gateway/device/state' -m '{"device_euid":"00:00:EC:24:B8:2A:A4:86"}'

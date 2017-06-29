@@ -1,0 +1,202 @@
+<!-- BEGIN BASE-->
+<div id="base">
+
+    <!-- BEGIN OFFCANVAS LEFT -->
+    <div class="offcanvas">
+    </div><!--end .offcanvas-->
+    <!-- END OFFCANVAS LEFT -->
+
+    <!-- BEGIN CONTENT-->
+    <div id="content" ng-controller="ControlDeviceController">
+        <div ng-show="isContentLoaded">
+            <section>
+                <div class="section-header ">
+                    <ol class="breadcrumb">
+                        <li class="active">Device</li>
+                    </ol>
+                </div>
+                <div class="section-body contain-lg">
+
+                    <!-- BEGIN INTRO -->
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h2 class="text-primary">{{ device_data['device_name'] }}</h2>
+                        </div><!--end .col -->
+                        <div class="col-lg-8">
+                            <p class="lead">
+                                Please edit the details you wish to change.
+                            </p>
+                        </div><!--end .col -->
+                    </div><!--end .row -->
+                    <!-- END INTRO -->
+
+                    <!-- BEGIN HORIZONTAL FORM - BASIC ELEMENTS-->
+                    <div class="card">
+                        <div class="card-body">
+                            <form class="form-horizontal" role="form">
+                                <div class="form-group">
+                                    <label for="regular13" class="col-sm-2 control-label">Name</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="regular13" value="{{ device_data['device_name'] }}"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Mac Address</label>
+                                    <div class="col-sm-10">
+                                        <p class="form-control-static">{{ device_data['device_euid'] }}</p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="placeholder13" class="col-sm-2 control-label">Tags</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="placeholder13" value="office"
+                                               data-role="tagsinput"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">State</label>
+                                    <div class="col-sm-10">
+                                        <p class="form-control-static">Online</p>
+                                    </div>
+                                </div>
+
+                                <!--<div ng-controller="EditDeviceController">-->
+                                <!--<div class="form-group">-->
+                                <!--<label for="regular13" class="col-sm-2 control-label">User Command:</label>-->
+                                <!--<div class="col-sm-10">-->
+                                <!--<select id="user_command" class="form-control" ng-model="operations" ng-options="user_command for (user_command, operations) in user_commands">-->
+                                <!--<option value=''>Select</option>-->
+                                <!--</select>-->
+                                <!--</div>-->
+                                <!--</div>-->
+                                <!--<div class="form-group">-->
+                                <!--<label for="regular13" class="col-sm-2 control-label">Operation :</label>-->
+                                <!--<div class="col-sm-10">-->
+                                <!--<select id="operation" class="form-control" ng-disabled="!operations" ng-model="ranges" ng-options="operation for (operation, ranges) in operations"><option value=''>Select</option></select>-->
+                                <!--</div>-->
+                                <!--</div>-->
+                                <!--<div class="form-group">-->
+                                <!--<label for="regular13" class="col-sm-2 control-label">Range :</label>-->
+                                <!--<div class="col-sm-10">-->
+                                <!--<select id="range" class="form-control" ng-disabled="!ranges" ng-model="range" ng-options="range for range in ranges"><option value=''>Select</option></select>-->
+                                <!--</div>-->
+                                <!--</div>-->
+                                <!--</div>-->
+
+
+                            </form>
+                        </div><!--end .card-body -->
+                        <div class="card-actionbar">
+                            <div class="card-actionbar-row">
+                                <a href="/device" class="btn btn-flat btn-default ink-reaction">Cancel</a>
+                                <button type="submit" class="btn btn-flat btn-primary ink-reaction">Save</button>
+                            </div>
+                        </div>
+                    </div><!--end .card -->
+
+
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card tabs-left style-default-light">
+                            <ul class="card-head nav nav-tabs" data-toggle="tabs">
+                                <li><a href="#first5">FIRST A TAB</a></li>
+                                <li class="active"><a href="#second5">NO. A TWO</a></li>
+                                <li><a href="#third5">THE A THIRD</a></li>
+                            </ul>
+                            <div class="card-body tab-content style-default-bright">
+                                <div class="tab-pane" id="first5"><h3 class="text-light">Daniel <strong>Johnson</strong></h3>
+                                    <p>Ad ius duis dissentiunt, an sit harum primis persecuti, adipisci tacimates mediocrem sit et. Id illud voluptaria omittantur qui, te affert nostro mel. Cu conceptam vituperata temporibus has.</p>
+                                    <dl class="dl-horizontal">
+                                        <dt>Description lists</dt>
+                                        <dd>A description list is perfect for defining terms.</dd>
+                                        <dt>Euismod</dt>
+                                        <dd>Vestibulum id ligula porta felis euismod semper eget lacinia odio sem nec elit.</dd>
+                                        <dd>Donec id elit non mi porta gravida.</dd>
+                                        <dt>Malesuada porta</dt>
+                                        <dd>Etiam porta sem malesuada magna mollis euismod.</dd>
+                                    </dl>
+                                </div>
+                                <div class="tab-pane active" id="second5">
+                                    <h1><i class="fa fa-fw fa-clock-o text-accent"></i> History</h1>
+                                    <p class="lead">Ad ius duis dissentiunt, an sit harum primis persecuti, adipisci tacimates mediocrem sit et. Id illud voluptaria omittantur qui, te affert nostro mel. Cu conceptam vituperata temporibus has.</p>
+                                    <p>Per at postea mediocritatem, vim numquam aliquid eu, in nam sale gubergren. Fuisset delicatissimi duo, qui ut animal noluisse erroribus. Ea eum veniam audire. Dicant vituperata consequuntur.</p>
+                                </div>
+                                <div class="tab-pane" id="third5"><p>Duo semper accumsan ea, quidam convenire cum cu, oportere maiestatis incorrupte est eu. Soluta audiam timeam ius te, idque gubergren forensibus ad mel, persius urbanitas usu id. Civibus nostrum fabellas mea te, ne pri lucilius iudicabit. Ut cibo semper vituperatoribus vix, cum in error elitr. Vix molestiae intellegat omittantur an, nam cu modo ullum scriptorem.</p>
+                                    <p>Quod option numquam vel in, et fuisset delicatissimi duo, qui ut animal noluisse erroribus. Ea eum veniam audire. Per at postea mediocritatem, vim numquam aliquid eu, in nam sale gubergren. Dicant vituperata consequuntur at sea, mazim commodo</p>
+                                </div>
+                            </div><!--end .card-body -->
+                        </div><!--end .card -->
+                        <em class="text-caption">Left sidebar layout</em>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div><!--end #content-->
+    <!-- END CONTENT -->
+
+    <!-- BEGIN MENUBAR-->
+    <div id="menubar" class="menubar-inverse ">
+        <div class="menubar-fixed-panel">
+            <div>
+                <a class="btn btn-icon-toggle btn-default menubar-toggle"
+                   data-toggle="menubar" href="javascript:void(0);">
+                    <i class="fa fa-bars"></i>
+                </a>
+            </div>
+            <div class="expanded">
+                <a href="/dashboard">
+                    <span class="text-lg text-bold text-primary ">MATERIAL&nbsp;ADMIN</span>
+                </a>
+            </div>
+        </div>
+        <div class="menubar-scroll-panel">
+
+            <!-- BEGIN MAIN MENU -->
+            <ul id="main-menu" class="gui-controls">
+
+                <!-- BEGIN DASHBOARD -->
+                <li>
+                    <a href="/dashboard">
+                        <div class="gui-icon"><i class="md md-home"></i></div>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END DASHBOARD -->
+
+                <!-- BEGIN Gateway -->
+                <li class="gui-folder">
+                    <a href="/gateway">
+                        <div class="gui-icon"><i
+                                class="fa fa-puzzle-piece fa-fw"></i></div>
+                        <span class="title">Gateway</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END UI -->
+                <!-- BEGIN Devices -->
+                <li class="gui-folder">
+                    <a href="/device" class="active">
+                        <div class="gui-icon"><i class="md md-computer"></i>
+                        </div>
+                        <span class="title">Devices</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END FORMS -->
+
+
+            </ul><!--end .main-menu -->
+            <!-- END MAIN MENU -->
+        </div><!--end .menubar-scroll-panel-->
+    </div><!--end #menubar-->
+    <!-- END MENUBAR -->
+
+</div><!--end #base-->
+<!-- END BASE -->
+
+<!-- BEGIN JAVASCRIPT -->
+<script src="assets/js/libs/bootstrap-tagsinput/bootstrap-tagsinput.min.js"></script>
+<script src="assets/js/core/source/AppNavigation.js"></script>
+<!-- END JAVASCRIPT -->
+
+</body>
+</html>

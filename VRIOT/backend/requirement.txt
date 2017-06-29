@@ -1,0 +1,7 @@
+Django==1.11
+paho-mqtt==1.2
+pymongo==3.4.0
+djangorestframework==3.5.4
+celery==4.0.2
+django-cors-headers==2.0.0
+gunicorn==19.6.00

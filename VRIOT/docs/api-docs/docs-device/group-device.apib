@@ -1,0 +1,71 @@
+
+# Group Device
+
+Device APIs can be used to perform CRUD, Authentication, Mapping operations on a device.
+
+The attributes of Device object are the following, 
+
++ `device_euid` (string) : Unique identifier for a device.
++ `gateway` (string) : Gateway to which the device should be attached.
+
+Optional attributes
++ `device_name` (string) : User readable device name.
++ `gateway_lock` (bool str) : True if the device cannot be added to any other gateway. `Default` False
++ `association_mode` (int) : Logic of deciding device to gateway association. `Default` gateway
+    + Values
+        + 0 - gateway
+        + 1 - rssi
++ `sensor_id` (int): Unique identifier for the device sensor.
++ `sensor_type` (int): Type of the function the respective sensor is performing.
+    + Values
+        + 0 - Lighting
+        + 1 - Lock
+        + 2 - Switch
+        + 3 - Sensing
+        + 4 - Closures
+        + 5 - HVAC
+        + 6 - Shades
++ `function_id` (string): Uniquely identify two or more sensors with same type. `Default` 0x01
++ `user_command` (string): User representation of a capability.
++ `configured_value` (string): Value to be set for a sensor's capability. `Default` None
++ `manufacturer` (string): Device manufacturer. `Default` None
++ `brand` (string): Device brand name. `Default` None
++ `tags` (list of string): Device tags. `Default` None
++ `is_enabled` : Toggle to enable/disable the tenant. `Default` True
+
+Response attributes
++ `gateway` (string): Gateway to which the device is currently attached.
++ `device_type` (int): Type of function of the device.
+    + Values
+        + 0 - light
+        + 1 - door/lock
+        + 2 - thermostat
++ `power_mode` (int): Power mode of the device.
++ `battery_level` (int): Remaining battery percentage of the device.
++ `created_on` (int): Epoch time of when this record is created.
++ `updated_on` (int): Epoch time of when this record is last updated.
++ `reported_on` (int): Epoch time of when this record is last reported. 
++ `reported_value` (string): Value read from a sensor's capability.
+
+## Create [/app/v1/device]
+
+<!-- include(post-device.apib) -->
+
+## List [/app/v1/device?gateway={gateway}&type={type}]
+
++ Parameters
+    + gateway (string, optional) ... Get list of devices associated with the gateway.
+    + type (string, optional) ... onlyscan for scanned list, onlyadded for added list.
+
+<!-- include(get-device.apib) -->
+
+## List/Delete/Update [/app/v1/device/{id}]
+
++ Parameters
+    + id (int, required) ... Provide the device_id or device_euid of the device.
+
+<!-- include(delete-device-id.apib) -->
+<!-- include(patch-device-id.apib) -->
+<!-- include(get-device-id.apib) -->
+
+<!-- include(docs-device-open-window/group-device-open-window.apib) -->

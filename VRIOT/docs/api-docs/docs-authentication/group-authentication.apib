@@ -1,0 +1,22 @@
+
+# Group Authentication
+
+Authentication APIs provide workflow to authenicate an user.
+
+The attributes of Authentication object are the following, 
+
++ `email` (string) : Email-ID of the user.
++ `username` (string): Username of the user.
++ `password` (string) : Password of the user.
++ `api_key` (string): API Key generated for the user.
++ `api_secret` (string): API Secret generated for the user.
+
+## Login/Logout [/auth/v1/login]
+
+<!-- include(get-token.apib) -->
+<!-- include(delete-authentication.apib) -->
+
+## Refresh [/auth/v1/refreshtoken]
+
+<!-- include(get-renewtoken.apib) -->
+

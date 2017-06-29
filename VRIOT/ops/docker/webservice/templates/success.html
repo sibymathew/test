@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VRIOT Service Runner</title>
+</head>
+<style>
+body {
+    background-color: linen;
+}
+
+.titleBar img {
+    float: left;
+}
+
+.titleBar h2 {
+    vertical-align: middle;
+    padding: 20px 120px;
+    background: rgb(185, 192, 228);
+}
+
+</style>
+<body>
+    <section class="titleBar">
+        
+        <img src="/static/Ruckus_logo.png" height="75" width="100">
+        <h2>Vriot Service Runner</h2>
+    </div>
+    </section> 
+    <p>Success!  </p>
+    <p> 
+    Your docker has started. <br>
+    For accessing MQTT broker in docker, you will need to connect to a {{domain_name}} FQDN.
+    Please map your DNS appropriately. i.e please ensure when you access the above fqdn in your network, you are actually reaching 
+    the machine where vriot is deployed. 
+
+    Also, if you are not in a position to map your DNS, try changing /etc/hosts to check if vriot deployment is reachable.
+
+    You can monitor the services <a id="supervisorLink" href="123">here<a></p>
+    {% if aa_ip %}
+      <p>ASSA ABLOY tunnel service is also provisioned. It shall connect to Vision Line server at <b>{{aa_ip}}</b></p>
+    {% endif %}
+</body>
+
+<script type="text/javascript">
+    a = document.getElementById('supervisorLink');
+    hname = window.location.hostname;
+    a.href = "http://"+hname+":9001/";
+</script>
+
+</html>

@@ -1,0 +1,28 @@
+
+# Group Tenants
+
+Tenant is a global registration of an entity which enables access to use the IoT platform/infrastructure.
+
+The attributes of tenant object are the following, 
+
++ `first_name` (string): First Name of the tenant to be registered.
++ `last_name` (string): Last Name of the tenant to be registered.
++ `company` (string): Company Name of the tenant to be registered.
++ `email` (string): Email-ID of the tenant to be registered.
++ `password` (string): Password of the created tenant account.
+
+Optional attributes
++ `phone`: Phone Number of the tenant to be registered. `Default` None 
++ `subscription_type`: Tenant's subscription model. `Default` Trial
++ `subscription_template`: JSON structure of subscription template. `Default` /get/subscription_template_example
++ `email_verfification`: Toggle to enable/disable email verification. `Default` False
++ `email_success_verification`: Toggle to enable/disable email success verification. `Default` False
++ `welcome_email`: Toggle to enable/disable welcome email. `Default` False
++ `email_template`: JSON structure of email template. `Default` /get/email_template_example.
++ `is_enabled`: Toggle to enable/disable the tenant. `Default` True
++ `is_revoked`: Toggle to enable/disable the tenant temp access. `Default` False 
+
+## All Tenants [/tenant]
+
+<!-- include(post-tenant.apib) -->
+<!-- include(delete-tenant.apib) -->

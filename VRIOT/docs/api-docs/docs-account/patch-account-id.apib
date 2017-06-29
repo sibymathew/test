@@ -1,0 +1,43 @@
+### PATCH
+
+This endpoint MUST be used to update an existing user.
+
++ Request (application/vnd.api+json)
+
+    + Headers
+
+            Authentication: Basic BASE64(SESSION TOKEN)
+            Access-Control-Allow-Origin:'*'
+            Accept: application/vnd.api+json
+
+    + Body
+
+            {
+                "first_name":"FirstName",
+                "last_name":"LastName",
+                "company":"Company",
+                "email":"email@email.com",
+                "username":"UserName",
+                "password":"Password",
+                "phone":"PhoneNumber",
+                "directory_map":"default",
+                "group_map":"guest",
+                "email_verification":False,
+                "email_success_verification":False,
+                "welcome_email":False,
+                "email_template":"JSONTemplate"
+                "is_enabled":True,
+                "is_revoked":False
+            }
+
++ Response 200 (application/vnd.api+json)
+
+    + Body
+
+            {
+                "user_id":"123456789012",
+                "last_updated":"epoch timestamp"
+            }
+
+
+<!-- include(../docs-reuseable/docs-401-response.apib) -->

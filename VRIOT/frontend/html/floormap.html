@@ -1,0 +1,122 @@
+<!-- BEGIN BASE-->
+<div id="base">
+
+    <!-- BEGIN CONTENT-->
+    <div id="content">
+        <section>
+            <div class="section-header">
+                <ol class="breadcrumb">
+                    <li class="active">Floormap</li>
+                </ol>
+            </div>
+
+            <div class="section-body">
+                <!-- BEGIN FILE UPLOAD -->
+                <div class="row">
+                    <div ng-controller="FloorMapController">
+                        <h2>Upload your floor Map</h2>
+                        <p>Please tag on the image wherever you wish to place an AP<br />
+
+                        </p>
+                        <div>
+                            <img src="../../assets/img/img_forest.jpg" id="img1" />
+                        </div>
+                    </div>
+                </div><!--end .row -->
+                <!-- END FILE UPLOAD -->
+            </div>
+
+        </section>
+
+    </div><!--end #content-->
+    <!-- END CONTENT -->
+
+    <!-- BEGIN MENUBAR-->
+    <div id="menubar" class="menubar-inverse ">
+        <div class="menubar-fixed-panel">
+            <div>
+                <a class="btn btn-icon-toggle btn-default menubar-toggle"
+                   data-toggle="menubar" href="javascript:void(0);">
+                    <i class="fa fa-bars"></i>
+                </a>
+            </div>
+            <div class="expanded">
+                <a href="/dashboard">
+                    <span class="text-lg text-bold text-primary ">MATERIAL&nbsp;ADMIN</span>
+                </a>
+            </div>
+        </div>
+        <div class="menubar-scroll-panel">
+
+            <!-- BEGIN MAIN MENU -->
+            <ul id="main-menu" class="gui-controls">
+
+                <!-- BEGIN DASHBOARD -->
+                <li>
+                    <a href="/dashboard">
+                        <div class="gui-icon"><i class="md md-home"></i></div>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END DASHBOARD -->
+
+                <!-- BEGIN Gateway -->
+                <li>
+                    <a href="/gateway">
+                        <div class="gui-icon"><i
+                                class="fa fa-puzzle-piece fa-fw"></i></div>
+                        <span class="title">Gateway</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END Gateway -->
+                <!-- BEGIN Devices -->
+                <li>
+                    <a href="/device">
+                        <div class="gui-icon"><i class="md md-computer"></i>
+                        </div>
+                        <span class="title">Devices</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END Devices -->
+                <!-- BEGIN floormap -->
+                <li>
+                    <a href="/floormap" class="active">
+                        <div class="gui-icon"><i class="md md-3d-rotation"></i>
+                        </div>
+                        <span class="title">Floormap</span>
+                    </a>
+                </li><!--end /menu-li -->
+                <!-- END floormap -->
+
+
+            </ul><!--end .main-menu -->
+            <!-- END MAIN MENU -->
+        </div><!--end .menubar-scroll-panel-->
+    </div><!--end #menubar-->
+    <!-- END MENUBAR -->
+
+</div><!--end #base-->
+<!-- END BASE -->
+<!-- BEGIN JAVASCRIPT -->
+<script>
+    jQuery.curCSS = jQuery.css;
+</script>
+<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.7/jquery-ui.min.js'></script>
+<script src='assets/js/app/jquery.tag.js'></script>
+<script src="assets/js/core/source/AppNavigation.js"></script>
+
+<script>
+    $(document).ready(function(){
+        console.log('l1');
+        $("#img1").tag({
+            showTag: 'always',
+            canDelete: true,
+            canTag: true,
+            defaultTags: [
+                {'id':1,'label':'Uncle Jerry','width':150,'height':150,'top':50,'left':160},
+                {'id':2,'label':'Baby johnny','width':100,'height':150,'top':250,'left':380}
+            ]
+        });
+    });
+</script>
+<!-- END JAVASCRIPT -->

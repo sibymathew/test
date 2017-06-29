@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "account_info",
+  "description": "Details of the user account added under the directory",
+  "type": "object",
+  "properties": {
+    "_id": {
+      "description": "Unique mongodb id for a document. Auto generated",
+      "type": "string",
+      "index": {
+        "$ref": "/indexes/_id"
+      }
+    },
+    "directory_id": {
+      "description": "Directory(ies) under which the account is linked",
+      "type": "array",
+      "items": {
+        "description": "Mongodb document '_id' field for the directory",
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "group_id": {
+      "description": "Group(s) under which the account is mapped",
+      "type": "array",
+      "items": {
+        "description": "Mongodb document '_id' field for the group",
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "email_address": {
+      "description": "E-mail address of the user",
+      "type": "string",
+      "index": {
+        "$ref": "/indexes/email_address"
+      }
+    },
+    "password": {
+      "description": "First name of the user",
+      "type": "string"
+    },
+    "first_name": {
+      "description": "First name of the user",
+      "type": "string"
+    },
+    "last_name": {
+      "description": "Last name of the user",
+      "type": "string",
+      "default": ""
+    },
+    "cellular_number": {
+      "description": "Phone of the user",
+      "type": "string",
+      "default": ""
+    },
+    "is_cellular_verified": {
+      "description": "Cellular number of the user is verified or not",
+      "type": "boolean",
+      "default": false
+    },
+    "is_cellular_verification_sent": {
+      "description": "Cellular Verification sent for the user or not",
+      "type": "boolean",
+      "default": false
+    },
+    "is_email_verified": {
+      "description": "E-mail of the user is verified or not",
+      "type": "boolean",
+      "default": false
+    },
+    "is_email_verification_sent": {
+      "description": "Verification E-mail for the user is sent or not",
+      "type": "boolean",
+      "default": false
+    },
+    "is_account_active": {
+      "description": "Account of the user is active or not",
+      "type": "boolean",
+      "default": true
+    },
+    "is_account_deleted": {
+      "description": "Account of the user is deleted or not",
+      "type": "boolean",
+      "default": false
+    },
+    "created_on": {
+      "description": "Account created time",
+      "type": "string",
+      "default": "Datetime object from python"
+    },
+    "updated_on": {
+      "description": "Account updated time",
+      "type": "string",
+      "default": "Datetime object from python"
+    },
+    "account_tags": {
+      "type": "array",
+      "description": "Tags to the user set by the admin. By default, directory, group names will be added to the tags, but can be edited by the admin or the user himself",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "notification_enabled": {
+      "description": "Notification to be sent to user or not",
+      "type": "boolean",
+      "default": false
+    },
+    "notification_preferences": {
+      "type": "object",
+      "description": "Notification preference for the Account",
+      "properties": {
+        "notify_email": {
+          "description": "Notification to be sent via email or not",
+          "type": "boolean",
+          "default": false
+        },
+        "notify_cellular": {
+          "description": "Notification to be sent via cellular or not",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "required": [
+    "directory_id",
+    "email_address",
+    "password",
+    "first_name",
+    "last_name"
+  ],
+  "indexes": {
+    "_id": {
+      "description": "Mongo DB default index on document",
+      "type": "string"
+    },
+    "email_address": {
+      "description": "For faster email search during login",
+      "type": "string"
+    }
+  }
+}
