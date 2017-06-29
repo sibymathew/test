@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: /home/circleci
+    working_directory: ~/sibywork
     machine: true
     steps:
       - checkout
@@ -16,7 +16,7 @@ jobs:
           command: 'pip install pyinstaller'
       - run:
           name: download-baseimage
-          command: 'aws s3 cp s3://vriot/baseimages/vriot-disk.vmdk /home/circleci/vriot-disk.vmdk'
+          command: 'aws s3 cp s3://vriot/baseimages/vriot-disk.vmdk vriot-disk.vmdk'
       - run:
           name: run-build-script
           command: 'python VRIOT/ops/scripts/build.py'
