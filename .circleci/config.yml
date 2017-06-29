@@ -16,10 +16,10 @@ jobs:
           command: 'pip install pyinstaller'
       - run:
           name: update-apt
-          command: 'apt-get update'
+          command: 'sudo apt-get update'
       - run:
           name: install-qemu-utils
-          command: 'apt-get install qemu-utils'
+          command: 'sudo apt-get install qemu-utils'
       - run:
           name: download-baseimage
           command: 'aws s3 cp s3://vriot/baseimages/vriot-disk.vmdk vriot-disk.vmdk'
