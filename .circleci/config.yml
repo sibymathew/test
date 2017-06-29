@@ -2,3 +2,11 @@ version: 2
 jobs:
   build:
     machine: true
+  steps:
+    - checkout
+    - run:
+        name: Install python tools
+        command: 'sudo apt-get install python-setuptools'
+    - run:
+        name: Install AWSCLI
+        command: 'easy_install awscli'
