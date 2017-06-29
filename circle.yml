@@ -1,6 +1,7 @@
 machine:
-  pre:
-    - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
+  post:
+    - sudo curl -L -o /usr/bin/docker https://get.docker.com/builds/Linux/x86_64/docker-1.9.1
+    - sudo container=yes docker daemon: { background: true }
   services:
     - docker
   python:
