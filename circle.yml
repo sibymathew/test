@@ -2,12 +2,7 @@ version: 2
 
 jobs:
   build:
-    machine:
-      enabled: true
-      services:
-        - docker
-      python:
-        version: 2.7.3
+    machine: true
 
 dependencies:
   pre:
