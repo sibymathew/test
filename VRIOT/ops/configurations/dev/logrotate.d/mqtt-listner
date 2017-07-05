@@ -1,9 +1,0 @@
-/var/log/mqtt_service.log {
-    rotate 5
-    daily
-    compress
-    size 5M
-    notifempty
-    missingok
-
-}

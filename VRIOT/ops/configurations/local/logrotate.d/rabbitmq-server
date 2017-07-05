@@ -1,9 +1,0 @@
-/var/log/rabbitmq/*.log {
-        daily
-        missingok
-        rotate 5
-        compress
-        delaycompress
-        notifempty
-        size 5M
-}

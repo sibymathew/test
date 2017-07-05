@@ -1,8 +1,0 @@
-/var/log/mongo_default_service.log{
-    rotate 5
-    daily
-    compress
-    size 5M
-    notifempty
-    missingok
-}

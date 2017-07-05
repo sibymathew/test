@@ -1,1 +1,0 @@
-This Repository hosts API Blueprint documentation for VRIOT API.
