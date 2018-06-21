@@ -16,8 +16,6 @@ test:
     - docker run -d -p 5000:5000 -e "STORMPATH_ID=$STORMPATH_ID" -e "STORMPATH_SECRET=$STORMPATH_SECRET" -e "PUBNUB_PUBLISH=$PUBNUB_PUBLISH" -e "PUBNUB_SUBSCRIBE=$PUBNUB_SUBSCRIBE" "$DOCKER_BRANCH":"$CIRCLE_SHA1"; sleep 10
     - curl http://localhost:5000/1/ping
 
-check oyther place code
-
 deployment:
   elasticbeanstalk:
     branch: master
@@ -25,3 +23,5 @@ deployment:
       - docker login -e siby.math@gmail.com -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
       - docker push "$DOCKER_BRANCH":"$CIRCLE_SHA1"
       - python ops/xcloud_deploy.py -bbucket -axcloud-app -v"$CIRCLE_SHA1" -excloud-env -mstage
+
+      trackcool guy is in parlim
