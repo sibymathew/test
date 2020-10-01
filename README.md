@@ -1,4 +1,5 @@
-<h3 align="center">CLOUD DEPLOYMENT MANAGER</h3>
+<h2 align="center">CLOUD DEPLOYMENT MANAGER</h2>
+
 
 Terraform is a tool for building, changing, and versioning infrastructure safely and efficiently. Terraform can manage existing and popular service providers as well as custom in-house solutions.
 
@@ -9,6 +10,8 @@ Ruckus Devops Workflow is broadly divided into two categories,
     </ul>
       
 Terraform offers different kind of providers which enables us to perform and complete the above workflows. This includes Google Provider (for Infra creation), Kubernetes Provider (for K8S Cluster Deployment) and other Custom Provider options (for custom applications like vSZ VM)
+
+<a href="https://jira-wiki.ruckuswireless.com/display/KUMO/Ruckus+Cloud+Continuous+Deployment">Wiki Document</a>
 
 ## Getting Started
 
@@ -31,3 +34,20 @@ git clone https://github.com/github_username/repo_name.git
 ```sh
 brew install hashicorp/tap/terraform
 ```
+
+### Run
+
+1. Before Run
+```sh
+Replace credentials.json with your GCP service account credentials JSON.
+In root folder, main.tf comment or uncomment the modules that needs to be deployed.
+```
+
+2. Run
+```sh
+terraform init
+terraform plan --var-file="variables.tfvars"
+terraform apply --var-file="variables.tfvars"
+terraform destroy --var-file="variables.tfvars"
+```
+
