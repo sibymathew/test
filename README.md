@@ -3,11 +3,13 @@
 
   <h3 align="center">CLOUD DEPLOYMENT MANAGER</h3>
 
-  <p align="center">
+  <p align="left">
     Terraform is a tool for building, changing, and versioning infrastructure safely and efficiently. Terraform can manage existing and popular service providers as well as custom in-house solutions.
+  
     Ruckus Devops Workflow is broadly divided into two categories,
       . Infrastructure Create/Destroy/Manage
       . Application/Services Deployment (K8S and Other Applications/VMs)
+      
     Terraform offers different kind of providers which enables us to perform and complete the above workflows. This includes Google Provider (for Infra creation), Kubernetes Provider (for K8S Cluster Deployment) and other Custom Provider options (for custom applications like vSZ VM)
     <br />
   </p>
