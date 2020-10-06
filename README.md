@@ -107,7 +107,9 @@ In alto-tf,
 	* Replace credentials.json with your GCP service account credentials JSON.
 	* In layers folder, go to Argosy folder.
 	* Make sure kubectl is set with GCP Cluster Config Context.
+	
 	  gcloud container clusters get-credentials <GKE Cluster Name> --region=<Region Name>
+	  
 	* In argosy/variables.tfvars modify all parameter values.
 ```
 
