@@ -77,7 +77,7 @@ git clone ssh://git@bitbucket.rks-cloud.com:7999/cd/gitops-flux-argosy.git
 
 ### Run GCP Infra Creation Workflow
 
-1. Before Run
+* Before Run
 ```sh
 In alto-tf,
 	* Replace credentials.json with your GCP service account credentials JSON.
@@ -91,7 +91,7 @@ In alto-tf,
 	* In top level directory, variables.tfvars modify all parameter values.
 ```
 
-2. Run
+* Run
 ```sh
 terraform init
 terraform plan --var-file="variables.tfvars"
@@ -101,15 +101,17 @@ terraform destroy --var-file="variables.tfvars"
 
 ### Run Agrosy Workflow
 
-1. Before Run
+* Before Run
 ```sh
 In alto-tf,
 	* Replace credentials.json with your GCP service account credentials JSON.
 	* In layers folder, go to Argosy folder.
+	* Make sure kubectl is set with GCP Cluster Config Context.
+	  gcloud container clusters get-credentials <GKE Cluster Name> --region=<Region Name>
 	* In argosy/variables.tfvars modify all parameter values.
 ```
 
-2. Run
+* Run
 ```sh
 terraform init
 terraform plan --var-file="variables.tfvars"
