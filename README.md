@@ -75,20 +75,22 @@ git clone ssh://git@bitbucket.rks-cloud.com:7999/cd/gitops-flux-argosy.git
 * Using gcloud init, configure and connect to GCP
 
 
-### Run GCP Infra Creation Workflow
+### Native Deployment (Using Raw Application)
 
 * Before Run
 ```sh
 In alto-tf,
-	* Replace credentials.json with your GCP service account credentials JSON.
+	* GCP Infra can deployed in single click or in layers.
+	* If the environment is fresh install, recommendation would be to run all layers in one shot.
+		* To run in one shot, use the main.tf in the top level directory.
+		* In top level directory, variables.tfvars modify all parameter values.
+	* For layered approach, go to the individual layer directory and run terrafrom from that location.
 	* In layers folder, there are different layers like,
 		* Project
 		* Cluster
 		* Network
 	* Based on the need pick and choose the layer you need to run.
-	* If the environment in fresh install, recommendation would be run the all layers in one shot.
-	* To run in one shot, use the main.tf in the top level directory.
-	* In top level directory, variables.tfvars modify all parameter values.
+	* Replace credentials.json with your GCP service account credentials JSON.
 ```
 
 * Run
@@ -120,3 +122,6 @@ terraform plan --var-file="variables.tfvars"
 terraform apply --var-file="variables.tfvars"
 terraform destroy --var-file="variables.tfvars"
 ```
+
+### Docker based Deployment (Dockerized Application)
+
