@@ -139,18 +139,21 @@ Build the docker,
 ```sh
 Run the docker,
 	* Run example,
-		* docker run -v credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode oneclick --type all --env int --do plan
+		* docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode oneclick --type all --env int --do plan
 	* In the above example we are deploying the whole GCP infra oneclick, env as int and only plan (dry run).
 	* Help menu,
-SMATHEWMBPRO13RETINA:gcp sibymathew$ docker run -v /Users/sibymathew/kubernetes/terraform//brave-joy-289022-5dc3dee288dd.json.orig:/ruckus-cloud-deploy/credentials.json -t test:1.2
-usage: call_script.py [-h] [-m MODE] [-t TYPE] [-e ENV] [-d DO]
+		SMATHEWMBPRO13RETINA:gcp sibymathew$ docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2
+		usage: call_script.py [-h] [-m MODE] [-t TYPE] [-e ENV] [-d DO]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -m MODE, --mode MODE  oneclick or layer
-  -t TYPE, --type TYPE  all/argosy/bigquery/bucket/cluster/firewall/network/pg
-                        sqldb/redisdb
-  -e ENV, --env ENV     git branch from where config to be pulled
-  -d DO, --do DO        plan/apply/destroy
-SMATHEWMBPRO13RETINA:gcp sibymathew$ 
+		optional arguments:
+		  -h, --help            show this help message and exit
+		  -m MODE, --mode MODE  oneclick or layer
+		  -t TYPE, --type TYPE  all/argosy/bigquery/bucket/cluster/firewall/network/pg
+					sqldb/redisdb
+		  -e ENV, --env ENV     git branch from where config to be pulled
+		  -d DO, --do DO        plan/apply/destroy
+		SMATHEWMBPRO13RETINA:gcp sibymathew$ 
+	* Argosy workflow to be separately deployed (using layer method)
+	* Run Example (for Argosy)
+		* docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode layer --type argosy --env int --do plan
 ```
