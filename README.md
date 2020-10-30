@@ -76,8 +76,7 @@ git clone ssh://git@bitbucket.rks-cloud.com:7999/cd/gitops-flux-argosy.git
 * Using gcloud init, configure and connect to GCP
 
 
-
-
+<br><br>
 ## Native Deployment (Using Raw Application)
 
 ### Deploy GCP Infrastrcuture
@@ -129,7 +128,7 @@ terraform destroy --var-file="variables.tfvars"
 ```
 
 
-
+<br><br>
 ## Docker based Deployment (Dockerized Application)
 
 * Before Run
