@@ -13,6 +13,7 @@ Terraform offers different kind of providers which enables us to perform and com
 
 <a href="https://jira-wiki.ruckuswireless.com/display/KUMO/Ruckus+Cloud+Continuous+Deployment">Internal Wiki Doc for Terraform and Ruckus Cloud Deployment</a>
 
+
 ## Getting Started
 
 To get a local copy up and running, follow these simple steps.
@@ -75,6 +76,8 @@ git clone ssh://git@bitbucket.rks-cloud.com:7999/cd/gitops-flux-argosy.git
 * Using gcloud init, configure and connect to GCP
 
 
+
+
 ## Native Deployment (Using Raw Application)
 
 ### Deploy GCP Infrastrcuture
@@ -124,6 +127,8 @@ terraform plan --var-file="variables.tfvars"
 terraform apply --var-file="variables.tfvars"
 terraform destroy --var-file="variables.tfvars"
 ```
+
+
 
 ## Docker based Deployment (Dockerized Application)
 
