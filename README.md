@@ -146,12 +146,12 @@ optional arguments:
   -d DO, --do DO        plan/apply/destroy
 SMATHEWMBPRO13RETINA:gcp sibymathew$ 
 ```
-	* Run example (In this example we are deploying the whole GCP infra oneclick, env as int and only plan --> dry run),
+	* `Run example (In this example we are deploying the whole GCP infra oneclick, env as int and only plan --> dry run),`
 ```sh
 docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode oneclick --type all --env int --do plan
 ```
-	* Argosy workflow to be separately deployed (using layer method)
-	* Run Example (for Argosy)
+	* `Argosy workflow to be separately deployed (using layer method)`
+	* `Run Example (for Argosy)`
 ```sh
 docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode layer --type argosy --env int --do plan
 ```
