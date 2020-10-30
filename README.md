@@ -121,6 +121,23 @@ terraform apply --var-file="variables.tfvars"
 terraform destroy --var-file="variables.tfvars"
 ```
 
+<br><br>
+## Wrapper Script based Deployment (Non Dockerized Application)
+
+* Before Run (Copy Creds),
+	* Clone alto-tf repo and build.
+	* Copy credentials.json and repoaccess.creds file to root level of alto-tf
+	
+* Run example (In this example we are deploying the whole GCP infra oneclick, env as int and only plan --> dry run),
+```sh
+python3 call_script.py --mode oneclick --type all --env int --do plan
+```
+* Argosy workflow to be separately deployed (using layer method)
+* Run Example (for Argosy)
+```sh
+python3 call_script.py --mode layer --type argosy --env int --do plan
+```
+
 
 <br><br>
 ## Docker based Deployment (Dockerized Application)
@@ -128,7 +145,7 @@ terraform destroy --var-file="variables.tfvars"
 * Before Run (Build the docker),
 	* Clone alto-tf repo and build.
 		* docker build --tag xxx:Major.Minor .
-	* Image to be suuccesful built and can be verified using docker images.
+	* Image to be succesful built and can be verified using docker images.
 	* Make sure credential.json (for GCP Infra) is available (on youy laptop or in CI tool like Jenkins)
 	
 * Help Menu (For Reference),
