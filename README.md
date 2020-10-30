@@ -81,9 +81,7 @@ git clone ssh://git@bitbucket.rks-cloud.com:7999/cd/gitops-flux-argosy.git
 
 ### Deploy GCP Infrastrcuture
 
-* Before Run
-```sh
-In alto-tf directory,
+* Before Run (In alto-tf directory),
 	* GCP Infra can deployed in single click or in layers.
 	* If the environment is fresh install, recommendation would be to run all layers in one shot.
 		* To run in one shot, use the main.tf in the top level directory.
@@ -95,7 +93,6 @@ In alto-tf directory,
 		* Network
 	* Based on the need pick and choose the layer you need to run.
 	* Replace credentials.json with your GCP service account credentials JSON.
-```
 
 * Run
 ```sh
@@ -107,16 +104,13 @@ terraform destroy --var-file="variables.tfvars"
 
 ### Run Agrosy Workflow
 
-* Before Run
-```sh
-In alto-tf,
+* Before Run (In alto-tf/layers/argosy directory),
 	* Replace credentials.json with your GCP service account credentials JSON.
 	* In layers folder, go to Argosy folder.
-	* Make sure kubectl is set with GCP Cluster Config Context.
-	
-	  gcloud container clusters get-credentials <GKE Cluster Name> --region=<Region Name>
-	  
 	* In argosy/variables.tfvars modify all parameter values.
+	* Make sure kubectl is set with GCP Cluster Config Context.
+```sh
+gcloud container clusters get-credentials <GKE Cluster Name> --region=<Region Name>
 ```
 
 * Run
@@ -131,33 +125,33 @@ terraform destroy --var-file="variables.tfvars"
 <br><br>
 ## Docker based Deployment (Dockerized Application)
 
-* Before Run
-```sh
-Build the docker,
+* Before Run (Build the docker),
 	* Clone alto-tf repo and build.
 		* docker build --tag xxx:Major.Minor .
 	* Image to be suuccesful built and can be verified using docker images.
 	* Make sure credential.json (for GCP Infra) is available (on youy laptop or in CI tool like Jenkins)
-```
-* Run
+	
+* Run (Run the docker),
+	* Help Menu (For reference)
 ```sh
-Run the docker,
-	* Run example,
-		* docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode oneclick --type all --env int --do plan
-	* In the above example we are deploying the whole GCP infra oneclick, env as int and only plan (dry run).
-	* Help menu,
-		SMATHEWMBPRO13RETINA:gcp sibymathew$ docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2
-		usage: call_script.py [-h] [-m MODE] [-t TYPE] [-e ENV] [-d DO]
+SMATHEWMBPRO13RETINA:gcp sibymathew$ docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2
+usage: call_script.py [-h] [-m MODE] [-t TYPE] [-e ENV] [-d DO]
 
-		optional arguments:
-		  -h, --help            show this help message and exit
-		  -m MODE, --mode MODE  oneclick or layer
-		  -t TYPE, --type TYPE  all/argosy/bigquery/bucket/cluster/firewall/network/pg
-					sqldb/redisdb
-		  -e ENV, --env ENV     git branch from where config to be pulled
-		  -d DO, --do DO        plan/apply/destroy
-		SMATHEWMBPRO13RETINA:gcp sibymathew$ 
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MODE, --mode MODE  oneclick or layer
+  -t TYPE, --type TYPE  all/argosy/bigquery/bucket/cluster/firewall/network/pg
+			sqldb/redisdb
+  -e ENV, --env ENV     git branch from where config to be pulled
+  -d DO, --do DO        plan/apply/destroy
+SMATHEWMBPRO13RETINA:gcp sibymathew$ 
+```
+	* Run example (In this example we are deploying the whole GCP infra oneclick, env as int and only plan --> dry run),
+```sh
+docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode oneclick --type all --env int --do plan
+```
 	* Argosy workflow to be separately deployed (using layer method)
 	* Run Example (for Argosy)
-		* docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode layer --type argosy --env int --do plan
+```sh
+docker run -v /credentials.json:/ruckus-cloud-deploy/credentials.json -t test:1.2 --mode layer --type argosy --env int --do plan
 ```
