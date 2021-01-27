@@ -16,7 +16,9 @@ def dreams_plc_find_attributes(plc_ip_addr):
      
     for typ in plc.data_types:
         #print(f'{typ} attributes: ', plc.data_types[typ]['attributes'])
-        results.append('{typ} attributes: ', plc.data_types[typ]['attributes'])
+        #results.append('{typ} attributes: ', plc.data_types[typ]['attributes'])
+        results.append(typ)
+        results.append(plc.data_types[typ]['attributes'])
     
     return results
     
