@@ -4,7 +4,7 @@ def dreams_plc_find_info(plc_ip_addr):
   with LogixDriver(plc_ip_addr) as plc:
     return plc.info
 
-def dreams_plc_find_attributes(plc_ip_addr):
+def dreams_plc_find_attr(plc_ip_addr):
 
     #construct the API return object
     results = [] 
@@ -47,8 +47,11 @@ def dreams_plc_find_tags(plc_ip_addr):
     plc = LogixDriver(plc_ip_addr, init_program_tags=True)
     #print(plc.tags)
     return plc.tags
+<<<<<<< HEAD
 
 def read_tags(plc_ip_addr,plc_tag_name):
     with LogixDriver(plc_ip_addr) as plc:
         # return the value as dict for the given Tag
         return plc.read(plc_tag_name)
+=======
+>>>>>>> c70d67be8f819c254f206173b76f79043408a10a
