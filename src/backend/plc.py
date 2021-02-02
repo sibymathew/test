@@ -50,4 +50,5 @@ def dreams_plc_find_tags(plc_ip_addr):
 
 def read_tags(plc_ip_addr,plc_tag_name):
     with LogixDriver(plc_ip_addr) as plc:
+        # return the value as dict for the given Tag
         return plc.read(plc_tag_name)
