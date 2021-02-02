@@ -47,3 +47,7 @@ def dreams_plc_find_tags(plc_ip_addr):
     plc = LogixDriver(plc_ip_addr, init_program_tags=True)
     #print(plc.tags)
     return plc.tags
+
+def read_tags(plc_ip_addr,plc_tag_name):
+    with LogixDriver(plc_ip_addr) as plc:
+        return plc.read(plc_tag_name)
