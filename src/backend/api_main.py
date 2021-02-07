@@ -5,7 +5,7 @@ from base64 import b64decode
 import json
 import datetime
 
-from plc import dreams_plc_find_info, dreams_plc_find_tags, dreams_plc_find_pids, dreams_plc_find_attr
+from plc import dreams_plc_find_info, dreams_plc_find_tags, dreams_plc_find_pids, dreams_plc_find_attr, read_tags
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
@@ -74,6 +74,23 @@ def dreams_plc_attr_get(BASE_URL, VERSION):
     return Response(json.dumps({"message": response}), 200)
   else:
     info = dreams_plc_find_attr(ip_addr)
+    response = {"status": 0, "response": json.dumps(info)}
+    return Response(json.dumps({"message": response}), 200)
+
+@app.route('/<BASE_URL>/<VERSION>/plc/read', methods=['GET'])
+def dreams_plc_read_get(BASE_URL, VERSION):
+
+  if not "ip_addr" in request.args or not "tag_name" in request.args:
+    response = {"status": 0, "response": {"reason": "Unknown Query Parameter. Refer API Documentation."}}
+    return Response(json.dumps({"message": response}), 400)
+
+  ip_addr=request.args.get('ip_addr')
+  tag_name=request.args.get('tag_name')
+  if "mode" in request.args and request.args.get('mode') == "test":
+    response = {"status": 0, "response": request.args}
+    return Response(json.dumps({"message": response}), 200)
+  else:
+    info = read_tags(ip_addr, tag_name)
     response = {"status": 0, "response": json.dumps(info)}
     return Response(json.dumps({"message": response}), 200)
 
