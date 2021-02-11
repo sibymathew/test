@@ -2,17 +2,15 @@ from paho.mqtt import client as mqtt
 import ssl
 import data_structure
 from data_collector import reduced_test_data 
+from data_collector import enumerate_data
 import json, time
 from plc import read_tags
 from pycomm3 import LogixDriver
 import argparse
+import sys
+from db import Database
 
-path_to_root_cert = "./digi.crt"
-#device_id = "plc_data_collector"
-#sas_token = "SharedAccessSignature sr=siby-iothub.azure-devices.net%2Fdevices%2Fplc_data_collector&sig=wgzNjjZdzuMyeHVQFKh3pb0XCQf4QDDmNSNJ5zxlPGY%3D&se=1612551913"
-#iot_hub_name = "siby-iothub"
-#plc_tag_name = "F71"
-#plc_ip_addr = "10.0.0.180"
+path_to_root_cert = "src/backend/digi.crt"
 
 def collect_and_publish(mode="test", plc_ip_addr=None, plc_tag_name=None, iot_hub_name=None, device_id=None, sas_token=None):
 
@@ -50,7 +48,16 @@ def collect_and_publish(mode="test", plc_ip_addr=None, plc_tag_name=None, iot_hu
                     # return the value as dict for the given Tag
                     resp = plc.read(plc_tag_name)
 
-                    msg = test_data(data_structure.device_to_cloud)
+                    result = {}
+                    result["Data"] = resp[1]['Data']
+                    msg = enumerate_data(resp[1]['Data'], 155, 3)
+                    result["Msg"] = msg
+
+                    data = Database('data.json')
+                    length= data.length()
+                    result["index"] = length + 1
+                    data.insert(result)
+
             else:
                 msg = reduced_test_data(data_structure.reduced_device_to_cloud)
 
@@ -72,7 +79,14 @@ def main():
 
     args = parser.parse_args()
 
-    collect_and_publish(args.mode, "None", "None", args.iothub, args.iotdevice, args.iotdevicesastoken)
+    if len(sys.argv)<1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    if args.ipaddr and args.tagname:
+        collect_and_publish(args.mode, args.ipaddr, args.tagname, args.iothub, args.iotdevice, args.iotdevicesastoken)
+    else:
+        collect_and_publish(args.mode, "None", "None", args.iothub, args.iotdevice, args.iotdevicesastoken)
     
 if __name__ == '__main__':
     main()
