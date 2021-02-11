@@ -98,18 +98,18 @@ def enumerate_data(data, id, series):
 
         for i, dword in enumerate(data):
             if i == 0:
-               # For bits 0, 1, 2 the data to be read togather for run_mode
-                   val = dword & 7
-                   if val == 2:
-                       resp["run_mode"] = "rest brake set"
-                   elif val == 4:
-                       resp["run_mode"] = "running up"
-                   elif val == 5:
-                       resp["run_mode"] = "running down"
-                   elif val == 4:
-                       resp["run_mode"] = "rest brake set, but torque proving in process"
-                   else:
-                       resp["run_mode"] = "unknown " + str(val)
+                # For bits 0, 1, 2 the data to be read togather for run_mode
+                val = dword & 7
+                if val == 2:
+                    resp["run_mode"] = "rest brake set"
+                elif val == 4:
+                    resp["run_mode"] = "running up"
+                elif val == 5:
+                    resp["run_mode"] = "running down"
+                elif val == 4:
+                    resp["run_mode"] = "rest brake set, but torque proving in process"
+                else:
+                    resp["run_mode"] = "unknown " + str(val)
 
                for x in range(4,15):
                    # Omit the notdefined in the bit_list
