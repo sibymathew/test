@@ -1,0 +1,7 @@
+export note_uuid="world.youtopian.siby.mathew:drill_bit"
+
+apt-get update
+apt-get install -y python3-pip
+
+
+pip3 install supervisor
