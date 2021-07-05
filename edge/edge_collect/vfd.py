@@ -152,8 +152,12 @@ def read(drive_obj):
       datapoints.append(datapoint)
 
       data = {}
+      data["edge_uuid"] = "ab12-1f56-56df-dc6acd"
+      data["motor_uuid"] = "bcfd-24fh-76cd"
+      data["total_motors"] = 1
       data["timestamp"] = start_time
       data["motor_data"] = datapoints
+
       #Store to DB
       print(json.dumps(data, indent=4, sort_keys=True))
 
