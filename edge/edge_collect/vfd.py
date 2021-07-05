@@ -1,4 +1,6 @@
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from edge_loader import ingest_stream
+
 import argparse
 import json
 import time
@@ -160,6 +162,7 @@ def read(drive_obj):
 
       #Store to DB
       print(json.dumps(data, indent=4, sort_keys=True))
+      ingest_stream(data)
 
       end_time = round(time.time() * 1000)
       lapsed_time = end_time - start_time
