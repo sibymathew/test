@@ -1,7 +1,15 @@
-export note_uuid="world.youtopian.siby.mathew:drill_bit"
+sudo export note_uuid="world.youtopian.siby.mathew:drill_bit"
 
-apt-get update
-apt-get install -y python3-pip
+sudo apt-get update
+sudo apt-get install -y python3-pip
 
+sudo pip3 install dse-driver
+sudo apt install openjdk-8-jdk -y
+sudo apt install apt-transport-https -y
+sudo sh -c 'echo "deb http://www.apache.org/dist/cassandra/debian 40x main" > /etc/apt/sources.list.d/cassandra.list'
+sudo wget -q -O - https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+sudo apt update
+sudo apt install Cassandra -y
+sudo systemctl enable cassandra
 
-pip3 install supervisor
+sudo pip3 install supervisor

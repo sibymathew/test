@@ -4,6 +4,9 @@ import time
 import notecard
 
 from periphery import Serial
+import ast
+import argparse
+
 #import serial
 
 def getargs():
@@ -23,27 +26,49 @@ def main():
 
     print("Opening port...")
     try:
-        port = Serial(nodeport, noderate)
+        pass
+        #port = Serial(nodeport, noderate)
         #port = serial.Serial(nodeport, noderate)
     except Exception as exception:
-        raise Exception("error opening port: "+ exception)
+        raise Exception("error opening port: {}".format(exception))
 
     print("Opening Notecard...")
     try:
-        card = notecard.OpenSerial(port)
+        #card = notecard.OpenSerial(port)
 
         while True:
-            req = {"req":"hub.sync"}
-            card.Transaction(req)
-
-            req = {"req":"hub.sync.status"}
-            card.Transaction(req)
-
-            req = {"req":"note.get", "file":"data.qi", "delete":True}
+            to_send = {}
+            to_send["req"] = "web.get"
+            to_send["route"] = "configpull"
             while True:
-                print(card.Transaction(req))
+                #config = card.Transaction(to_send)
+                with open("config.local", "r") as hdlr:
+                    content = hdlr.read()
+                    config = ast.literal_eval(content)
+
+                print(config)
+
+                if config["edge_serial"] == "5adc6718fdef":
+                    with open("config.supervisor") as hdlr:
+                        supervisor_conf = hdlr.read()
+                    with open("config.supervisor.template") as hdlr:
+                        supervisor_tmpl = hdlr.read()
+
+                    cmd = "docker run sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600"
+                    name = "Cloud Push Service"
+
+                    temp_tmpl = supervisor_tmpl.replace("name", name)
+                    temp_tmpl = temp_tmpl.replace("cmd", cmd)
+
+                    result = supervisor_conf + temp_tmpl
+
+                with open("supervisord.conf", "w") as hdlr:
+                    hdlr.write(result)
+
+                sys.exit(2)
                 time.sleep(60)
+                #Serial number from the box to be checked against the incoming configuration
     except Exception as exception:
-        raise Exception("error opening notecard: " + exception)
+        raise Exception("error opening notecard: {}".format(exception))
 
 main()

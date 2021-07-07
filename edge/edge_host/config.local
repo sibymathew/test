@@ -1,0 +1,52 @@
+{
+	"edge_uuid": "b03108db-65f2-4d7c-b884-bb908d111400",
+	"edge_serial": "5adc6718fdef",
+	"crane_type": 1,
+	"total_motors": 2,
+	"crane_name": "ACECO Crane Systems",
+	"crane_location": "531 Old Swede Rd, Douglassville, PA 19518",
+	"crane_site": "Bay 6",
+	"push_interval": 1200,
+	"pull_interval_idle": 1000,
+	"pull_interval_run": 100,
+	"created_on": 1622238027000,
+	"updated_on": 1622238027000,
+	"wan_network": {
+		"backlog": 0,
+		"network_status": "Connected"
+	},
+	"vfd_mapping": [{
+		"vfd_name": "VFD-1",
+		"vfd_uuid": "b03108db",
+		"vfd_manufacturer": "Magnetek",
+		"vfd_motor_mapping": ["bb908d111401"]
+	}, {
+		"vfd_name": "VFD-2",
+		"vfd_uuid": "b03108de",
+		"vfd_manufacturer": "Magnetek",
+		"vfd_motor_mapping": ["bb908d111402"]
+	}],
+	"motor_config": [{
+			"name": "Hoist-Cust1",
+			"speciality": 1,
+			"motor_type": 1,
+			"uuid": "bb908d111401",
+			"network": {
+				"address": "0x10",
+				"baud_rate": 9600,
+				"tag_name": "None"
+			}
+		},
+		{
+			"name": "Trolley-Cust1",
+			"speciality": 2,
+			"motor_type": 1,
+			"uuid": "bb908d111402",
+			"network": {
+				"address": "0x12",
+				"baud_rate": 9600,
+				"tag_name": "None"
+			}
+		}
+	]
+}

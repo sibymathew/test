@@ -6,6 +6,9 @@ import json
 import time
 import logging
 
+__PULL_INTERVAL__ = 250
+__SAMPLES_PER_SECOND__ = 1000/250
+
 class Connect_Modbus:
 
     def __init__(self, modbus_type, vfd_addr, port, rate=115200):
@@ -33,27 +36,25 @@ class Connect_Modbus:
 
 def getargs():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-addr', action='store', help='VFD Comm Address', type=str)
-    parser.add_argument('-port', action='store', help='ModBus RTU Comm Port', type=str)
-    parser.add_argument('-rate', action='store', help='ModBus RTU Baud Rate', type=int, default=115200)
+    parser.add_argument('-a', action='store', help='VFD Comm Address', type=str)
+    parser.add_argument('-p', action='store', help='ModBus RTU Comm Port', type=str)
+    parser.add_argument('-r', action='store', help='ModBus RTU Baud Rate', type=int, default=115200)
+    parser.add_argument('-eu', action='store', help='Edge UUID', type=str)
+    parser.add_argument('-mu', action='store', help='Motor UUID', type=str)
+    parser.add_argument('-c', action='store', help='Total Motors', type=int)
 
     return parser.parse_args()
 
-def connect():
-
-    args = getargs()
-    vfd_addr = args.addr
-    vfd_port = args.port
-    vfd_rate = args.rate
-    mode = "rtu"
+def connect(mode="rtu", vfd_addr, vfd_port, vfd_rate):
 
     drive_obj = Connect_Modbus(mode, vfd_addr, vfd_port, vfd_rate)
     drive_obj.connect()
 
     return drive_obj
 
-def read(drive_obj):
+def read(drive_obj, edge_uuid, motor_uuid, count):
 
+    counter = 0
     while True:
       start_time = round(time.time() * 1000)
       datapoints = []
@@ -154,33 +155,47 @@ def read(drive_obj):
       datapoints.append(datapoint)
 
       data = {}
-      data["edge_uuid"] = "ab12-1f56-56df-dc6acd"
-      data["motor_uuid"] = "bcfd-24fh-76cd"
-      data["total_motors"] = 1
+      data["edge_uuid"] = edge_uuid
+      data["motor_uuid"] = motor_uuid
+      data["total_motors"] = count
       data["timestamp"] = start_time
       data["motor_data"] = datapoints
 
-      #Store to DB
       print(json.dumps(data, indent=4, sort_keys=True))
+
       ingest_stream(data)
+      if counter == __SAMPLES_PER_SECOND__:
+          #Another table for one second data storage
+          ingest_stream(data)
+          counter = 0
+      else:
+          counter += 1
 
       end_time = round(time.time() * 1000)
       lapsed_time = end_time - start_time
       print("Total Lapsed Time {}".format(lapsed_time))
 
-      time.sleep((250-lapsed_time)/1000)
+      time.sleep((__PULL_INTERVAL__-lapsed_time)/1000)
 
 if __name__ == "__main__":
 
+    args = getargs()
+    vfd_addr = args.a
+    vfd_port = args.p
+    vfd_rate = args.r
+    edge_uuid = args.eu
+    motor_uuid = args.mu
+    count = args.c
+
     while True:
         try:
-          drive_obj = connect()
+          drive_obj = connect("rtu", vfd_addr, vfd_port, vfd_rate)
         except Exception as err:
           print("Error in connection \n {}".format(err.message))
           time.sleep(5)
         else:
             try:
-              read(drive_obj)
+              read(drive_obj, edge_uuid, motor_uuid, count)
             except Exception as err:
               print("Error in reading \n {}".format(err.message))
               time.sleep(5)
