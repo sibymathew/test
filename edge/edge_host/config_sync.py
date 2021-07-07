@@ -62,6 +62,24 @@ def main():
 
                     result = supervisor_conf + temp_tmpl
 
+                    edge_uuid = config["edge_uuid"]
+                    total_motors = config["total_motors"]
+                    port = "/dev/ttyUSB0"
+                    print(edge_uuid)
+                    print(total_motors)
+                    for motor in config["motor_config"]:
+                        address = motor["network"]["address"]
+                        rate = motor["network"]["baud_rate"]
+                        motor_uuid = motor["uuid"]
+
+                        name = "Collect Service " + motor_uuid
+                        cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -c {}".format(address, port, rate, edge_uuid, motor_uuid, total_motors)
+
+                        temp_tmpl = supervisor_tmpl.replace("name", name)
+                        temp_tmpl = temp_tmpl.replace("cmd", cmd)
+
+                        result = result + temp_tmpl
+
                 with open("supervisord.conf", "w") as hdlr:
                     hdlr.write(result)
 
