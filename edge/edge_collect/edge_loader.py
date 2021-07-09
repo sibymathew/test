@@ -69,9 +69,69 @@ def ingest_stream(crane_query_json):
                         
     except Exception as e:
         error_msg = {"Status": "Failed to ingest for Edge UUID="+edge_uuid,"Error":str(e)}
-        return error_msg                  
-                    
+        return error_msg
 
 
+def ingest_stream2(crane_query_json):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        # Check the given JSON is a list
+        if (isinstance(crane_query_json, list)):
+            # Loop thru the given JsON
+            print("List")
+        else:
+            edge_uuid = crane_query_json["edge_uuid"]
+            # edge_mac =  crane_query_json["edge_mac"]
+            total_motors = crane_query_json["total_motors"]
+            query_timestamp = crane_query_json["timestamp"]
+            motor_data = crane_query_json["motor_data"]
+            # load_timestamp = datetime.datetime.today()
+            load_timestamp = datetime.datetime.utcnow().date()
+            motor_uuid = crane_query_json["motor_uuid"]
+
+            # single Insert Statement
+            dbSession.edge_session.execute(
+                """
+                insert into edge_core.crane_details2 (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp) 
+                values (%s,%s,%s,%s,%s,%s)
+                """,
+                (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp)
+            )
+
+        dbSession.shutCluster()
+        return "Stream Ingested"
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to ingest for Edge UUID=" + edge_uuid, "Error": str(e)}
+        return error_msg
+
+
+def get_motor_data(table_name, interval):
+    # TODO: Log
+    # TODO: CONFIG
+
+    if table_name is None:
+        table_name = 'edge_core.crane_details2'
+
+    if interval is None:
+        interval = 2
+
+    now = datetime.datetime.utcnow().date()
+    query_timestamp = now - datetime.timedelta(minutes=2)
+    query = "select json edge_uuid, motor_uuid, query_timestamp, edge_mac, load_timestamp, motor_data, total_motors from edge_core.crane_details2 where query_time_stamp > '" +  query_timestamp + "'"
+    motor_rows = []
+
+    for motor_row in dbSession.edge_session.execute(statement):
+
+        motor_rows.append(motor_row[0].replace("'", '"'))
+        # print( motor_rows)
+        # print(json.dumps( motor_rows))
+
+    return json.dumps(motor_rows)
 
 
