@@ -51,8 +51,8 @@ def ingest_stream(crane_query_json):
             # edge_mac =  crane_query_json["edge_mac"]
             total_motors = crane_query_json["total_motors"]
             query_timestamp= crane_query_json["timestamp"]        
-            motor_data = crane_query_json["motor_data"]
-            load_timestamp =   datetime.datetime.today()
+            motor_data = str(crane_query_json["motor_data"])
+            load_timestamp = datetime.datetime.utcnow().date()
             motor_uuid = crane_query_json["motor_uuid"]
 
             # single Insert Statement
@@ -89,7 +89,7 @@ def ingest_stream2(crane_query_json):
             # edge_mac =  crane_query_json["edge_mac"]
             total_motors = crane_query_json["total_motors"]
             query_timestamp = crane_query_json["timestamp"]
-            motor_data = crane_query_json["motor_data"]
+            motor_data = str(crane_query_json["motor_data"])
             # load_timestamp = datetime.datetime.today()
             load_timestamp = datetime.datetime.utcnow().date()
             motor_uuid = crane_query_json["motor_uuid"]

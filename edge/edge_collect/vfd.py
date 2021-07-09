@@ -1,5 +1,5 @@
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
-from edge_loader import ingest_stream
+from edge_loader import ingest_stream,ingest_stream2
 
 import argparse
 import json
@@ -45,7 +45,7 @@ def getargs():
 
     return parser.parse_args()
 
-def connect(mode="rtu", vfd_addr, vfd_port, vfd_rate):
+def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 
     drive_obj = Connect_Modbus(mode, vfd_addr, vfd_port, vfd_rate)
     drive_obj.connect()
@@ -166,7 +166,7 @@ def read(drive_obj, edge_uuid, motor_uuid, count):
       ingest_stream(data)
       if counter == __SAMPLES_PER_SECOND__:
           #Another table for one second data storage
-          ingest_stream(data)
+          ingest_stream2(data)
           counter = 0
       else:
           counter += 1
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-          drive_obj = connect("rtu", vfd_addr, vfd_port, vfd_rate)
+          drive_obj = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
         except Exception as err:
           print("Error in connection \n {}".format(err.message))
           time.sleep(5)
