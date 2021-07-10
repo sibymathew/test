@@ -4,6 +4,7 @@ from dse.query import tuple_factory
 from dse.cluster import BatchStatement, SimpleStatement
 from dse.auth import PlainTextAuthProvider
 import uuid
+from datetime import timezone
 import datetime
 
 
@@ -52,7 +53,7 @@ def ingest_stream(crane_query_json):
             total_motors = crane_query_json["total_motors"]
             query_timestamp= crane_query_json["timestamp"]        
             motor_data = str(crane_query_json["motor_data"])
-            load_timestamp = datetime.datetime.utcnow().date()
+            load_timestamp = datetime.datetime.now(timezone.utc)
             motor_uuid = crane_query_json["motor_uuid"]
 
             # single Insert Statement
@@ -91,7 +92,7 @@ def ingest_stream2(crane_query_json):
             query_timestamp = crane_query_json["timestamp"]
             motor_data = str(crane_query_json["motor_data"])
             # load_timestamp = datetime.datetime.today()
-            load_timestamp = datetime.datetime.utcnow().date()
+            load_timestamp = datetime.datetime.now(timezone.utc)
             motor_uuid = crane_query_json["motor_uuid"]
 
             # single Insert Statement
@@ -121,9 +122,10 @@ def get_motor_data(table_name, interval):
     if interval is None:
         interval = 2
 
-    now = datetime.datetime.utcnow().date()
-    query_timestamp = now - datetime.timedelta(minutes=2)
-    query = "select json edge_uuid, motor_uuid, query_timestamp, edge_mac, load_timestamp, motor_data, total_motors from edge_core.crane_details2 where query_time_stamp > '" +  query_timestamp + "'"
+    now = datetime.datetime.now(timezone.utc)
+    query_timestamp = now - datetime.timedelta(minutes=interval)
+
+    query = "select json edge_uuid, motor_uuid, query_timestamp, edge_mac, load_timestamp, motor_data, total_motors from edge_core.crane_details2 where query_time_stamp >= '" +  query_timestamp.strftime("%Y-%d-%m %H:%M") + "'"
     motor_rows = []
 
     for motor_row in dbSession.edge_session.execute(statement):
