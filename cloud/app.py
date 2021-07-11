@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 from io import BytesIO
+from cloud_loader import ingest_stream
 import json
 import gzip
 import base64
@@ -16,10 +17,10 @@ def index():
 
     received_value = BytesIO(decodedData)
     to_receive = gzip.GzipFile(fileobj=received_value, mode='rb').read()
-    payload_rx = json.loads(to_receive.decode("utf-8"))
-    print(payload_rx)
-
-    print(len(payload_rx))
+    ingest_stream(to_receive.decode("utf-8"))
+    #payload_rx = json.loads(to_receive.decode("utf-8"))
+    #print(payload_rx)
+    #print(len(payload_rx))
 
     return {"msg": "Hello World"}
 

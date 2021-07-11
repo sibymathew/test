@@ -7,6 +7,7 @@ import uuid
 from datetime import timezone
 import datetime
 import calendar
+import json
 
 
 # Apache Cassandra DB connection (Edge)
@@ -134,11 +135,12 @@ def get_motor_data(table_name, interval):
         query_timestamp = now - datetime.timedelta(minutes=interval)
         epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
 
-        query = "select json edge_uuid, motor_uuid, query_timestamp, edge_mac, load_timestamp, motor_data, total_motors from edge_core.crane_details2 where edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'   and motor_uuid ='bb908d111401' and query_timestamp >= " +  epoch_query_timestamp
+        motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'   and motor_uuid ='bb908d111401' and query_timestamp >= " +  epoch_query_timestamp
         motor_rows = []
 
-        for motor_row in dbSession.edge_session.execute(statement):
-            motor_rows.append(motor_row[0].replace("'", '"'))
+        for motor_row in dbSession.edge_session.execute(motor_query):
+            #motor_rows.append(motor_row[0].replace("'", '"'))
+            motor_rows.append(motor_row[0])
             # print( motor_rows)
             # print(json.dumps( motor_rows))
             #
@@ -147,5 +149,5 @@ def get_motor_data(table_name, interval):
         return json.dumps(motor_rows)
 
     except Exception as e:
-        error_msg = {"Status": "Failed to ingest for Edge UUID=" + edge_uuid, "Error": str(e)}
+        error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
         return error_msg
