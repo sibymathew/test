@@ -12,8 +12,8 @@ import gzip
 import json
 import base64
 
-from periphery import Serial
-#import serial
+from serial import Serial
+from edge_loader import get_motor_data
 
 sys.path.insert(0, os.path.abspath(
                 os.path.join(os.path.dirname(__file__), '..')))
@@ -54,7 +54,6 @@ def main():
     print("Opening port...")
     try:
         port = Serial(nodeport, noderate)
-        #port = serial.Serial(nodeport, noderate)
     except Exception as exception:
         raise Exception("error opening port: {}".format(exception))
 
@@ -67,12 +66,14 @@ def main():
     try:
         configure_notecard(productUID, card)
 
+        da = get_motor_data("table", 2)
+        print(da)
         # To collect data from database. Example below.
-        da = {'motor_data': [{'d': 'Motor Speed in Hz', 'k': 'motor_speed', 'u': 'Hz', 'v': 0}, {'d': 'Output Voltage', 'k': 'output_voltage', 'u': 'Volt', 'v': 0}, {'d': 'DC Bus Voltage', 'k': 'dc_bus_voltage', 'u': 'Volt', 'v': 298}, {'d': 'Output Horsepower', 'k': 'output_hp', 'u': 'HP', 'v': 0}, {'d': 'Drive Ready', 'k': 'drive_ready', 'v': 1}, {'d': 'Alarm/Minor Fault', 'k': 'drive_alarm', 'v': 0}, {'d': 'Major Fault', 'k': 'drive_fault', 'v': 0}, {'d': 'Drive Direction', 'k': 'drive_direction'}, {'d': 'Run Time', 'k': 'run_time', 'u': 'TBD', 'v': 7}, {'d': 'Motor Amps', 'k': 'motor_amps', 'v': 0.0}, {'d': 'Total Motor Start/Stop', 'k': 'number_of_start_stop', 'v': 172}, {'d': 'Motor in RPM', 'k': 'motor_in_rpm', 'v': 0.0}, {'d': 'Speed in FPM', 'k': 'speed_in_fpm', 'v': 0.0}], 'timestamp': 1623452329314}
+        # da = {'motor_data': [{'d': 'Motor Speed in Hz', 'k': 'motor_speed', 'u': 'Hz', 'v': 0}, {'d': 'Output Voltage', 'k': 'output_voltage', 'u': 'Volt', 'v': 0}, {'d': 'DC Bus Voltage', 'k': 'dc_bus_voltage', 'u': 'Volt', 'v': 298}, {'d': 'Output Horsepower', 'k': 'output_hp', 'u': 'HP', 'v': 0}, {'d': 'Drive Ready', 'k': 'drive_ready', 'v': 1}, {'d': 'Alarm/Minor Fault', 'k': 'drive_alarm', 'v': 0}, {'d': 'Major Fault', 'k': 'drive_fault', 'v': 0}, {'d': 'Drive Direction', 'k': 'drive_direction'}, {'d': 'Run Time', 'k': 'run_time', 'u': 'TBD', 'v': 7}, {'d': 'Motor Amps', 'k': 'motor_amps', 'v': 0.0}, {'d': 'Total Motor Start/Stop', 'k': 'number_of_start_stop', 'v': 172}, {'d': 'Motor in RPM', 'k': 'motor_in_rpm', 'v': 0.0}, {'d': 'Speed in FPM', 'k': 'speed_in_fpm', 'v': 0.0}], 'timestamp': 1623452329314}
 
         to_send = {}
         to_send["req"] = "web.post"
-        to_send["route"] = "sibywebpost"
+        to_send["route"] = "datapush"
 
         compressed_body = BytesIO()
         gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
