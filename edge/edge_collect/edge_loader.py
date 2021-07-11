@@ -6,6 +6,7 @@ from dse.auth import PlainTextAuthProvider
 import uuid
 from datetime import timezone
 import datetime
+import calendar
 
 
 # Apache Cassandra DB connection (Edge)
@@ -124,8 +125,9 @@ def get_motor_data(table_name, interval):
 
     now = datetime.datetime.now(timezone.utc)
     query_timestamp = now - datetime.timedelta(minutes=interval)
+    epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
 
-    query = "select json edge_uuid, motor_uuid, query_timestamp, edge_mac, load_timestamp, motor_data, total_motors from edge_core.crane_details2 where query_time_stamp >= '" +  query_timestamp.strftime("%Y-%d-%m %H:%M") + "'"
+    query = "select json edge_uuid, motor_uuid, query_timestamp, edge_mac, load_timestamp, motor_data, total_motors from edge_core.crane_details2 where edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'   and motor_uuid ='bb908d111401' and query_timestamp >= " +  epoch_query_timestamp +
     motor_rows = []
 
     for motor_row in dbSession.edge_session.execute(statement):
