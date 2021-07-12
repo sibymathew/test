@@ -22,7 +22,7 @@ def index():
     #print(payload_rx)
     #print(len(payload_rx))
 
-    return {"msg": "Hello World"}
+    return {"msg": "Success!"}
 
 if __name__ == '__main__':
    app.run(host="0.0.0.0", port=443, debug = True)

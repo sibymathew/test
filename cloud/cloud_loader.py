@@ -57,7 +57,7 @@ def ingest_stream(crane_query_json):
         if (isinstance(crane_query_json, list)):
             # Loop thru the given JsON
             for motor_data in crane_query_json:
-                json_motor_data = json.loads(motor_data)
+                json_motor_data = motor_data
                 edge_uuid = json_motor_data["edge_uuid"]
                 # edge_mac =  json_motor_data["edge_mac"]
                 total_motors = json_motor_data["total_motors"]

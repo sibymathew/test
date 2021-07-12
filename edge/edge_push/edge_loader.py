@@ -140,13 +140,13 @@ def get_motor_data(table_name, interval):
 
         for motor_row in dbSession.edge_session.execute(motor_query):
             #motor_rows.append(motor_row[0].replace("'", '"'))
-            motor_rows.append(motor_row[0])
+            motor_rows.append(json.loads(motor_row[0]))
             # print( motor_rows)
             # print(json.dumps( motor_rows))
             #
 
         dbSession.shutCluster()
-        return json.dumps(motor_rows)
+        return motor_rows
 
     except Exception as e:
         error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
