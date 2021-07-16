@@ -40,7 +40,8 @@ def getargs():
     parser.add_argument('-p', action='store', help='ModBus RTU Comm Port', type=str)
     parser.add_argument('-r', action='store', help='ModBus RTU Baud Rate', type=int, default=115200)
     parser.add_argument('-eu', action='store', help='Edge UUID', type=str)
-    parser.add_argument('-mu', action='store', help='Motor UUID', type=str)
+    parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
+    parser.add_argument('-mt', action='store', help='Motor Type', type=int)
     parser.add_argument('-c', action='store', help='Total Motors', type=int)
 
     return parser.parse_args()
@@ -52,7 +53,7 @@ def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 
     return drive_obj
 
-def read(drive_obj, edge_uuid, motor_uuid, count):
+def read(drive_obj, edge_uuid, motor_uuid, count, motor_type):
 
     counter = 0
     while True:
@@ -110,10 +111,12 @@ def read(drive_obj, edge_uuid, motor_uuid, count):
               direction = reg & 5
               datapoint["k"] = "drive_direction"
               datapoint["d"] = "Drive Direction"
-              if direction == 1:
+              if direction == 1 or direction == 3:
                   datapoint["v"] = 0
-              elif direction == 5:
+              elif direction == 5 or direction == 7:
                   datapoint["v"] = 1
+              else:
+                datapoint["v"] = -1
               datapoints.append(datapoint)
           elif i == 10:
               datapoint = {}
@@ -127,11 +130,16 @@ def read(drive_obj, edge_uuid, motor_uuid, count):
       resp = drive_obj.read(38, 1)
       datapoint = {}
       datapoint["k"] = "motor_amps"
-      datapoint["v"] = resp[0]/10
+      datapoint["v"] = resp[0]/(10*count)
       datapoint["d"] = "Motor Amps"
       datapoints.append(datapoint)
 
-      resp = drive_obj.read(117, 1)
+      if motor_type == 1:
+          resp = drive_obj.read(117, 1)
+      elif motor_type == 2:
+          resp = drive_obj.read(2068, 1)
+      else:
+          resp = drive_obj.read(117, 1)
       datapoint = {}
       datapoint["k"] = "number_of_start_stop"
       datapoint["v"] = resp[0]
@@ -156,17 +164,20 @@ def read(drive_obj, edge_uuid, motor_uuid, count):
 
       data = {}
       data["edge_uuid"] = edge_uuid
-      data["motor_uuid"] = motor_uuid
       data["total_motors"] = count
       data["timestamp"] = start_time
       data["motor_data"] = datapoints
 
       print(json.dumps(data, indent=4, sort_keys=True))
 
-      ingest_stream(data)
+      for motor in motor_uuid:
+          data["motor_uuid"] = motor
+          ingest_stream(data)
+
       if counter == __SAMPLES_PER_SECOND__:
-          #Another table for one second data storage
-          ingest_stream2(data)
+          for motor in motor_uuid:
+              data["motor_uuid"] = motor
+              ingest_stream2(data)
           counter = 0
       else:
           counter += 1
@@ -185,6 +196,7 @@ if __name__ == "__main__":
     vfd_rate = args.r
     edge_uuid = args.eu
     motor_uuid = args.mu
+    motor_type = args.mt
     count = args.c
 
     while True:
@@ -195,7 +207,7 @@ if __name__ == "__main__":
           time.sleep(5)
         else:
             try:
-              read(drive_obj, edge_uuid, motor_uuid, count)
+              read(drive_obj, edge_uuid, motor_uuid, count, motor_type)
             except Exception as err:
               print("Error in reading \n {}".format(err.message))
               time.sleep(5)
