@@ -21,9 +21,7 @@ sys.path.insert(0, os.path.abspath(
 import notecard
 
 productUID = "world.youtopian.siby.mathew:drill_bit"
-port = "/dev/tty.usbmodemNOTE1"
-rate = 9600
-
+__PUSH_INTERVAL__ = 120 #seconds
 
 def configure_notecard(productUID, card):
     req = {"req": "hub.set"}
@@ -66,27 +64,33 @@ def main():
     try:
         configure_notecard(productUID, card)
 
-        da = get_motor_data("table", 2)
-        print(da)
-        # To collect data from database. Example below.
-        # da = {'motor_data': [{'d': 'Motor Speed in Hz', 'k': 'motor_speed', 'u': 'Hz', 'v': 0}, {'d': 'Output Voltage', 'k': 'output_voltage', 'u': 'Volt', 'v': 0}, {'d': 'DC Bus Voltage', 'k': 'dc_bus_voltage', 'u': 'Volt', 'v': 298}, {'d': 'Output Horsepower', 'k': 'output_hp', 'u': 'HP', 'v': 0}, {'d': 'Drive Ready', 'k': 'drive_ready', 'v': 1}, {'d': 'Alarm/Minor Fault', 'k': 'drive_alarm', 'v': 0}, {'d': 'Major Fault', 'k': 'drive_fault', 'v': 0}, {'d': 'Drive Direction', 'k': 'drive_direction'}, {'d': 'Run Time', 'k': 'run_time', 'u': 'TBD', 'v': 7}, {'d': 'Motor Amps', 'k': 'motor_amps', 'v': 0.0}, {'d': 'Total Motor Start/Stop', 'k': 'number_of_start_stop', 'v': 172}, {'d': 'Motor in RPM', 'k': 'motor_in_rpm', 'v': 0.0}, {'d': 'Speed in FPM', 'k': 'speed_in_fpm', 'v': 0.0}], 'timestamp': 1623452329314}
+        while True:
+            start_time = time.time()
+            da = get_motor_data("table", 2)
+            print(da)
+            # To collect data from database. Example below.
+            # da = {'motor_data': [{'d': 'Motor Speed in Hz', 'k': 'motor_speed', 'u': 'Hz', 'v': 0}, {'d': 'Output Voltage', 'k': 'output_voltage', 'u': 'Volt', 'v': 0}, {'d': 'DC Bus Voltage', 'k': 'dc_bus_voltage', 'u': 'Volt', 'v': 298}, {'d': 'Output Horsepower', 'k': 'output_hp', 'u': 'HP', 'v': 0}, {'d': 'Drive Ready', 'k': 'drive_ready', 'v': 1}, {'d': 'Alarm/Minor Fault', 'k': 'drive_alarm', 'v': 0}, {'d': 'Major Fault', 'k': 'drive_fault', 'v': 0}, {'d': 'Drive Direction', 'k': 'drive_direction'}, {'d': 'Run Time', 'k': 'run_time', 'u': 'TBD', 'v': 7}, {'d': 'Motor Amps', 'k': 'motor_amps', 'v': 0.0}, {'d': 'Total Motor Start/Stop', 'k': 'number_of_start_stop', 'v': 172}, {'d': 'Motor in RPM', 'k': 'motor_in_rpm', 'v': 0.0}, {'d': 'Speed in FPM', 'k': 'speed_in_fpm', 'v': 0.0}], 'timestamp': 1623452329314}
 
-        to_send = {}
-        to_send["req"] = "web.post"
-        to_send["route"] = "datapush"
+            to_send = {}
+            to_send["req"] = "web.post"
+            to_send["route"] = "datapush"
 
-        compressed_body = BytesIO()
-        gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
-        sz = gz.write(json.dumps(da).encode("utf-8"))
-        gz.close()
-        de = compressed_body.getvalue()
+            compressed_body = BytesIO()
+            gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
+            sz = gz.write(json.dumps(da).encode("utf-8"))
+            gz.close()
+            de = compressed_body.getvalue()
 
-        encodedData = base64.b64encode(de).decode('UTF-8')
-        to_send["body"] = {"data": encodedData}
+            encodedData = base64.b64encode(de).decode('UTF-8')
+            to_send["body"] = {"data": encodedData}
 
-        print(round(time.time() * 1000))
-        r = card.Transaction(to_send)
-        print(round(time.time() * 1000))
+            r = card.Transaction(to_send)
+            end_time = time.time()
+
+            lapsed_time = end_time - start_time
+            print("Total Lapsed Time {}".format(lapsed_time))
+
+            time.sleep(__PUSH_INTERVAL__-lapsed_time)
     except Exception as exception:
         print("Transaction error: {}".format(exception))
         time.sleep(5)
