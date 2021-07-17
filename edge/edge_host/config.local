@@ -24,7 +24,7 @@
 		"vfd_name": "VFD-2",
 		"vfd_uuid": "b03108de",
 		"vfd_manufacturer": "Magnetek",
-		"vfd_motor_mapping": ["bb908d111402"]
+		"vfd_motor_mapping": ["bb908d111402", "bb908d111403"]
 	}],
 	"motor_config": [{
 			"name": "Hoist-Cust1",
@@ -38,10 +38,21 @@
 			}
 		},
 		{
-			"name": "Trolley-Cust1",
+			"name": "Bridge-Cust1",
 			"speciality": 2,
 			"motor_type": 1,
 			"uuid": "bb908d111402",
+			"network": {
+				"address": "0x12",
+				"baud_rate": 9600,
+				"tag_name": "None"
+			}
+		},
+		{
+			"name": "Bridge-Cust2",
+			"speciality": 2,
+			"motor_type": 1,
+			"uuid": "bb908d111403",
 			"network": {
 				"address": "0x12",
 				"baud_rate": 9600,

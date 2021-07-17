@@ -67,6 +67,30 @@ def main():
                     port = "/dev/ttyUSB0"
                     print(edge_uuid)
                     print(total_motors)
+                    for mapping in config["vfd_mapping"]:
+                        to_apply = False
+                        motors = mapping["vfd_motor_mapping"]
+
+                        for motor in config["motor_config"]:
+                            if motor["uuid"] in motors:
+                                address = motor["network"]["address"]
+                                rate = motor["network"]["baud_rate"]
+                                to_apply = True
+                                break
+
+                        if to_apply:
+                            motor_uuid_str = " ".join(motors)
+
+                            name = "Collect Service " + motor_uuid_str
+                            cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -c {}".format(address, port, rate, edge_uuid, motor_uuid_str, len(motors))
+                            to_apply = False
+
+                            temp_tmpl = supervisor_tmpl.replace("name", name)
+                            temp_tmpl = temp_tmpl.replace("cmd", cmd)
+
+                            result = result + temp_tmpl
+
+                    """
                     for motor in config["motor_config"]:
                         address = motor["network"]["address"]
                         rate = motor["network"]["baud_rate"]
@@ -78,7 +102,7 @@ def main():
                         temp_tmpl = supervisor_tmpl.replace("name", name)
                         temp_tmpl = temp_tmpl.replace("cmd", cmd)
 
-                        result = result + temp_tmpl
+                        result = result + temp_tmpl"""
 
                 with open("supervisord.conf", "w") as hdlr:
                     hdlr.write(result)
