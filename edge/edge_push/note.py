@@ -39,6 +39,7 @@ def getargs():
     parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)
     parser.add_argument('-port', action='store', help='Notecard Comm Port', type=str)
     parser.add_argument('-rate', action='store', help='Notecard Baud Rate', type=int, default=115200)
+    parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
 
     return parser.parse_args()
 
@@ -48,6 +49,7 @@ def main():
     productUID = args.puuid
     nodeport = args.port
     noderate = args.rate
+    motor_uuid = args.mu
 
     print("Opening port...")
     try:
@@ -66,7 +68,7 @@ def main():
 
         while True:
             start_time = time.time()
-            da = get_motor_data("table", 2)
+            da = get_motor_data("table", motor_uuid, 2)
             print(da)
             # To collect data from database. Example below.
             # da = {'motor_data': [{'d': 'Motor Speed in Hz', 'k': 'motor_speed', 'u': 'Hz', 'v': 0}, {'d': 'Output Voltage', 'k': 'output_voltage', 'u': 'Volt', 'v': 0}, {'d': 'DC Bus Voltage', 'k': 'dc_bus_voltage', 'u': 'Volt', 'v': 298}, {'d': 'Output Horsepower', 'k': 'output_hp', 'u': 'HP', 'v': 0}, {'d': 'Drive Ready', 'k': 'drive_ready', 'v': 1}, {'d': 'Alarm/Minor Fault', 'k': 'drive_alarm', 'v': 0}, {'d': 'Major Fault', 'k': 'drive_fault', 'v': 0}, {'d': 'Drive Direction', 'k': 'drive_direction'}, {'d': 'Run Time', 'k': 'run_time', 'u': 'TBD', 'v': 7}, {'d': 'Motor Amps', 'k': 'motor_amps', 'v': 0.0}, {'d': 'Total Motor Start/Stop', 'k': 'number_of_start_stop', 'v': 172}, {'d': 'Motor in RPM', 'k': 'motor_in_rpm', 'v': 0.0}, {'d': 'Speed in FPM', 'k': 'speed_in_fpm', 'v': 0.0}], 'timestamp': 1623452329314}

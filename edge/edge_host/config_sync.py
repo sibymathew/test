@@ -54,27 +54,22 @@ def main():
                     with open("config.supervisor.template") as hdlr:
                         supervisor_tmpl = hdlr.read()
 
-                    cmd = "docker run sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600"
-                    name = "Cloud Push Service"
-
-                    temp_tmpl = supervisor_tmpl.replace("name", name)
-                    temp_tmpl = temp_tmpl.replace("cmd", cmd)
-
-                    result = supervisor_conf + temp_tmpl
+                    result = supervisor_conf
+                    all_motor_uuid_str = ""
 
                     edge_uuid = config["edge_uuid"]
-                    total_motors = config["total_motors"]
                     port = "/dev/ttyUSB0"
                     print(edge_uuid)
-                    print(total_motors)
-                    for mapping in config["vfd_mapping"]:
+                    for mapping in config["crane_details"]["vfd_mapping"]:
                         to_apply = False
                         motors = mapping["vfd_motor_mapping"]
 
-                        for motor in config["motor_config"]:
+                        for motor in config["crane_details"]["motor_config"]:
                             if motor["uuid"] in motors:
                                 address = motor["network"]["address"]
                                 rate = motor["network"]["baud_rate"]
+                                motor_type = motor["motor_type"]
+                                red_factor = motor["motor_reduction_factor"]
                                 to_apply = True
                                 break
 
@@ -82,7 +77,7 @@ def main():
                             motor_uuid_str = " ".join(motors)
 
                             name = "Collect Service " + motor_uuid_str
-                            cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -c {}".format(address, port, rate, edge_uuid, motor_uuid_str, len(motors))
+                            cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -mt {} -r {} -c {}".format(address, port, rate, edge_uuid, motor_uuid_str, motor_type, red_factor, len(motors))
                             to_apply = False
 
                             temp_tmpl = supervisor_tmpl.replace("name", name)
@@ -90,19 +85,15 @@ def main():
 
                             result = result + temp_tmpl
 
-                    """
-                    for motor in config["motor_config"]:
-                        address = motor["network"]["address"]
-                        rate = motor["network"]["baud_rate"]
-                        motor_uuid = motor["uuid"]
+                            all_motor_uuid_str += motor_uuid_str + " "
 
-                        name = "Collect Service " + motor_uuid
-                        cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -c {}".format(address, port, rate, edge_uuid, motor_uuid, total_motors)
+                    cmd = "docker run sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_uuid_str)
+                    name = "Cloud Push Service"
 
-                        temp_tmpl = supervisor_tmpl.replace("name", name)
-                        temp_tmpl = temp_tmpl.replace("cmd", cmd)
+                    temp_tmpl = supervisor_tmpl.replace("name", name)
+                    temp_tmpl = temp_tmpl.replace("cmd", cmd)
 
-                        result = result + temp_tmpl"""
+                    result = result + temp_tmpl
 
                 with open("supervisord.conf", "w") as hdlr:
                     hdlr.write(result)

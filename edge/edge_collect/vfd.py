@@ -1,5 +1,6 @@
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from vilimbu.client.sync import ModbusSerialClient as ModbusClient
 from edge_loader import ingest_stream,ingest_stream2
+from edge_loader import get_motor_data
 
 import argparse
 import json
@@ -30,7 +31,7 @@ class Connect_Modbus:
             pass
 
     def read(self, start_addr, count):
-        resp = self.client.read_holding_registers(start_addr, count, unit=0x1F)
+        resp = self.client.read_holding_registers(start_addr, count, unit=int(self.vfd_addr, 16))
         print(resp)
         return resp.registers
 
@@ -42,6 +43,7 @@ def getargs():
     parser.add_argument('-eu', action='store', help='Edge UUID', type=str)
     parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
     parser.add_argument('-mt', action='store', help='Motor Type', type=int)
+    parser.add_argument('-rf', action='store', help='Motor Reduction Factor', type=int)
     parser.add_argument('-c', action='store', help='Total Motors', type=int)
     parser.add_argument('-m', action='store', help='Test Data', type=int)
 
@@ -98,7 +100,7 @@ def generate_test_data():
     datapoint = {}
     datapoint["k"] = "drive_direction"
     datapoint["d"] = "Drive Direction"
-    datapoint["v"] = randint(-1,1)
+    datapoint["v"] = randint(0,3)
     datapoints.append(datapoint)
 
     datapoint = {}
@@ -144,9 +146,10 @@ def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 
     return drive_obj
 
-def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, test):
+def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test):
 
     counter = 1
+
     while True:
         start_time = round(time.time() * 1000)
         datapoints = []
@@ -210,13 +213,14 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, test):
                     elif direction == 5 or direction == 7:
                         datapoint["v"] = 1
                     else:
-                      datapoint["v"] = -1
+                      #Drive is stopped
+                      datapoint["v"] = 3
                     datapoints.append(datapoint)
-                elif i == 10:
+                elif i == 10 and motor_type == 1:
                     datapoint = {}
                     datapoint["k"] = "run_time"
                     datapoint["v"] = reg
-                    datapoint["u"] = "TBD"
+                    datapoint["u"] = "Hours"
                     datapoint["d"] = "Run Time"   
                     datapoints.append(datapoint)
                 i+=1
@@ -230,7 +234,7 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, test):
 
             if motor_type == 1:
                 resp = drive_obj.read(117, 1)
-            elif motor_type == 2:
+            elif motor_type == 0:
                 resp = drive_obj.read(2068, 1)
             else:
                 resp = drive_obj.read(117, 1)
@@ -248,8 +252,6 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, test):
             datapoint["d"] = "Motor in RPM"
             datapoints.append(datapoint)
 
-            # To be read from DB, Customer Input.
-            reduction_factor = 1
             datapoint = {}
             datapoint["k"] = "speed_in_fpm"
             datapoint["v"] = motor_in_rpm/reduction_factor
@@ -275,8 +277,6 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, test):
                 data["motor_uuid"] = motor
                 ingest_stream2(data)
             counter = 1
-            import sys
-            sys.exit(0)
         else:
             counter += 1
 
@@ -295,6 +295,7 @@ if __name__ == "__main__":
     edge_uuid = args.eu
     motor_uuid = args.mu
     motor_type = args.mt
+    reduction_factor = args.rf
     count = args.c
     test = args.m
 
@@ -313,7 +314,7 @@ if __name__ == "__main__":
                   time.sleep(5)
         else:
             try:
-                read(False, edge_uuid, motor_uuid, count, motor_type, test)
+                read(False, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test)
             except Exception as err:
                 print("Error in reading \n {}".format(err.message))
                 time.sleep(5)
