@@ -150,6 +150,16 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, 
 
     counter = 1
 
+    # To get the latest record for each motor
+    content = get_motor_data("table", motor_uuid, 0)
+
+    run_time = 0
+    for row in content:
+        for i in row["motor_data"]:
+            if i["k"] == "run_time":
+                run_time = i["v"]
+                break
+
     while True:
         start_time = round(time.time() * 1000)
         datapoints = []
@@ -225,6 +235,15 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, 
                     datapoints.append(datapoint)
                 i+=1
 
+            if motor_type == 0:
+                if direction == 1 or direction == 3 or direction == 5 or direction == 7:
+                    datapoint = {}
+                    datapoint["k"] = "run_time"
+                    datapoint["v"] = reg
+                    datapoint["u"] = "Hours"
+                    datapoint["d"] = "Run Time"   
+                    datapoints.append(datapoint)
+                    
             resp = drive_obj.read(38, 1)
             datapoint = {}
             datapoint["k"] = "motor_amps"
