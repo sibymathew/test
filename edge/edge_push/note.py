@@ -20,7 +20,15 @@ sys.path.insert(0, os.path.abspath(
 
 import notecard
 
-productUID = "world.youtopian.siby.mathew:drill_bit"
+LOG_PATH = "/var/log/collect.log"
+log_hdlr = logging.getLogger(__name__)
+log_hdlr.setLevel(logging.DEBUG)
+
+hdlr = RotatingFileHandler(LOG_PATH,maxBytes=5 * 1024 * 1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+hdlr.setFormatter(formatter)
+log_hdlr.addHandler(hdlr)
+
 __PUSH_INTERVAL__ = 120 #seconds
 
 def configure_notecard(productUID, card):
@@ -31,7 +39,7 @@ def configure_notecard(productUID, card):
     try:
         card.Transaction(req)
     except Exception as exception:
-        print("Transaction error: {}".format(exception))
+        log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
 
 def getargs():
@@ -55,13 +63,13 @@ def main():
     try:
         port = Serial(nodeport, noderate)
     except Exception as exception:
-        raise Exception("error opening port: {}".format(exception))
+        log_hdlr.info("Error opening port: {}".format(exception))
 
     print("Opening Notecard...")
     try:
         card = notecard.OpenSerial(port)
     except Exception as exception:
-        raise Exception("error opening notecard: {}".format(exception))
+        log_hdlr.info("Error opening notecard: {}".format(exception))
 
     try:
         configure_notecard(productUID, card)
@@ -70,8 +78,6 @@ def main():
             start_time = time.time()
             da = get_motor_data("table", motor_uuid, 2)
             print(da)
-            # To collect data from database. Example below.
-            # da = {'motor_data': [{'d': 'Motor Speed in Hz', 'k': 'motor_speed', 'u': 'Hz', 'v': 0}, {'d': 'Output Voltage', 'k': 'output_voltage', 'u': 'Volt', 'v': 0}, {'d': 'DC Bus Voltage', 'k': 'dc_bus_voltage', 'u': 'Volt', 'v': 298}, {'d': 'Output Horsepower', 'k': 'output_hp', 'u': 'HP', 'v': 0}, {'d': 'Drive Ready', 'k': 'drive_ready', 'v': 1}, {'d': 'Alarm/Minor Fault', 'k': 'drive_alarm', 'v': 0}, {'d': 'Major Fault', 'k': 'drive_fault', 'v': 0}, {'d': 'Drive Direction', 'k': 'drive_direction'}, {'d': 'Run Time', 'k': 'run_time', 'u': 'TBD', 'v': 7}, {'d': 'Motor Amps', 'k': 'motor_amps', 'v': 0.0}, {'d': 'Total Motor Start/Stop', 'k': 'number_of_start_stop', 'v': 172}, {'d': 'Motor in RPM', 'k': 'motor_in_rpm', 'v': 0.0}, {'d': 'Speed in FPM', 'k': 'speed_in_fpm', 'v': 0.0}], 'timestamp': 1623452329314}
 
             to_send = {}
             to_send["req"] = "web.post"
@@ -86,15 +92,17 @@ def main():
             encodedData = base64.b64encode(de).decode('UTF-8')
             to_send["body"] = {"data": encodedData}
 
-            r = card.Transaction(to_send)
+            log_hdlr.info("Sending {} bytes of data".format(compressed_body().nbytes))
+            resp = card.Transaction(to_send)
+            log_hdlr.info("Notecard Response {}".format(response))
             end_time = time.time()
 
             lapsed_time = end_time - start_time
-            print("Total Lapsed Time {}".format(lapsed_time))
+            log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
 
             time.sleep(__PUSH_INTERVAL__-lapsed_time)
     except Exception as exception:
-        print("Transaction error: {}".format(exception))
+        log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
 
 main()

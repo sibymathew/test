@@ -6,9 +6,19 @@ import argparse
 import json
 import time
 import logging
+from logging.handlers import RotatingFileHandler
 
 __PULL_INTERVAL__ = 250
 __SAMPLES_PER_SECOND__ = 1000/250
+
+LOG_PATH = "/var/log/collect.log"
+log_hdlr = logging.getLogger(__name__)
+log_hdlr.setLevel(logging.DEBUG)
+
+hdlr = RotatingFileHandler(LOG_PATH,maxBytes=5 * 1024 * 1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+hdlr.setFormatter(formatter)
+log_hdlr.addHandler(hdlr)
 
 class Connect_Modbus:
 
@@ -19,13 +29,12 @@ class Connect_Modbus:
         self.rate = int(rate)
 
     def connect(self):
-        print("{} {} {} {}".format(self.type, self.vfd_addr, self.port, self.rate))
         try:
             if self.type != 'rtu':
                 print("Not supported type")
             else:
                 self.client = ModbusClient(method=self.type, port=self.port, timeout=1, baudrate=self.rate)
-                print(self.client.connect())
+                log_hdlr.info(self.client.connect())
                 print(self.client)
         except:
             pass
@@ -149,22 +158,25 @@ def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test):
 
     counter = 1
-
     # To get the latest record for each motor
     content = get_motor_data("table", motor_uuid, 0)
 
-    run_time = 0
-    for row in content:
-        for i in row["motor_data"]:
-            if i["k"] == "run_time":
-                run_time = i["v"]
-                break
+    if not json.loads(content):
+        run_time = 0
+    else:
+        for row in json.loads(content):
+            i = json.loads(row)
+            k = ast.literal_eval(i["motor_data"])
+            for s in k:
+                if s["k"] == "run_time":
+                    run_time = s["v"]
+                    break
 
     while True:
         start_time = round(time.time() * 1000)
         datapoints = []
 
-        print(test)
+        log_hdlr.info(test)
         if not test:
             resp = drive_obj.read(68, 11)
             i = 0
@@ -243,7 +255,7 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, 
                     datapoint["u"] = "Hours"
                     datapoint["d"] = "Run Time"   
                     datapoints.append(datapoint)
-                    
+
             resp = drive_obj.read(38, 1)
             datapoint = {}
             datapoint["k"] = "motor_amps"
@@ -301,7 +313,7 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, 
 
         end_time = round(time.time() * 1000)
         lapsed_time = end_time - start_time
-        print("Total Lapsed Time {}".format(lapsed_time))
+        log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
 
         time.sleep((__PULL_INTERVAL__-lapsed_time)/1000)
 
@@ -318,23 +330,25 @@ if __name__ == "__main__":
     count = args.c
     test = args.m
 
+    log_hdlr.info(args)
+
     while True:
         if not test:
           try:
               drive_obj = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
           except Exception as err:
-              print("Error in connection \n {}".format(err.message))
+              log_hdlr.info("Error in connection \n {}".format(err))
               time.sleep(5)
           else:
               try:
-                  read(drive_obj, edge_uuid, motor_uuid, count, motor_type, test)
+                  read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test)
               except Exception as err:
-                  print("Error in reading \n {}".format(err.message))
+                  log_hdlr.info("Error in reading \n {}".format(err))
                   time.sleep(5)
         else:
             try:
                 read(False, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test)
             except Exception as err:
-                print("Error in reading \n {}".format(err.message))
+                log_hdlr.info("Error in reading \n {}".format(err))
                 time.sleep(5)
 
