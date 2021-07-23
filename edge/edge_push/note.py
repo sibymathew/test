@@ -92,9 +92,9 @@ def main():
             encodedData = base64.b64encode(de).decode('UTF-8')
             to_send["body"] = {"data": encodedData}
 
-            log_hdlr.info("Sending {} bytes of data".format(compressed_body().nbytes))
+            log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
             resp = card.Transaction(to_send)
-            log_hdlr.info("Notecard Response {}".format(response))
+            log_hdlr.info("Notecard Response {}".format(resp))
             end_time = time.time()
 
             lapsed_time = end_time - start_time

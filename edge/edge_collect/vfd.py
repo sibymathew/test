@@ -7,6 +7,7 @@ import json
 import time
 import logging
 from logging.handlers import RotatingFileHandler
+import ast
 
 __PULL_INTERVAL__ = 250
 __SAMPLES_PER_SECOND__ = 1000/250
@@ -52,7 +53,7 @@ def getargs():
     parser.add_argument('-eu', action='store', help='Edge UUID', type=str)
     parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
     parser.add_argument('-mt', action='store', help='Motor Type', type=int)
-    parser.add_argument('-rf', action='store', help='Motor Reduction Factor', type=int)
+    parser.add_argument('-rf', action='store', help='Motor Reduction Factor', type=float)
     parser.add_argument('-c', action='store', help='Total Motors', type=int)
     parser.add_argument('-m', action='store', help='Test Data', type=int)
 
