@@ -12,7 +12,7 @@ import json
 
 # Apache Cassandra DB connection (Edge)
 # TODO: CONFIG
-EDGE_DB_INSTANCE = '10.106.1.73'
+EDGE_DB_INSTANCE = '52.136.123.48'
 EDGE_DB_PORT = 9042
 EDGE_DB_USER = 'cassandra'
 EDGE_DB_PASSWD = 'cassandra'
@@ -139,7 +139,7 @@ def get_motor_data(table_name,motor_list, interval):
 
         for motor_id in motor_list:
             if interval == 0:
-                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and order by query_timestamp desc LIMIT 1"
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
             else:
                 motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
 
