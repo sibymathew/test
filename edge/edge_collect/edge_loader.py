@@ -114,7 +114,7 @@ def ingest_stream2(crane_query_json):
         return error_msg
 
 
-def get_motor_data(table_name, interval):
+def get_motor_data(table_name,motor_list, interval):
     # TODO: Log
     # TODO: CONFIG
 
@@ -135,15 +135,20 @@ def get_motor_data(table_name, interval):
         query_timestamp = now - datetime.timedelta(minutes=interval)
         epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
 
-        motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'   and motor_uuid ='bb908d111401' and query_timestamp >= " +  epoch_query_timestamp
         motor_rows = []
 
-        for motor_row in dbSession.edge_session.execute(motor_query):
-            #motor_rows.append(motor_row[0].replace("'", '"'))
-            motor_rows.append(motor_row[0])
-            # print( motor_rows)
-            # print(json.dumps( motor_rows))
-            #
+        for motor_id in motor_list:
+            if interval == 0:
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and order by query_timestamp desc LIMIT 1"
+            else:
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
+
+            for motor_row in dbSession.edge_session.execute(motor_query):
+                #motor_rows.append(motor_row[0].replace("'", '"'))
+                motor_rows.append(motor_row[0])
+                # print( motor_rows)
+                # print(json.dumps( motor_rows))
+                #
 
         dbSession.shutCluster()
         return json.dumps(motor_rows)
