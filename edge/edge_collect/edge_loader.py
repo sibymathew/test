@@ -12,7 +12,7 @@ import json
 
 # Apache Cassandra DB connection (Edge)
 # TODO: CONFIG
-EDGE_DB_INSTANCE = '52.136.123.48'
+EDGE_DB_INSTANCE = 'localhost'
 EDGE_DB_PORT = 9042
 EDGE_DB_USER = 'cassandra'
 EDGE_DB_PASSWD = 'cassandra'
