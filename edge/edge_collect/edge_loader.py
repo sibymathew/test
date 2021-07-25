@@ -1,5 +1,5 @@
 # pip install dse-driver
-from dse.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT
+    
 from dse.query import tuple_factory
 from dse.cluster import BatchStatement, SimpleStatement
 from dse.auth import PlainTextAuthProvider
@@ -12,7 +12,7 @@ import json
 
 # Apache Cassandra DB connection (Edge)
 # TODO: CONFIG
-EDGE_DB_INSTANCE = 'localhost'
+EDGE_DB_INSTANCE = '127.0.0.1'
 EDGE_DB_PORT = 9042
 EDGE_DB_USER = 'cassandra'
 EDGE_DB_PASSWD = 'cassandra'
