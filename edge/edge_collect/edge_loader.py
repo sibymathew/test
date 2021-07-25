@@ -1,5 +1,5 @@
 # pip install dse-driver
-    
+from dse.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT
 from dse.query import tuple_factory
 from dse.cluster import BatchStatement, SimpleStatement
 from dse.auth import PlainTextAuthProvider
@@ -8,11 +8,12 @@ from datetime import timezone
 import datetime
 import calendar
 import json
+import os
 
 
 # Apache Cassandra DB connection (Edge)
 # TODO: CONFIG
-EDGE_DB_INSTANCE = '127.0.0.1'
+# EDGE_DB_INSTANCE = '127.0.0.1'
 EDGE_DB_PORT = 9042
 EDGE_DB_USER = 'cassandra'
 EDGE_DB_PASSWD = 'cassandra'
@@ -27,6 +28,8 @@ class DatabaseConnection:
         self.openSession()
 
     def openSession(self):
+    
+        EDGE_DB_INSTANCE = os.environ["CASSANDRA_IP"]
         self.edge_auth_provider = PlainTextAuthProvider(
             username=EDGE_DB_USER, password=EDGE_DB_PASSWD)        
         self.edge_cluster = Cluster(contact_points=[EDGE_DB_INSTANCE],port=EDGE_DB_PORT, auth_provider=self.edge_auth_provider)
