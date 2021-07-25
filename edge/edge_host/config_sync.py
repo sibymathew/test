@@ -76,7 +76,7 @@ def main():
                         if to_apply:
                             motor_uuid_str = " ".join(motors)
 
-                            name = "Collect Service " + motor_uuid_str
+                            name = "Collect_Service_" + motor_uuid_str.replace(" ", "_")
                             cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -mt {} -r {} -c {}".format(address, port, rate, edge_uuid, motor_uuid_str, motor_type, red_factor, len(motors))
                             to_apply = False
 
@@ -88,7 +88,7 @@ def main():
                             all_motor_uuid_str += motor_uuid_str + " "
 
                     cmd = "docker run sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_uuid_str)
-                    name = "Cloud Push Service"
+                    name = "Cloud_Push_Service"
 
                     temp_tmpl = supervisor_tmpl.replace("name", name)
                     temp_tmpl = temp_tmpl.replace("cmd", cmd)
