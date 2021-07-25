@@ -19,8 +19,10 @@ sys.path.insert(0, os.path.abspath(
                 os.path.join(os.path.dirname(__file__), '..')))
 
 import notecard
+import logging
+from logging.handlers import RotatingFileHandler
 
-LOG_PATH = "/var/log/collect.log"
+LOG_PATH = "/var/log/push.log"
 log_hdlr = logging.getLogger(__name__)
 log_hdlr.setLevel(logging.DEBUG)
 
@@ -73,7 +75,13 @@ def main():
 
     try:
         configure_notecard(productUID, card)
+    except Exception as exception:
+        log_hdlr.info("Error opening notecard: {}".format(exception))
 
+    push(card, motor_uuid)
+
+def push(card, motor_uuid):
+    try:
         while True:
             start_time = time.time()
             da = get_motor_data("table", motor_uuid, 2)
@@ -104,5 +112,7 @@ def main():
     except Exception as exception:
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
+        push()
 
 main()
+

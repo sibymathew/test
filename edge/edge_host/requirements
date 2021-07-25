@@ -13,3 +13,6 @@ sudo apt install Cassandra -y
 sudo systemctl enable cassandra
 
 sudo pip3 install supervisor
+
+sudo apt-get install supervisor
+sudo apt-get install vim

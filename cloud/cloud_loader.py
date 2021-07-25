@@ -1,5 +1,4 @@
 from cassandra.auth import PlainTextAuthProvider
-import config as cfg
 from cassandra.query import BatchStatement, SimpleStatement
 import time
 import ssl
