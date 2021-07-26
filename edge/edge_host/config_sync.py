@@ -77,7 +77,7 @@ def main():
                             motor_uuid_str = " ".join(motors)
 
                             name = "Collect_Service_" + motor_uuid_str.replace(" ", "_")
-                            cmd = "docker run sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -mt {} -r {} -c {}".format(address, port, rate, edge_uuid, motor_uuid_str, motor_type, red_factor, len(motors))
+                            cmd = "sudo docker run --privileged -e CASSANDRA_IP='192.168.1.35' sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -mt {} -rf {} -c {}".format(address, port, rate, edge_uuid, motor_uuid_str, motor_type, red_factor, len(motors))
                             to_apply = False
 
                             temp_tmpl = supervisor_tmpl.replace("name", name)
@@ -87,7 +87,7 @@ def main():
 
                             all_motor_uuid_str += motor_uuid_str + " "
 
-                    cmd = "docker run sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_uuid_str)
+                    cmd = "sudo docker run --privileged -e CASSANDRA_IP='192.168.1.35' sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_uuid_str)
                     name = "Cloud_Push_Service"
 
                     temp_tmpl = supervisor_tmpl.replace("name", name)
