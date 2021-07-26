@@ -159,6 +159,8 @@ def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test):
 
     counter = 1
+    push_counter = (1000 / __PULL_INTERVAL__) * 60
+
     # To get the latest record for each motor
     content = get_motor_data("table", motor_uuid, 0)
 
@@ -242,20 +244,39 @@ def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, 
                 elif i == 10 and motor_type == 1:
                     datapoint = {}
                     datapoint["k"] = "run_time"
-                    datapoint["v"] = reg
-                    datapoint["u"] = "Hours"
+                    datapoint["v"] = reg * 60
+                    datapoint["u"] = "Minutes"
                     datapoint["d"] = "Run Time"   
                     datapoints.append(datapoint)
                 i+=1
 
             if motor_type == 0:
                 if direction == 1 or direction == 3 or direction == 5 or direction == 7:
+                    push_counter -= 1
+                    if push_counter == 0:
+                        push_counter = (1000 / __PULL_INTERVAL__) * 60
+                        # To get the latest record for each motor
+                        content = get_motor_data("table", motor_uuid, 0)
+
+                        if not json.loads(content):
+                            run_time = 0
+                        else:
+                            for row in json.loads(content):
+                                i = json.loads(row)
+                                k = ast.literal_eval(i["motor_data"])
+                                for s in k:
+                                    if s["k"] == "run_time":
+                                        run_time = s["v"]
+                                        break
+
+                            run_time += 1
+
                     datapoint = {}
                     datapoint["k"] = "run_time"
-                    datapoint["v"] = reg
-                    datapoint["u"] = "Hours"
+                    datapoint["v"] = run_time
+                    datapoint["u"] = "Minutes"
                     datapoint["d"] = "Run Time"   
-                    datapoints.append(datapoint)
+                    datapoints.append(datapoint)                        
 
             resp = drive_obj.read(38, 1)
             datapoint = {}

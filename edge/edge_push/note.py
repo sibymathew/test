@@ -39,7 +39,8 @@ def configure_notecard(productUID, card):
     req["mode"] = "continuous"
 
     try:
-        card.Transaction(req)
+        resp = card.Transaction(req)
+        log_hdlr.info("Configure NoteCard Response {}".format(resp))
     except Exception as exception:
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
@@ -64,12 +65,14 @@ def main():
     print("Opening port...")
     try:
         port = Serial(nodeport, noderate)
+        log_hdlr.info("Opened Serial Port {}".format(port))
     except Exception as exception:
         log_hdlr.info("Error opening port: {}".format(exception))
 
     print("Opening Notecard...")
     try:
         card = notecard.OpenSerial(port)
+        log_hdlr.info("Opened Card {}".format(card))
     except Exception as exception:
         log_hdlr.info("Error opening notecard: {}".format(exception))
 
@@ -102,7 +105,7 @@ def push(card, motor_uuid):
 
             log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
             resp = card.Transaction(to_send)
-            log_hdlr.info("Notecard Response {}".format(resp))
+            log_hdlr.info("Push Notecard Response {}".format(resp))
             end_time = time.time()
 
             lapsed_time = end_time - start_time

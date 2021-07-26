@@ -7,6 +7,7 @@ import gzip
 import base64
 import logging
 from logging.handlers import RotatingFileHandler
+import ast
 
 LOG_PATH = "/var/log/cloud.log"
 log_hdlr = logging.getLogger(__name__)
@@ -22,17 +23,21 @@ app = Flask(__name__)
 @app.route("/v1/data/push", methods = ['POST', 'GET'])
 def index():
     try:
-        resp = request.json
-        decodedData = base64.b64decode(resp["data"])
-
+        resp = ast.literal_eval(request.data.decode('utf-8'))["data"]
+        decodedData = base64.b64decode(resp)
         received_value = BytesIO(decodedData)
         to_receive = gzip.GzipFile(fileobj=received_value, mode='rb').read()
         data = to_receive.decode("utf-8")
-        log_hdlr.info(data)
-        ingest_stream(data)
-        #payload_rx = json.loads(to_receive.decode("utf-8"))
-        #print(payload_rx)
-        #print(len(payload_rx))
+
+        r = ast.literal_eval(ast.literal_eval(data))
+        to_save = []
+        for i in r:
+            to_save.append(ast.literal_eval(i))
+        log_hdlr.info(to_save)
+        res = ingest_stream(to_save)
+        log_hdlr.info(res)
+        print(to_save)
+        print(res)
     except Exception as err:
         return {"status": 0, "msg": err}
     else:
