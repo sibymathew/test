@@ -17,10 +17,10 @@ import json
 
 # Apache Cassandra DB connection (Edge)
 # TODO: CONFIG
-COSMOS_DB_INSTANCE = 'aceco-cranes.cassandra.cosmos.azure.com'
+COSMOS_DB_INSTANCE = 'aceco-cosmos-iot-db.cassandra.cosmos.azure.com'
 COSMOS_DB_PORT = 10350
-COSMOS_DB_USER = 'aceco-cranes'
-COSMOS_DB_PASSWD = 'paUfCgXuJbnFAkioNKUUqtWOeweGffKLyNEblOr4Wr6h6JK0P8kmkeQHzPCFlEXL9dOEXRuuFrCE9BK6m58ZuQ=='
+COSMOS_DB_USER = 'aceco-cosmos-iot-db'
+COSMOS_DB_PASSWD = 'HD5QPD0v9zvrrdlXULhDGLqyAMKAEVkt7AuXOVr0jGnmfYjeag2fPVYXXhy0zHrHTNG9zU2zT2Jtqn8Zzk4hLg=='
 COSMOS_KEY_SPACE = 'cloud_core'
 
 # Connect to database
