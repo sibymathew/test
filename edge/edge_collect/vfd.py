@@ -116,7 +116,7 @@ def generate_test_data():
     datapoint = {}
     datapoint["k"] = "run_time"
     datapoint["v"] = randint(0,100)
-    datapoint["u"] = "TBD"
+    datapoint["u"] = "Minutes"
     datapoint["d"] = "Run Time"   
     datapoints.append(datapoint)
 
