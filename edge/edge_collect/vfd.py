@@ -9,8 +9,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 import ast
 
-__PULL_INTERVAL__ = 250
-__SAMPLES_PER_SECOND__ = 1000/250
+__PULL_INTERVAL__ = 1000
+__SAMPLES_PER_SECOND__ = (1000/1000)*30 
 
 LOG_PATH = "/var/log/collect.log"
 log_hdlr = logging.getLogger(__name__)
@@ -47,14 +47,14 @@ class Connect_Modbus:
 
 def getargs():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', action='store', help='VFD Comm Address', type=str)
+    parser.add_argument('-a', action='store', help='VFD Comm Address', nargs="+", type=str)
     parser.add_argument('-p', action='store', help='ModBus RTU Comm Port', type=str)
     parser.add_argument('-r', action='store', help='ModBus RTU Baud Rate', type=int, default=115200)
     parser.add_argument('-eu', action='store', help='Edge UUID', type=str)
     parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
-    parser.add_argument('-mt', action='store', help='Motor Type', type=int)
-    parser.add_argument('-rf', action='store', help='Motor Reduction Factor', type=float)
-    parser.add_argument('-c', action='store', help='Total Motors', type=int)
+    parser.add_argument('-mt', action='store', help='Motor Type', nargs="+", type=str)
+    parser.add_argument('-ms', action='store', help='Motor Speciality', nargs="+", type=str)
+    parser.add_argument('-rf', action='store', help='Motor Reduction Factor', nargs="+", type=str)
     parser.add_argument('-m', action='store', help='Test Data', type=int)
 
     return parser.parse_args()
@@ -156,221 +156,297 @@ def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 
     return drive_obj
 
-def read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test):
-
-    counter = 1
-    push_counter = (1000 / __PULL_INTERVAL__) * 60
-
-    # To get the latest record for each motor
-    content = get_motor_data("table", motor_uuid, 0)
-
-    if not json.loads(content):
-        run_time = 0
-    else:
-        for row in json.loads(content):
-            i = json.loads(row)
-            k = ast.literal_eval(i["motor_data"])
-            for s in k:
-                if s["k"] == "run_time":
-                    run_time = s["v"]
-                    break
+def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode="rtu"):
 
     while True:
         start_time = round(time.time() * 1000)
-        datapoints = []
+        r = True
+        conn_chk = ModbusClient(method=mode, port=vfd_port, timeout=1, baudrate=vfd_rate)
+        if conn_chk.connect():
+            #Read Sample Register from VFD
+            #All VFD to be running for reading to work
+            for vfd in vfd_addrs:
+                resp = conn_chk.read_holding_registers(1288, 1, unit=int(vfd, 16))
+                log_hdlr.info("Connection Response for {}: {}".format(vfd, resp))
 
-        log_hdlr.info(test)
-        if not test:
-            resp = drive_obj.read(68, 11)
-            i = 0
-            for reg in resp:
-                datapoint = {}
-                if i == 0:
-                    datapoint["k"] = "motor_speed"
-                    datapoint["v"] = reg
-                    motor_speed = datapoint["v"]
-                    datapoint["u"] = "Hz"
-                    datapoint["d"] = "Motor Speed in Hz"
-                    datapoints.append(datapoint)
-                elif i == 1:
-                    datapoint["k"] = "output_voltage"
-                    datapoint["v"] = reg
-                    datapoint["u"] = "Volt"
-                    datapoint["d"] = "Output Voltage"
-                    datapoints.append(datapoint)
-                elif i == 2:
-                    datapoint["k"] = "dc_bus_voltage"
-                    datapoint["v"] = reg
-                    datapoint["u"] = "Volt"
-                    datapoint["d"] = "DC Bus Voltage"
-                    datapoints.append(datapoint)
-                elif i == 3:
-                    datapoint["k"] = "output_hp"
-                    datapoint["v"] = reg
-                    datapoint["u"] = "HP"
-                    datapoint["d"] = "Output Horsepower"
-                    datapoints.append(datapoint)
-                elif i == 7:
-                    datapoint = {}
-                    datapoint["k"] = "drive_ready"
-                    datapoint["v"] = (reg & (1<<5)) >> 5
-                    datapoint["d"] = "Drive Ready"
-                    datapoints.append(datapoint)
+                if 'Error' in str(resp):
+                    r = False
+        else:
+            log.hdlr.info("USB Port is not connected or having connectivity issues.")
+            r = False
 
-                    datapoint = {}
-                    datapoint["k"] = "drive_alarm"
-                    datapoint["v"] = (reg & (1<<6)) >> 6
-                    datapoint["d"] = "Alarm/Minor Fault"
-                    datapoints.append(datapoint)
+        if r is True:
+            break
+        else:
+            data = {}
+            data["edge_uuid"] = edge_uuid
+            data["total_motors"] = len(motor_uuid[vfd_addr])
+            data["timestamp"] = start_time
+            data["vfd_status"] = "Not Reachable"
+            data["motor_data"] = {}
+            for vfd in vfd_addrs:
+                for motor in motor_uuid[vfd]:
+                    data["motor_uuid"] = motor
+                    print(json.dumps(data, indent=4, sort_keys=True))
+                    ingest_stream(data)
 
-                    datapoint = {}
-                    datapoint["k"] = "drive_fault"
-                    datapoint["v"] = (reg & (1<<7)) >> 7
-                    datapoint["d"] = "Major Fault"
-                    datapoints.append(datapoint)
+            time.sleep(5)
 
-                    datapoint = {}
-                    direction = reg & 5
-                    datapoint["k"] = "drive_direction"
-                    datapoint["d"] = "Drive Direction"
-                    if direction == 1 or direction == 3:
-                        datapoint["v"] = 0
-                    elif direction == 5 or direction == 7:
-                        datapoint["v"] = 1
-                    else:
-                      #Drive is stopped
-                      datapoint["v"] = 3
-                    datapoints.append(datapoint)
-                elif i == 10 and motor_type == 1:
-                    datapoint = {}
-                    datapoint["k"] = "run_time"
-                    datapoint["v"] = reg * 60
-                    datapoint["u"] = "Minutes"
-                    datapoint["d"] = "Run Time"   
-                    datapoints.append(datapoint)
-                i+=1
+    return r
 
-            if motor_type == 0:
-                if direction == 1 or direction == 3 or direction == 5 or direction == 7:
-                    push_counter -= 1
-                    if push_counter == 0:
-                        push_counter = (1000 / __PULL_INTERVAL__) * 60
-                        # To get the latest record for each motor
-                        content = get_motor_data("table", motor_uuid, 0)
+def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, test):
 
-                        if not json.loads(content):
-                            run_time = 0
+    try:
+        run_time = {}
+        counter = {}
+        push_counter = {}
+        for vfd_addr in vfd_addrs:
+            run_time[vfd_addr] = 0
+            counter[vfd_addr] = 1
+            push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
+
+
+        while True:
+            for vfd_addr in vfd_addrs:
+                start_time = round(time.time() * 1000)
+                datapoints = []
+
+                log_hdlr.info(test)
+                if not test:
+                    resp = drive_obj[vfd_addr].read(68, 11)
+                    i = 0
+                    for reg in resp:
+                        datapoint = {}
+                        if i == 0:
+                            if motor_spl[vfd_addr] == 1:
+                                datapoint["k"] = "motor_speed"
+                                datapoint["v"] = reg
+                                motor_speed = datapoint["v"]
+                                rpm = 1200
+                                datapoint["u"] = "Hz"
+                                datapoint["d"] = "Motor Speed in Hz"
+                                datapoints.append(datapoint)
+                            elif motor_spl[vfd_addr] == 0:
+                                speed = drive_obj[vfd_addr].read(65, 1)
+                                datapoint["k"] = "motor_speed"
+                                datapoint["v"] = speed[0]
+                                motor_speed = datapoint["v"]
+                                rpm = 1800
+                                datapoint["u"] = "Hz"
+                                datapoint["d"] = "Motor Speed in Hz"
+                                datapoints.append(datapoint)
+                        elif i == 1:
+                            datapoint["k"] = "output_voltage"
+                            datapoint["v"] = reg
+                            datapoint["u"] = "Volt"
+                            datapoint["d"] = "Output Voltage"
+                            datapoints.append(datapoint)
+                        elif i == 2:
+                            datapoint["k"] = "dc_bus_voltage"
+                            datapoint["v"] = reg
+                            datapoint["u"] = "Volt"
+                            datapoint["d"] = "DC Bus Voltage"
+                            datapoints.append(datapoint)
+                        elif i == 3:
+                            datapoint["k"] = "output_hp"
+                            datapoint["v"] = reg
+                            datapoint["u"] = "HP"
+                            datapoint["d"] = "Output Horsepower"
+                            datapoints.append(datapoint)
+                        elif i == 7:
+                            datapoint = {}
+                            datapoint["k"] = "drive_ready"
+                            datapoint["v"] = (reg & (1<<5)) >> 5
+                            datapoint["d"] = "Drive Ready"
+                            datapoints.append(datapoint)
+
+                            datapoint = {}
+                            datapoint["k"] = "drive_alarm"
+                            datapoint["v"] = (reg & (1<<6)) >> 6
+                            datapoint["d"] = "Alarm/Minor Fault"
+                            datapoints.append(datapoint)
+
+                            datapoint = {}
+                            datapoint["k"] = "drive_fault"
+                            datapoint["v"] = (reg & (1<<7)) >> 7
+                            datapoint["d"] = "Major Fault"
+                            datapoints.append(datapoint)
+
+                            datapoint = {}
+                            direction = reg & 5
+                            datapoint["k"] = "drive_direction"
+                            datapoint["d"] = "Drive Direction"
+                            if direction == 1 or direction == 3:
+                                datapoint["v"] = 0
+                            elif direction == 5 or direction == 7:
+                                datapoint["v"] = 1
+                            else:
+                              #Drive is stopped
+                              datapoint["v"] = 3
+                            datapoints.append(datapoint)
+                        elif i == 10 and motor_type == 1:
+                            datapoint = {}
+                            datapoint["k"] = "run_time"
+                            datapoint["v"] = reg * 60
+                            datapoint["u"] = "Minutes"
+                            datapoint["d"] = "Run Time"   
+                            datapoints.append(datapoint)
+                        i+=1
+
+                    print("here1")
+                    
+                    if motor_type[vfd_addr] == 0:
+                        if direction == 1 or direction == 3 or direction == 5 or direction == 7:
+                            push_counter[vfd_addr] -= 1
+
+                        print(motor_uuid[vfd_addr])
+                        content = get_motor_data("table", motor_uuid[vfd_addr], 0)
+
+                        print(content)
+                        if not content:
+                            pass
+                            #run_time = 0
                         else:
                             for row in json.loads(content):
                                 i = json.loads(row)
                                 k = ast.literal_eval(i["motor_data"])
                                 for s in k:
                                     if s["k"] == "run_time":
-                                        run_time = s["v"]
-                                        break
+                                        run_time[vfd_addr] = s["v"]
 
-                            run_time += 1
+                        if push_counter[vfd_addr] == 0:
+                            push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
+                            run_time[vfd_addr] += 1
 
+                        print("here1.2")
+                        datapoint = {}
+                        datapoint["k"] = "run_time"
+                        datapoint["v"] = run_time[vfd_addr]
+                        datapoint["u"] = "Minutes"
+                        datapoint["d"] = "Run Time"   
+                        datapoints.append(datapoint)                        
+                    
+
+                    print("here2")
+                    resp = drive_obj[vfd_addr].read(38, 1)
                     datapoint = {}
-                    datapoint["k"] = "run_time"
-                    datapoint["v"] = run_time
-                    datapoint["u"] = "Minutes"
-                    datapoint["d"] = "Run Time"   
-                    datapoints.append(datapoint)                        
+                    datapoint["k"] = "motor_amps"
+                    datapoint["v"] = resp[0]/(10*len(motor_uuid[vfd_addr]))
+                    datapoint["d"] = "Motor Amps"
+                    datapoints.append(datapoint)
 
-            resp = drive_obj.read(38, 1)
-            datapoint = {}
-            datapoint["k"] = "motor_amps"
-            datapoint["v"] = resp[0]/(10*count)
-            datapoint["d"] = "Motor Amps"
-            datapoints.append(datapoint)
+                    if motor_type[vfd_addr] == 1:
+                        resp = drive_obj[vfd_addr].read(117, 1)
+                    elif motor_type[vfd_addr] == 0:
+                        resp = drive_obj[vfd_addr].read(2068, 1)
+                    else:
+                        resp = drive_obj[vfd_addr].read(117, 1)
+                    datapoint = {}
+                    datapoint["k"] = "number_of_start_stop"
+                    datapoint["v"] = resp[0]
+                    datapoint["d"] = "Total Motor Start/Stop"
+                    datapoints.append(datapoint)
 
-            if motor_type == 1:
-                resp = drive_obj.read(117, 1)
-            elif motor_type == 0:
-                resp = drive_obj.read(2068, 1)
-            else:
-                resp = drive_obj.read(117, 1)
-            datapoint = {}
-            datapoint["k"] = "number_of_start_stop"
-            datapoint["v"] = resp[0]
-            datapoint["d"] = "Total Motor Start/Stop"
-            datapoints.append(datapoint)
+                    resp = drive_obj[vfd_addr].read(773, 1)
+                    datapoint = {}
+                    datapoint["k"] = "motor_in_rpm"
+                    datapoint["v"] = ((motor_speed/resp[0])*rpm)/10
+                    motor_in_rpm = datapoint["v"]
+                    datapoint["d"] = "Motor in RPM"
+                    datapoints.append(datapoint)
 
-            resp = drive_obj.read(1797, 3)
-            datapoint = {}
-            datapoint["k"] = "motor_in_rpm"
-            datapoint["v"] = (motor_speed/resp[0])*resp[2]
-            motor_in_rpm = datapoint["v"]
-            datapoint["d"] = "Motor in RPM"
-            datapoints.append(datapoint)
+                    print("here3")
+                    datapoint = {}
+                    datapoint["k"] = "speed_in_fpm"
+                    datapoint["v"] = motor_in_rpm/reduction_factor[vfd_addr]
+                    datapoint["d"] = "Speed in FPM"
+                    datapoints.append(datapoint)
 
-            datapoint = {}
-            datapoint["k"] = "speed_in_fpm"
-            datapoint["v"] = motor_in_rpm/reduction_factor
-            datapoint["d"] = "Speed in FPM"
-            datapoints.append(datapoint)
+                else:
+                    datapoints = generate_test_data()
 
-        else:
-            datapoints = generate_test_data()
+                print("here4")
+                data = {}
+                data["edge_uuid"] = edge_uuid
+                data["total_motors"] = len(motor_uuid[vfd_addr])
+                data["timestamp"] = start_time
+                data["vfd_status"] = "Reachable"
+                data["motor_data"] = datapoints
 
-        data = {}
-        data["edge_uuid"] = edge_uuid
-        data["total_motors"] = count
-        data["timestamp"] = start_time
-        data["motor_data"] = datapoints
+                print("here5")
+                for motor in motor_uuid[vfd_addr]:
+                    data["motor_uuid"] = motor
+                    print(json.dumps(data, indent=4, sort_keys=True))
+                    ingest_stream(data)
 
-        for motor in motor_uuid:
-            data["motor_uuid"] = motor
-            print(json.dumps(data, indent=4, sort_keys=True))
-            ingest_stream(data)
+                print("here6")
+                if counter[vfd_addr] == __SAMPLES_PER_SECOND__:
+                    for motor in motor_uuid[vfd_addr]:
+                        data["motor_uuid"] = motor
+                        ingest_stream2(data)
+                    counter[vfd_addr] = 1
+                else:
+                    counter[vfd_addr] += 1
 
-        if counter == __SAMPLES_PER_SECOND__:
-            for motor in motor_uuid:
-                data["motor_uuid"] = motor
-                ingest_stream2(data)
-            counter = 1
-        else:
-            counter += 1
+                print("here7")
+                end_time = round(time.time() * 1000)
+                lapsed_time = end_time - start_time
+                log_hdlr.info("Total Lapsed Time For Drive {} is {}".format(vfd_addr, lapsed_time))
 
-        end_time = round(time.time() * 1000)
-        lapsed_time = end_time - start_time
-        log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
-
-        time.sleep((__PULL_INTERVAL__-lapsed_time)/1000)
+                time.sleep((__PULL_INTERVAL__-lapsed_time)/1000)
+    except Exception as err:
+        log_hdlr.info("Error in datapoints collections (read or dummy){}".format(err))
+        time.sleep(5)
+        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, test)
 
 if __name__ == "__main__":
 
     args = getargs()
-    vfd_addr = args.a
+    vfd_addrs = args.a
     vfd_port = args.p
     vfd_rate = args.r
     edge_uuid = args.eu
     motor_uuid = args.mu
-    motor_type = args.mt
-    reduction_factor = args.rf
-    count = args.c
+    motor_types = args.mt
+    motor_spls = args.ms
+    reduction_factors = args.rf
     test = args.m
+
+    motor_map = {}
+    for vfd_addr in vfd_addrs:
+        motor_list = []
+        for motors in motor_uuid:
+            if vfd_addr in motors:
+                motor_list.append(motors.split(':')[1])
+        motor_map[vfd_addr] = motor_list
+
+    type_map = {}
+    for vfd_addr in vfd_addrs:
+        for motor_type in motor_types:
+            if vfd_addr in motor_type:
+                type_map[vfd_addr] = int(motor_type.split(':')[1])
+
+    spl_map = {}
+    for vfd_addr in vfd_addrs:
+        for motor_spl in motor_spls:
+            if vfd_addr in motor_spl:
+                spl_map[vfd_addr] = int(motor_spl.split(':')[1])
+
+    rf_map = {}
+    for vfd_addr in vfd_addrs:
+        for rf in reduction_factors:
+            if vfd_addr in rf:
+                rf_map[vfd_addr] = float(rf.split(':')[1])
 
     log_hdlr.info(args)
 
-    while True:
-        if not test:
-          try:
-              drive_obj = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
-          except Exception as err:
-              log_hdlr.info("Error in connection \n {}".format(err))
-              time.sleep(5)
-          else:
-              try:
-                  read(drive_obj, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test)
-              except Exception as err:
-                  log_hdlr.info("Error in reading \n {}".format(err))
-                  time.sleep(5)
-        else:
-            try:
-                read(False, edge_uuid, motor_uuid, count, motor_type, reduction_factor, test)
-            except Exception as err:
-                log_hdlr.info("Error in reading \n {}".format(err))
-                time.sleep(5)
+    if not test:
+      r = connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_map, "rtu")
+      if r is True:
+          drive_obj_map = {}
+          for vfd_addr in vfd_addrs:
+              drive_obj_map[vfd_addr] = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
 
+          read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, test)
+    else:
+        read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, test)

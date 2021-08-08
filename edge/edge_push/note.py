@@ -33,6 +33,15 @@ log_hdlr.addHandler(hdlr)
 
 __PUSH_INTERVAL__ = 120 #seconds
 
+def getargs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)
+    parser.add_argument('-port', action='store', help='Notecard Comm Port', type=str)
+    parser.add_argument('-rate', action='store', help='Notecard Baud Rate', type=int, default=115200)
+    parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
+
+    return parser.parse_args()
+
 def configure_notecard(productUID, card):
     req = {"req": "hub.set"}
     req["product"] = productUID
@@ -45,22 +54,7 @@ def configure_notecard(productUID, card):
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
 
-def getargs():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)
-    parser.add_argument('-port', action='store', help='Notecard Comm Port', type=str)
-    parser.add_argument('-rate', action='store', help='Notecard Baud Rate', type=int, default=115200)
-    parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
-
-    return parser.parse_args()
-
-def main():
-
-    args = getargs()
-    productUID = args.puuid
-    nodeport = args.port
-    noderate = args.rate
-    motor_uuid = args.mu
+def connect(productUID, nodeport, noderate, motor_uuid):
 
     print("Opening port...")
     try:
@@ -85,14 +79,13 @@ def main():
 
 def push(card, motor_uuid):
     try:
+        to_send = {}
+        to_send["req"] = "web.post"
+        to_send["route"] = "datapush"
         while True:
             start_time = time.time()
             da = get_motor_data("table", motor_uuid, 2)
             print(da)
-
-            to_send = {}
-            to_send["req"] = "web.post"
-            to_send["route"] = "datapush"
 
             compressed_body = BytesIO()
             gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
@@ -112,10 +105,37 @@ def push(card, motor_uuid):
             log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
 
             time.sleep(__PUSH_INTERVAL__-lapsed_time)
+
+            """
+            if 'err' in resp:
+                log_hdlr.info("Restarting the card. Wait... ")
+                restart(card)
+            """
     except Exception as exception:
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
+        # Not a correct way to code, as it is recursive. But very rare happening. Will change it later.
         push()
+
+def restart(card):
+    try:
+        req = {"req": "card.restart"}
+        resp = card.Transaction(req)
+
+        log_hdlr.info("Restart Notecard Response {}".format(resp))
+
+        main()
+        #Recursive
+
+def main():
+
+    args = getargs()
+    productUID = args.puuid
+    nodeport = args.port
+    noderate = args.rate
+    motor_uuid = args.mu
+
+    connect(productUID, nodeport, noderate, motor_uuid)
 
 main()
 
