@@ -9,6 +9,6 @@ RUN pip3 install -r requirements.txt
 
 ADD ./vfd.py /vfd.py
 ADD ./edge_loader.py /edge_loader.py
-ADD ./vilimbu /vilimbu
+ADD ./yw /yw
 
 ENTRYPOINT ["/usr/bin/python3", "vfd.py"]

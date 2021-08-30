@@ -1,4 +1,4 @@
-from vilimbu.client.sync import ModbusSerialClient as ModbusClient
+from yw.edge.interface import YWSerialClient as ModbusClient
 from edge_loader import ingest_stream,ingest_stream2
 from edge_loader import get_motor_data
 
@@ -41,7 +41,7 @@ class Connect_Modbus:
             pass
 
     def read(self, start_addr, count):
-        resp = self.client.read_holding_registers(start_addr, count, unit=int(self.vfd_addr, 16))
+        resp = self.client.read_yw_registers(start_addr, count, unit=int(self.vfd_addr, 16))
         print(resp)
         return resp.registers
 
@@ -166,7 +166,7 @@ def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode=
             #Read Sample Register from VFD
             #All VFD to be running for reading to work
             for vfd in vfd_addrs:
-                resp = conn_chk.read_holding_registers(1288, 1, unit=int(vfd, 16))
+                resp = conn_chk.read_yw_registers(1288, 1, unit=int(vfd, 16))
                 log_hdlr.info("Connection Response for {}: {}".format(vfd, resp))
 
                 if 'Error' in str(resp):
