@@ -311,7 +311,147 @@ class ClientDecoder(IModbusDecoder):
             self.__sub_lookup[function.function_code][
                 function.sub_function_code] = function
 
+# --------------------------------------------------------------------------- #
+# Series 3 Series 4 VFD  Decoder
+# --------------------------------------------------------------------------- #
+class VFDDecoder(IModbusDecoder):
+    """ Response Message Factory (Client)
 
+    To add more implemented functions, simply add them to the list
+    """
+    """
+    YW reisters were customized according to VFD scenarios
+    """
+    __function_table = [
+            ReadYWRegistersResponse,
+            ReadDiscreteInputsResponse,
+            ReadInputRegistersResponse,
+            ReadCoilsResponse,
+            WriteMultipleCoilsResponse,
+            WriteMultipleRegistersResponse,
+            WriteSingleRegisterResponse,
+            WriteSingleCoilResponse,
+            ReadWriteMultipleRegistersResponse,
+            DiagnosticStatusResponse,
+            ReadExceptionStatusResponse,
+            GetCommEventCounterResponse,
+            GetCommEventLogResponse,
+            ReportSlaveIdResponse,
+            ReadFileRecordResponse,
+            WriteFileRecordResponse,
+            MaskWriteRegisterResponse,
+            ReadFifoQueueResponse,
+            ReadDeviceInformationResponse,
+    ]
+    __sub_function_table = [
+            ReturnQueryDataResponse,
+            RestartCommunicationsOptionResponse,
+            ReturnDiagnosticRegisterResponse,
+            ChangeAsciiInputDelimiterResponse,
+            ForceListenOnlyModeResponse,
+            ClearCountersResponse,
+            ReturnBusMessageCountResponse,
+            ReturnBusCommunicationErrorCountResponse,
+            ReturnBusExceptionErrorCountResponse,
+            ReturnSlaveMessageCountResponse,
+            ReturnSlaveNoReponseCountResponse,
+            ReturnSlaveNAKCountResponse,
+            ReturnSlaveBusyCountResponse,
+            ReturnSlaveBusCharacterOverrunCountResponse,
+            ReturnIopOverrunCountResponse,
+            ClearOverrunCountResponse,
+            GetClearModbusPlusResponse,
+            ReadDeviceInformationResponse,
+    ]
+
+    def __init__(self):
+        """ Initializes the client lookup tables
+        """
+        functions = set(f.function_code for f in self.__function_table)
+        self.__lookup = dict([(f.function_code, f)
+                              for f in self.__function_table])
+        self.__sub_lookup = dict((f, {}) for f in functions)
+        for f in self.__sub_function_table:
+            self.__sub_lookup[f.function_code][f.sub_function_code] = f
+
+    def lookupPduClass(self, function_code):
+        """ Use `function_code` to determine the class of the PDU.
+
+        :param function_code: The function code specified in a frame.
+        :returns: The class of the PDU that has a matching `function_code`.
+        """
+        return self.__lookup.get(function_code, ExceptionResponse)
+
+    def decode(self, message):
+        """ Wrapper to decode a response packet
+
+        :param message: The raw packet to decode
+        :return: The decoded modbus message or None if error
+        """
+        try:
+            return self._helper(message)
+        except ModbusException as er:
+            _logger.error("Unable to decode response %s" % er)
+
+        except Exception as ex:
+            _logger.error(ex)
+        return None
+
+    def _helper(self, data):
+        """
+        This factory is used to generate the correct response object
+        from a valid response packet. This decodes from a list of the
+        currently implemented request types.
+
+        :param data: The response packet to decode
+        :returns: The decoded request or an exception response object
+        """
+        fc_string = function_code = byte2int(data[0])
+        if function_code in self.__lookup:
+            fc_string = "%s: %s" % (
+                str(self.__lookup[function_code]).split('.')[-1].rstrip("'>"),
+                function_code
+            )
+        _logger.debug("Factory Response[%s]" % fc_string)
+        response = self.__lookup.get(function_code, lambda: None)()
+        if function_code > 0x80:
+            code = function_code & 0x7f  # strip error portion
+            response = ExceptionResponse(code, ecode.IllegalFunction)
+        if not response:
+            raise ModbusException("Unknown response %d" % function_code)
+        response.decode(data[1:])
+
+        if hasattr(response, 'sub_function_code'):
+            lookup = self.__sub_lookup.get(response.function_code, {})
+            subtype = lookup.get(response.sub_function_code, None)
+            if subtype: response.__class__ = subtype
+
+        return response
+
+    def register(self, function=None, sub_function=None, force=False):
+        """
+        Registers a function and sub function class with the decoder
+        :param function: Custom function class to register
+        :param sub_function: Custom sub function class to register
+        :param force: Force update the existing class
+        :return:
+        """
+        """
+        YW reisters were customized according to VFD scenarios
+        """
+        if function and not issubclass(function, ModbusResponse):
+            raise MessageRegisterException("'{}' is Not a valid Modbus Message"
+                                           ". Class needs to be derived from "
+                                           "`yw.yw_base.ModbusResponse` "
+                                           "".format(
+                function.__class__.__name__
+            ))
+        self.__lookup[function.function_code] = function
+        if hasattr(function, "sub_function_code"):
+            if function.function_code not in self.__sub_lookup:
+                self.__sub_lookup[function.function_code] = dict()
+            self.__sub_lookup[function.function_code][
+                function.sub_function_code] = function
 # --------------------------------------------------------------------------- #
 # Exported symbols
 # --------------------------------------------------------------------------- #

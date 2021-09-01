@@ -7,15 +7,17 @@ import sys
 from functools import partial
 from yw.constants import Defaults
 from yw.yw_utilities import hexlify_packets, ModbusTransactionState
-from yw.factory import ClientDecoder
+from yw.factory import ClientDecoder, VFDDecoder
 from yw.exceptions import NotImplementedException, ParameterException
 from yw.exceptions import ConnectionException
 from yw.transaction import FifoTransactionManager
-from yw.transaction import DictTransactionManager
+from yw.transaction import DictTransactionManager, DictTransactionManagerSeries3, DictTransactionManagerSeries4
 from yw.transaction import ModbusSocketFramer, ModbusBinaryFramer
 from yw.transaction import ModbusAsciiFramer, ModbusRtuFramer
 from yw.transaction import ModbusTlsFramer
 from yw.edge.common import ModbusClientMixin
+from yw.yw_generator.utils import YWGen
+from yw.yw_generator.utils.threadingJob import ThreadingJob
 
 # --------------------------------------------------------------------------- #
 # Logging
@@ -45,6 +47,8 @@ class BaseModbusClient(ModbusClientMixin):
         """
         self.framer = framer
         self.transaction = DictTransactionManager(self, **kwargs)
+        self.series3_transaction = DictTransactionManagerSeries3(self, **kwargs)
+        self.series4_transaction = DictTransactionManagerSeries4(self, **kwargs)
         self._debug = False
         self._debugfd = None
         self.broadcast_enable = kwargs.get('broadcast_enable', Defaults.broadcast_enable)
@@ -647,6 +651,8 @@ class YWSerialClient(BaseModbusClient):
             return ModbusBinaryFramer(ClientDecoder(), client)
         elif method == 'socket':
             return ModbusSocketFramer(ClientDecoder(), client)
+        elif method == 'vfd':
+            return ModbusSocketFramer(VFDDecoder(), client)
         raise ParameterException("Invalid framer method requested")
 
     def connect(self):

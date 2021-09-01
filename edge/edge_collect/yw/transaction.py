@@ -14,7 +14,9 @@ from yw.exceptions import InvalidMessageReceivedException
 from yw.constants import Defaults
 from yw.controller.ascii_framer import ModbusAsciiFramer
 from yw.controller.rtu_framer import ModbusRtuFramer
+from yw.controller.yw_rtu_framer import YWRtuFramer
 from yw.controller.socket_framer import ModbusSocketFramer
+from yw.controller.yw_socket_framer import YWSocketFramer
 from yw.controller.tls_framer import ModbusTlsFramer
 from yw.controller.binary_framer import ModbusBinaryFramer
 from yw.yw_utilities import hexlify_packets, ModbusTransactionState
@@ -479,6 +481,117 @@ class DictTransactionManager(ModbusTransactionManager):
 
         self.transactions.pop(tid, None)
 
+class DictTransactionManagerSeries3(ModbusTransactionManager):
+    """ Impelements a transaction for a manager where the
+    results are keyed based on the supplied transaction id.
+    """
+    """ Extended the implemetation of Series 3, Series 4
+    """
+
+    def __init__(self, client, **kwargs):
+        """ Initializes an instance of the ModbusTransactionManager
+
+        :param client: The client socket wrapper
+        """
+        self.transactions = {}
+        super(DictTransactionManager, self).__init__(client, **kwargs)
+
+    def __iter__(self):
+        """ Iterater over the current managed transactions
+
+        :returns: An iterator of the managed transactions
+        """
+        return iterkeys(self.transactions)
+
+    def addTransaction(self, request, tid=None):
+        """ Adds a transaction to the handler
+
+        This holds the requets in case it needs to be resent.
+        After being sent, the request is removed.
+
+        :param request: The request to hold on to
+        :param tid: The overloaded transaction id to use
+        """
+        tid = tid if tid != None else request.transaction_id
+        _logger.debug("Adding transaction %d" % tid)
+        self.transactions[tid] = request
+
+    def getTransaction(self, tid):
+        """ Returns a transaction matching the referenced tid
+
+        If the transaction does not exist, None is returned
+
+        :param tid: The transaction to retrieve
+
+        """
+        _logger.debug("Getting transaction %d" % tid)
+
+        return self.transactions.pop(tid, None)
+
+    def delTransaction(self, tid):
+        """ Removes a transaction matching the referenced tid
+
+        :param tid: The transaction to remove
+        """
+        _logger.debug("deleting transaction %d" % tid)
+
+        self.transactions.pop(tid, None)
+
+class DictTransactionManagerSeries4(ModbusTransactionManager):
+    """ Impelements a transaction for a manager where the
+    results are keyed based on the supplied transaction id.
+    """
+    """ Extended the implemetation of Series 3, Series 4
+    """
+
+    def __init__(self, client, **kwargs):
+        """ Initializes an instance of the ModbusTransactionManager
+
+        :param client: The client socket wrapper
+        """
+        self.transactions = {}
+        super(DictTransactionManager, self).__init__(client, **kwargs)
+
+    def __iter__(self):
+        """ Iterater over the current managed transactions
+
+        :returns: An iterator of the managed transactions
+        """
+        return iterkeys(self.transactions)
+
+    def addTransaction(self, request, tid=None):
+        """ Adds a transaction to the handler
+
+        This holds the requets in case it needs to be resent.
+        After being sent, the request is removed.
+
+        :param request: The request to hold on to
+        :param tid: The overloaded transaction id to use
+        """
+        tid = tid if tid != None else request.transaction_id
+        _logger.debug("Adding transaction %d" % tid)
+        self.transactions[tid] = request
+
+    def getTransaction(self, tid):
+        """ Returns a transaction matching the referenced tid
+
+        If the transaction does not exist, None is returned
+
+        :param tid: The transaction to retrieve
+
+        """
+        _logger.debug("Getting transaction %d" % tid)
+
+        return self.transactions.pop(tid, None)
+
+    def delTransaction(self, tid):
+        """ Removes a transaction matching the referenced tid
+
+        :param tid: The transaction to remove
+        """
+        _logger.debug("deleting transaction %d" % tid)
+
+        self.transactions.pop(tid, None)
 
 class FifoTransactionManager(ModbusTransactionManager):
     """ Impelements a transaction for a manager where the
@@ -537,7 +650,7 @@ class FifoTransactionManager(ModbusTransactionManager):
 
 __all__ = [
     "FifoTransactionManager",
-    "DictTransactionManager",
+    "DictTransactionManager", "DictTransactionManagerSeries3", "DictTransactionManagerSeries4",
     "ModbusSocketFramer", "ModbusTlsFramer", "ModbusRtuFramer",
     "ModbusAsciiFramer", "ModbusBinaryFramer",
 ]
