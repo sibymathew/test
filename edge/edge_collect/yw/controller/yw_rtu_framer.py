@@ -249,7 +249,7 @@ class YWRtuFramer(ModbusFramer):
                 time.sleep(self.client.timeout)
                 break
                 
-             elif self.client.state != ModbusTransactionState.RETRYING:
+            elif self.client.state != ModbusTransactionState.RETRYING:
                
                 # Speed up
                 time.sleep(self.client.timeout)

@@ -16,7 +16,7 @@ from yw.transaction import ModbusSocketFramer, ModbusBinaryFramer
 from yw.transaction import ModbusAsciiFramer, ModbusRtuFramer
 from yw.transaction import ModbusTlsFramer
 from yw.edge.common import ModbusClientMixin
-from yw.yw_generator.utils import YWGen
+from yw.yw_generator.utils.modbus import YWGen
 from yw.yw_generator.utils.threadingJob import ThreadingJob
 
 # --------------------------------------------------------------------------- #
