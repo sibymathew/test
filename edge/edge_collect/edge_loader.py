@@ -142,7 +142,7 @@ def get_motor_data(table_name,motor_list, interval):
 
         for motor_id in motor_list:
             if interval == 0:
-                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
             else:
                 motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
 
