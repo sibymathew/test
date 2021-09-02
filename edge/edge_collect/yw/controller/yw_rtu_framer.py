@@ -116,8 +116,7 @@ class YWRtuFramer(ModbusFramer):
             return False
 
         try:
-            # Frame is ready only if populateHeader() successfully populates crc field which finishes RTU frame
-            # Otherwise, if buffer is not yet long enough, populateHeader() raises IndexError
+
             self.populateHeader()
         except IndexError:
             return False
@@ -218,7 +217,7 @@ class YWRtuFramer(ModbusFramer):
     def sendPacket(self, message):
         """
         Sends packets on the bus with 3.5char delay between frames
-        :param message: Message to be sent over the bus
+
         :return:
         """
         start = time.time()
@@ -269,7 +268,7 @@ class YWRtuFramer(ModbusFramer):
     def recvPacket(self, size):
         """
         Receives packet from the bus with specified len
-        :param size: Number of bytes to read
+
         :return:
         """
         result = self.client.recv(size)

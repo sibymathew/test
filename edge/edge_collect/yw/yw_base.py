@@ -25,35 +25,7 @@ class YWProtocol(object):
     """
     Base class for all Modbus messages
 
-    .. attribute:: transaction_id
 
-       This value is used to uniquely identify a request
-       response pair.  It can be implemented as a simple counter
-
-    .. attribute:: protocol_id
-
-       This is a constant set at 0 to indicate Modbus.  It is
-       put here for ease of expansion.
-
-    .. attribute:: unit_id
-
-       This is used to route the request to the correct child. In
-       the TCP modbus, it is used for routing (or not used at all. However,
-       for the serial versions, it is used to specify which child to perform
-       the requests against. The value 0x00 represents the broadcast address
-       (also 0xff).
-
-    .. attribute:: check
-
-       This is used for LRC/CRC in the serial modbus protocols
-
-    .. attribute:: skip_encode
-
-       This is used when the message payload has already been encoded.
-       Generally this will occur when the PayloadBuilder is being used
-       to create a complicated message. By setting this to True, the
-       request will pass the currently encoded message through instead
-       of encoding it again.
     """
     """
     :method:  custom implemented for YW scenarios  - Series 3, Series 4
@@ -77,7 +49,7 @@ class YWProtocol(object):
     def decode(self, data):
         """ Decodes data part of the message.
 
-        :param data: is a string object
+
         :raises: A not implemented exception
         """
         raise NotImplementedException()
@@ -86,7 +58,7 @@ class YWProtocol(object):
     def calculateRtuFrameSize(cls, buffer):
         """ Calculates the size of a PDU.
 
-        :param buffer: A buffer containing the data that have been received.
+
         :returns: The number of bytes in the PDU.
         """
         if hasattr(cls, '_rtu_frame_size'):
@@ -107,7 +79,7 @@ class ModbusRequest(YWProtocol):
     def doException(self, exception):
         """ Builds an error response based on the function
 
-        :param exception: The exception to return
+
         :raises: An exception response
         """
         exc = ExceptionResponse(self.function_code, exception)
@@ -118,15 +90,7 @@ class ModbusRequest(YWProtocol):
 class ModbusResponse(YWProtocol):
     """ Base class for a modbus response PDU
 
-    .. attribute:: should_respond
 
-       A flag that indicates if this response returns a result back
-       to the client issuing the request
-
-    .. attribute:: _rtu_frame_size
-
-       Indicates the size of the modbus rtu response used for
-       calculating how much to read.
     """
 
     should_respond = True
@@ -177,8 +141,7 @@ class ExceptionResponse(ModbusResponse):
     def __init__(self, function_code, exception_code=None, **kwargs):
         """ Initializes the modbus exception response
 
-        :param function_code: The function to build an exception response for
-        :param exception_code: The specific modbus exception to return
+
         """
         ModbusResponse.__init__(self, **kwargs)
         self.original_code = function_code
@@ -211,18 +174,15 @@ class ExceptionResponse(ModbusResponse):
 
 class IllegalFunctionRequest(ModbusRequest):
     """
-    Defines the Modbus slave exception type 'Illegal Function'
-    This exception code is returned if the slave::
 
-        - does not implement the function code **or**
-        - is not in a state that allows it to process the function
+    This exception code is returned if the slave: does not implement the function code
     """
     ErrorCode = 1
 
     def __init__(self, function_code, **kwargs):
         """ Initializes a IllegalFunctionRequest
 
-        :param function_code: The function we are erroring on
+
         """
         ModbusRequest.__init__(self, **kwargs)
         self.function_code = function_code
@@ -230,14 +190,14 @@ class IllegalFunctionRequest(ModbusRequest):
     def decode(self, data):
         """ This is here so this failure will run correctly
 
-        :param data: Not used
+
         """
         pass
 
     def execute(self, context):
         """ Builds an illegal function request error response
 
-        :param context: The current context for the message
+
         :returns: The error response packet
         """
         return ExceptionResponse(self.function_code, self.ErrorCode)

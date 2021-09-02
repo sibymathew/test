@@ -33,25 +33,7 @@ class ModbusTcpDiagClient(ModbusTcpClient):
     Variant of yw.edge.interface.ModbusTcpClient with additional
     logging to diagnose network issues.
 
-    The following events are logged:
 
-    +---------+-----------------------------------------------------------------+
-    | Level   | Events                                                          |
-    +=========+=================================================================+
-    | ERROR   | Failure to connect to modbus unit; unexpected disconnect by     |
-    |         | modbus unit                                                     |
-    +---------+-----------------------------------------------------------------+
-    | WARNING | Timeout on normal read; read took longer than warn_delay_limit  |
-    +---------+-----------------------------------------------------------------+
-    | INFO    | Connection attempt to modbus unit; disconnection from modbus    |
-    |         | unit; each time limited read                                    |
-    +---------+-----------------------------------------------------------------+
-    | DEBUG   | Normal read with timing information                             |
-    +---------+-----------------------------------------------------------------+
-
-    Reads are differentiated between "normal", which reads a specified number of
-    bytes, and "time limited", which reads all data for a duration equal to the
-    timeout period configured for this instance.
     """
     """
     YW Events are customized to Events as logged 
@@ -65,14 +47,7 @@ class ModbusTcpDiagClient(ModbusTcpClient):
 
         The keys of LOG_MSGS can be used in kwargs to customize the messages.
 
-        :param host: The host to connect to (default 127.0.0.1)
-        :param port: The modbus port to connect to (default 502)
-        :param source_address: The source address tuple to bind to (default ('', 0))
-        :param timeout: The timeout to use for this socket (default Defaults.Timeout)
-        :param warn_delay_limit: Log reads that take longer than this as warning.
-               Default True sets it to half of "timeout". None never logs these as
-               warning, 0 logs everything as warning.
-        :param framer: The modbus framer to use (default ModbusSocketFramer)
+
 
         .. note:: The host argument will accept ipv4 and ipv6 hosts
         """
@@ -150,9 +125,7 @@ class ModbusTcpDiagClient(ModbusTcpClient):
 
 
 def get_client():
-    """ Returns an appropriate client based on logging level
-
-    This will be ModbusTcpDiagClient by default, or the parent class
+    """ Returns an appropriate client based on logging level or the parent class
     if the log level is such that the diagnostic client will not log
     anything.
 

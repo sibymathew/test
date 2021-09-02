@@ -15,11 +15,7 @@ class Version(object):
     def __init__(self, package, major, minor, micro, pre=None):
         """
 
-        :param package: Name of the package that this is a version of.
-        :param major: The major version number.
-        :param minor: The minor version number.
-        :param micro: The micro version number.
-        :param pre: The pre release tag
+
         """
         self.package = package
         self.major = major

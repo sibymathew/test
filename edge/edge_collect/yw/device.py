@@ -2,9 +2,7 @@
 Modbus Device Controller
 -------------------------
 
-These are the device management handlers.  They should be
-maintained in the server context and the various methods
-should be inserted in the correct locations.
+
 """
 from yw.constants import DeviceInformation
 from yw.interfaces import Singleton
@@ -18,14 +16,11 @@ from collections import OrderedDict
 #---------------------------------------------------------------------------#
 class ModbusAccessControl(Singleton):
     '''
-    This is a simple implementation of a Network Management System table.
-    Its purpose is to control access to the server (if it is used).
-    We assume that if an entry is in the table, it is allowed accesses to
-    resources.  However, if the host does not appear in the table (all
+    This is a simple implementation, if the host does not appear in the table (all
     unknown hosts) its connection will simply be closed.
 
     Since it is a singleton, only one version can possible exist and all
-    instances pull from here.
+    instances pull from here. Extended for also Series 3, Series 4
     '''
     '''
     Extended to support Series 3, Series 4 for YW
@@ -42,16 +37,16 @@ class ModbusAccessControl(Singleton):
         return self.__nmstable.__iter__()
 
     def __contains__(self, host):
-        ''' Check if a host is allowed to access resources
+        ''' Check if a host is allowed to access resources based on Series 3, Series 4 for given VFD
 
-        :param host: The host to check
+
         '''
         return host in self.__nmstable
 
     def add(self, host):
-        ''' Add allowed host(s) from the NMS table
+        ''' Add allowed host(s) from the NMS table based on Series 3, Series 4 for given VFD
 
-        :param host: The host to add
+
         '''
         if not isinstance(host, list):
             host = [host]
@@ -60,9 +55,9 @@ class ModbusAccessControl(Singleton):
                 self.__nmstable.append(entry)
 
     def remove(self, host):
-        ''' Remove allowed host(s) from the NMS table
+        ''' Remove allowed host(s) from the NMS table  based on Series 3, Series 4 for given VFD
 
-        :param host: The host to remove
+
         '''
         if not isinstance(host, list):
             host = [host]
@@ -71,9 +66,9 @@ class ModbusAccessControl(Singleton):
                 self.__nmstable.remove(entry)
 
     def check(self, host):
-        ''' Check if a host is allowed to access resources
+        ''' Check if a host is allowed to access resources  based on Series 3, Series 4 for given VFD
 
-        :param host: The host to check
+
         '''
         return host in self.__nmstable
 
@@ -83,9 +78,8 @@ class ModbusAccessControl(Singleton):
 #---------------------------------------------------------------------------#
 class ModbusPlusStatistics(object):
     '''
-    This is used to maintain the current modbus plus statistics count. As of
-    right now this is simply a stub to complete the modbus implementation.
-    For more information, see the modbus implementation guide page 87.
+    This is used to maintain the current VFD plus statistics count. As of
+    right now this is simply a stub to complete the implementation guide.
     '''
     '''
     To be expended for all other VFD statuses 
@@ -221,9 +215,7 @@ class ModbusDeviceIdentification(object):
     def __init__(self, info=None):
         '''
         Initialize the datastore with the elements you need.
-        (note acceptable range is [0x00-0x06,0x80-0xFF] inclusive)
 
-        :param information: A dictionary of {int:string} of values
         '''
         if isinstance(info, dict):
             for key in info:
@@ -246,17 +238,14 @@ class ModbusDeviceIdentification(object):
 
     def update(self, value):
         ''' Update the values of this identity
-        using another identify as the value
-
-        :param value: The value to copy values from
+        using the value to copy values from
         '''
         self.__data.update(value)
 
     def __setitem__(self, key, value):
         ''' Wrapper used to access the device information
 
-        :param key: The register to set
-        :param value: The new value for referenced register
+
         '''
         if key not in [0x07, 0x08]:
             self.__data[key] = value
@@ -264,7 +253,7 @@ class ModbusDeviceIdentification(object):
     def __getitem__(self, key):
         ''' Wrapper used to access the device information
 
-        :param key: The register to read
+
         '''
         return self.__data.setdefault(key, '')
 
@@ -308,10 +297,7 @@ class DeviceInformationFactory(Singleton):
     def get(cls, control, read_code=DeviceInformation.Basic, object_id=0x00):
         ''' Get the requested device data from the system
 
-        :param control: The control block to pull data from
-        :param read_code: The read code to process
-        :param object_id: The specific object_id to read
-        :returns: The requested data (id, length, value)
+
         '''
         identity = control.Identity
         return cls.__lookup[read_code](cls, identity, object_id)
@@ -320,9 +306,6 @@ class DeviceInformationFactory(Singleton):
     def __get(cls, identity, object_id):
         ''' Read a single object_id from the device information
 
-        :param identity: The identity block to pull data from
-        :param object_id: The specific object id to read
-        :returns: The requested data (id, length, value)
         '''
         return { object_id:identity[object_id] }
 
@@ -330,9 +313,7 @@ class DeviceInformationFactory(Singleton):
     def __gets(cls, identity, object_ids):
         ''' Read multiple object_ids from the device information
 
-        :param identity: The identity block to pull data from
-        :param object_ids: The specific object ids to read
-        :returns: The requested data (id, length, value)
+
         '''
         return dict((oid, identity[oid]) for oid in object_ids if identity[oid])
 
@@ -344,68 +325,7 @@ class ModbusCountersHandler(object):
     '''
     This is a helper class to simplify the properties for the counters::
 
-    0x0B  1  Return Bus Message Count
 
-             Quantity of messages that the remote
-             device has detected on the communications system since its
-             last restart, clear counters operation, or power-up.  Messages
-             with bad CRC are not taken into account.
-
-    0x0C  2  Return Bus Communication Error Count
-
-             Quantity of CRC errors encountered by the remote device since its
-             last restart, clear counters operation, or power-up.  In case of
-             an error detected on the character level, (overrun, parity error),
-             or in case of a message length < 3 bytes, the receiving device is
-             not able to calculate the CRC. In such cases, this counter is
-             also incremented.
-
-    0x0D  3  Return Slave Exception Error Count
-
-             Quantity of MODBUS exception error detected by the remote device
-             since its last restart, clear counters operation, or power-up.  It
-             comprises also the error detected in broadcast messages even if an
-             exception message is not returned in this case.
-             Exception errors are described and listed in "MODBUS Application
-             Protocol Specification" document.
-
-    0xOE  4  Return Slave Message Count
-
-             Quantity of messages addressed to the remote device,  including
-             broadcast messages, that the remote device has processed since its
-             last restart, clear counters operation, or power-up.
-
-    0x0F  5  Return Slave No Response Count
-
-             Quantity of messages received by the remote device for which it
-             returned no response (neither a normal response nor an exception
-             response), since its last restart, clear counters operation, or
-             power-up. Then, this counter counts the number of broadcast
-             messages it has received.
-
-    0x10  6  Return Slave NAK Count
-
-             Quantity of messages addressed to the remote device for which it
-             returned a Negative Acknowledge (NAK) exception response, since
-             its last restart, clear counters operation, or power-up. Exception
-             responses are described and listed in "MODBUS Application Protocol
-             Specification" document.
-
-    0x11  7  Return Slave Busy Count
-
-             Quantity of messages addressed to the remote device for which it
-             returned a Slave Device Busy exception response, since its last
-             restart, clear counters operation, or power-up. Exception
-             responses are described and listed in "MODBUS Application
-             Protocol Specification" document.
-
-    0x12  8  Return Bus Character Overrun Count
-
-             Quantity of messages addressed to the remote device that it could
-             not handle due to a character overrun condition, since its last
-             restart, clear counters operation, or power-up. A character
-             overrun is caused by data characters arriving at the port faster
-             than they can.
 
     .. note:: I threw the event counter in here for convenience
     '''
@@ -554,7 +474,7 @@ class ModbusControlBlock(Singleton):
     def _setListenOnly(self, value):
         ''' This toggles the listen only status
 
-        :param value: The value to set the listen status to
+
         '''
         self.__listen_only = bool(value)
 
@@ -564,9 +484,7 @@ class ModbusControlBlock(Singleton):
     # Mode Properties
     #-------------------------------------------------------------------------#
     def _setMode(self, mode):
-        ''' This toggles the current serial mode
-
-        :param mode: The data transfer method in (RTU, ASCII)
+        ''' This toggles the current serial mode with data transfer method in (RTU, ASCII)
         '''
         if mode in ['ASCII', 'RTU']:
             self.__mode = mode
@@ -579,7 +497,7 @@ class ModbusControlBlock(Singleton):
     def _setDelimiter(self, char):
         ''' This changes the serial delimiter character
 
-        :param char: The new serial delimiter character
+
         '''
         if isinstance(char, str):
             self.__delimiter = char.encode()
@@ -594,9 +512,7 @@ class ModbusControlBlock(Singleton):
     # Diagnostic Properties
     #-------------------------------------------------------------------------#
     def setDiagnostic(self, mapping):
-        ''' This sets the value in the diagnostic register
-
-        :param mapping: Dictionary of key:value pairs to set
+        ''' This sets the value in the diagnostic register, where Dictionary of key:value pairs to set
         '''
         for entry in iteritems(mapping):
             if entry[0] >= 0 and entry[0] < len(self.__diagnostic):
@@ -605,7 +521,7 @@ class ModbusControlBlock(Singleton):
     def getDiagnostic(self, bit):
         ''' This gets the value in the diagnostic register
 
-        :param bit: The bit to get
+
         :returns: The current value of the requested bit
         '''
         try:
@@ -615,7 +531,7 @@ class ModbusControlBlock(Singleton):
             return None
 
     def getDiagnosticRegister(self):
-        ''' This gets the entire diagnostic register
+        ''' This gets the entire diagnostic register based on Series 3, Series 4 for given VFD
 
         :returns: The diagnostic register collection
         '''

@@ -2,14 +2,6 @@
 Modbus Request/Response Decoder Factories
 -------------------------------------------
 
-The following factories make it easy to decode request/response messages.
-To add a new request/response pair to be decode by the library, simply
-add them to the respective function lookup table (order doesn't matter, but
-it does help keep things organized).
-
-Regardless of how many functions are added to the lookup, O(1) behavior is
-kept as a result of a pre-computed lookup dictionary.
-
 
 Implementation is extensively customized to support VFD RTU so to read multiple registers in parallel.
 
@@ -101,7 +93,7 @@ class ServerDecoder(IModbusDecoder):
     def decode(self, message):
         """ Wrapper to decode a request packet
 
-        :param message: The raw modbus request packet
+
         :return: The decoded modbus message or None if error
         """
         try:
@@ -113,18 +105,13 @@ class ServerDecoder(IModbusDecoder):
     def lookupPduClass(self, function_code):
         """ Use `function_code` to determine the class of the PDU.
 
-        :param function_code: The function code specified in a frame.
         :returns: The class of the PDU that has a matching `function_code`.
         """
         return self.__lookup.get(function_code, ExceptionResponse)
 
     def _helper(self, data):
         """
-        This factory is used to generate the correct request object
-        from a valid request packet. This decodes from a list of the
-        currently implemented request types.
 
-        :param data: The request packet to decode
         :returns: The decoded request or illegal function request object
         """
         function_code = byte2int(data[0])
@@ -150,8 +137,7 @@ class ServerDecoder(IModbusDecoder):
     
     def register(self, function=None):
         """
-        Registers a function and sub function class with the decoder
-        :param function: Custom function class to register
+        Registers a function and sub function class , Custom function class to register
         :return:
         """
         if function and not issubclass(function, ModbusRequest):
@@ -235,7 +221,7 @@ class ClientDecoder(IModbusDecoder):
     def lookupPduClass(self, function_code):
         """ Use `function_code` to determine the class of the PDU.
 
-        :param function_code: The function code specified in a frame.
+
         :returns: The class of the PDU that has a matching `function_code`.
         """
         return self.__lookup.get(function_code, ExceptionResponse)
@@ -257,11 +243,7 @@ class ClientDecoder(IModbusDecoder):
 
     def _helper(self, data):
         """
-        This factory is used to generate the correct response object
-        from a valid response packet. This decodes from a list of the
-        currently implemented request types.
-
-        :param data: The response packet to decode
+        This factory is used to generate the correct response packet to decode
         :returns: The decoded request or an exception response object
         """
         fc_string = function_code = byte2int(data[0])
@@ -289,9 +271,7 @@ class ClientDecoder(IModbusDecoder):
     def register(self, function=None, sub_function=None, force=False):
         """
         Registers a function and sub function class with the decoder
-        :param function: Custom function class to register
-        :param sub_function: Custom sub function class to register
-        :param force: Force update the existing class
+
         :return:
         """
         """
@@ -400,10 +380,7 @@ class VFDDecoder(IModbusDecoder):
     def _helper(self, data):
         """
         This factory is used to generate the correct response object
-        from a valid response packet. This decodes from a list of the
-        currently implemented request types.
 
-        :param data: The response packet to decode
         :returns: The decoded request or an exception response object
         """
         fc_string = function_code = byte2int(data[0])
@@ -430,10 +407,7 @@ class VFDDecoder(IModbusDecoder):
 
     def register(self, function=None, sub_function=None, force=False):
         """
-        Registers a function and sub function class with the decoder
-        :param function: Custom function class to register
-        :param sub_function: Custom sub function class to register
-        :param force: Force update the existing class
+        Registers a function and sub function class with Force update the existing class
         :return:
         """
         """

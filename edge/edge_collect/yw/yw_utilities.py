@@ -3,7 +3,7 @@ YW Utilities
 -----------------
 
 A collection of utilities for packing data, unpacking
-data computing checksums, and decode checksums.
+data computing checksums, and decode checksums, implemented for any VFD thru RTU
 """
 from yw.compat import int2byte, byte2int, IS_PYTHON3
 from six import string_types
@@ -47,19 +47,16 @@ def default(value):
     Given a python object, return the default value
     of that object.
 
-    :param value: The value to get the default of
+
     :returns: The default value
     """
     return type(value)()
 
 
 def dict_property(store, index):
-    """ Helper to create class properties from a dictionary.
-    Basically this allows you to remove a lot of possible
+    """ Helper to create class properties of possible
     boilerplate code.
 
-    :param store: The store store to pull from
-    :param index: The index into the store to close over
     :returns: An initialized property set
     """
     if hasattr(store, '__call__'):
@@ -82,12 +79,7 @@ def dict_property(store, index):
 def pack_bitstring(bits):
     """ Creates a string out of an array of bits
 
-    :param bits: A bit array
 
-    example::
-
-        bits   = [False, True, False, True]
-        result = pack_bitstring(bits)
     """
     ret = b''
     i = packed = 0
@@ -109,12 +101,7 @@ def pack_bitstring(bits):
 def unpack_bitstring(string):
     """ Creates bit array out of a string
 
-    :param string: The modbus data packet to decode
 
-    example::
-
-        bytes  = 'bytes to decode'
-        result = unpack_bitstring(bytes)
     """
     byte_count = len(string)
     bits = []
@@ -132,7 +119,7 @@ def unpack_bitstring(string):
 def make_byte_string(s):
     """
     Returns byte string from a given string, python3 specific fix
-    :param s:
+
     :return:
     """
     if IS_PYTHON3 and isinstance(s, string_types):
@@ -168,7 +155,7 @@ def computeCRC(data):
     The difference between modbus's crc16 and a normal crc16
     is that modbus starts the crc value out at 0xffff.
 
-    :param data: The data to create a crc16 of
+
     :returns: The calculated CRC
     """
     crc = 0xffff
@@ -182,20 +169,17 @@ def computeCRC(data):
 def checkCRC(data, check):
     """ Checks if the data matches the passed in CRC
 
-    :param data: The data to create a crc16 of
-    :param check: The CRC to validate
+
     :returns: True if matched, False otherwise
     """
     return computeCRC(data) == check
 
 
 def computeLRC(data):
-    """ Used to compute the longitudinal redundancy check
-    against a string. This is only used on the serial ASCII
-    modbus protocol. A full description of this implementation
+    """ Used to compute the implementation
     can be found in appendex B of the serial line modbus description.
 
-    :param data: The data to apply a lrc to
+
     :returns: The calculated LRC
 
     """
@@ -207,8 +191,7 @@ def computeLRC(data):
 def checkLRC(data, check):
     """ Checks if the passed in data matches the LRC
 
-    :param data: The data to calculate
-    :param check: The LRC to validate
+
     :returns: True if matched, False otherwise
     """
     return computeLRC(data) == check
@@ -217,22 +200,10 @@ def checkLRC(data, check):
 def rtuFrameSize(data, byte_count_pos):
     """ Calculates the size of the frame based on the byte count.
 
-    :param data: The buffer containing the frame.
-    :param byte_count_pos: The index of the byte count in the buffer.
+
     :returns: The size of the frame.
 
-    The structure of frames with a byte count field is always the
-    same:
 
-    - first, there are some header fields
-    - then the byte count field
-    - then as many data bytes as indicated by the byte count,
-    - finally the CRC (two bytes).
-
-    To calculate the frame size, it is therefore sufficient to extract
-    the contents of the byte count field, add the position of this
-    field, and finally increment the sum by three (one byte for the
-    byte count field, two for the CRC).
     """
     """
     customize based on YW frame sizes

@@ -31,21 +31,7 @@ class ModbusEvent(object):
 class RemoteReceiveEvent(ModbusEvent):
     ''' Remote device MODBUS Receive Event
 
-    The remote device stores this type of event byte when a query message
-    is received. It is stored before the remote device processes the message.
-    This event is defined by bit 7 set to logic '1'. The other bits will be
-    set to a logic '1' if the corresponding condition is TRUE. The bit layout
-    is::
 
-        Bit Contents
-        ----------------------------------
-        0   Not Used
-        2   Not Used
-        3   Not Used
-        4   Character Overrun
-        5   Currently in Listen Only Mode
-        6   Broadcast Receive
-        7   1
     '''
 
     def __init__(self, **kwargs):
@@ -79,24 +65,10 @@ class RemoteReceiveEvent(ModbusEvent):
 class RemoteSendEvent(ModbusEvent):
     ''' Remote device MODBUS Send Event
 
-    The remote device stores this type of event byte when it finishes
-    processing a request message. It is stored if the remote device
-    returned a normal or exception response, or no response.
-
-    This event is defined by bit 7 set to a logic '0', with bit 6 set to a '1'.
-    The other bits will be set to a logic '1' if the corresponding
+    The remote device stores this type of event byte when  the corresponding
     condition is TRUE. The bit layout is::
 
-        Bit Contents
-        -----------------------------------------------------------
-        0   Read Exception Sent (Exception Codes 1-3)
-        1   Slave Abort Exception Sent (Exception Code 4)
-        2   Slave Busy Exception Sent (Exception Codes 5-6)
-        3   Slave Program NAK Exception Sent (Exception Code 7)
-        4   Write Timeout Error Occurred
-        5   Currently in Listen Only Mode
-        6   1
-        7   0
+
     '''
 
     def __init__(self, **kwargs):
@@ -138,8 +110,7 @@ class RemoteSendEvent(ModbusEvent):
 class EnteredListenModeEvent(ModbusEvent):
     ''' Remote device Entered Listen Only Mode
 
-    The remote device stores this type of event byte when it enters
-    the Listen Only Mode. The event is defined by a content of 04 hex.
+
     '''
 
     value = 0x04
@@ -162,18 +133,7 @@ class EnteredListenModeEvent(ModbusEvent):
 
 
 class CommunicationRestartEvent(ModbusEvent):
-    ''' Remote device Initiated Communication Restart
-
-    The remote device stores this type of event byte when its communications
-    port is restarted. The remote device can be restarted by the Diagnostics
-    function (code 08), with sub-function Restart Communications Option
-    (code 00 01).
-
-    That function also places the remote device into a 'Continue on Error'
-    or 'Stop on Error' mode. If the remote device is placed  into 'Continue on
-    Error' mode, the event byte is added to the existing event log. If the
-    remote device is placed into 'Stop on Error' mode, the byte is added to
-    the log and the rest of the log is cleared to zeros.
+    ''' Remote device Initiated Communication Restart added to the existing event log.
 
     The event is defined by a content of zero.
     '''
@@ -191,7 +151,7 @@ class CommunicationRestartEvent(ModbusEvent):
     def decode(self, event):
         ''' Decodes the event message to its status bits
 
-        :param event: The event to decode
+
         '''
         if event != self.__encoded:
             raise ParameterException('Invalid decoded value')

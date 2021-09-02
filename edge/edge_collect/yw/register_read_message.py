@@ -21,8 +21,7 @@ class ReadRegistersRequestBase(ModbusRequest):
     def __init__(self, address, count, **kwargs):
         ''' Initializes a new instance
 
-        :param address: The address to start the read from
-        :param count: The number of registers to read
+
         '''
         ModbusRequest.__init__(self, **kwargs)
         self.address = address
@@ -36,15 +35,15 @@ class ReadRegistersRequestBase(ModbusRequest):
         return struct.pack('>HH', self.address, self.count)
 
     def decode(self, data):
-        ''' Decode a register request packet
+        ''' Decode a register request packet to decode YW variety of registers using VFD
 
-        :param data: The request to decode
+
         '''
         self.address, self.count = struct.unpack('>HH', data)
 
     def get_response_pdu_size(self):
         """
-        Func_code (1 byte) + Byte Count(1 byte) + 2 * Quantity of Coils (n Bytes)
+
         :return: 
         """
         return 1 + 1 + 2 * self.count
@@ -59,7 +58,7 @@ class ReadRegistersRequestBase(ModbusRequest):
 
 class ReadRegistersResponseBase(ModbusResponse):
     '''
-    Base class for responding to a modbus register read
+    Base class for responding to a modbus register read  YW variety of registers using VFD
     '''
 
     _rtu_byte_count_pos = 2
@@ -67,7 +66,7 @@ class ReadRegistersResponseBase(ModbusResponse):
     def __init__(self, values, **kwargs):
         ''' Initializes a new instance
 
-        :param values: The values to write to
+
         '''
         ModbusResponse.__init__(self, **kwargs)
         self.registers = values or []
@@ -95,7 +94,7 @@ class ReadRegistersResponseBase(ModbusResponse):
     def getRegister(self, index):
         ''' Get the requested register
 
-        :param index: The indexed register to retrieve
+
         :returns: The request register
         '''
         return self.registers[index]
@@ -110,11 +109,7 @@ class ReadRegistersResponseBase(ModbusResponse):
 
 class ReadYWRegistersRequest(ReadRegistersRequestBase):
     '''
-    This function code is used to read the contents of a contiguous block
-    of holding registers in a remote device. The Request PDU specifies the
-    starting register address and the number of registers. In the PDU
-    Registers are addressed starting at zero. Therefore registers numbered
-    1-16 are addressed as 0-15.
+    This function code is used to read the registers .
     '''
     '''
     :custom params for YW
@@ -147,11 +142,7 @@ class ReadYWRegistersRequest(ReadRegistersRequestBase):
 
 class ReadYWRegistersResponse(ReadRegistersResponseBase):
     '''
-    This function code is used to read the contents of a contiguous block
-    of holding registers in a remote device. The Request PDU specifies the
-    starting register address and the number of registers. In the PDU
-    Registers are addressed starting at zero. Therefore registers numbered
-    1-16 are addressed as 0-15.
+    This function code is used to read the registers
     '''
     '''
     :custom params for YW
@@ -162,33 +153,29 @@ class ReadYWRegistersResponse(ReadRegistersResponseBase):
     def __init__(self, values=None, **kwargs):
         ''' Initializes a new response instance
 
-        :param values: The resulting register values
+
         '''
         ReadRegistersResponseBase.__init__(self, values, **kwargs)
 
 
 class ReadInputRegistersRequest(ReadRegistersRequestBase):
     '''
-    This function code is used to read from 1 to approx. 125 contiguous
-    input registers in a remote device. The Request PDU specifies the
-    starting register address and the number of registers. In the PDU
-    Registers are addressed starting at zero. Therefore input registers
-    numbered 1-16 are addressed as 0-15.
+    This function code is used to read input registers
+
     '''
     function_code = 4
 
     def __init__(self, address=None, count=None, **kwargs):
         ''' Initializes a new instance of the request
 
-        :param address: The starting address to read from
-        :param count: The number of registers to read from address
+
         '''
         ReadRegistersRequestBase.__init__(self, address, count, **kwargs)
 
     def execute(self, context):
         ''' Run a read input request against a datastore
 
-        :param context: The datastore to request from
+
         :returns: An initialized response, exception message otherwise
         '''
         if not (1 <= self.count <= 0x7d):
@@ -201,11 +188,8 @@ class ReadInputRegistersRequest(ReadRegistersRequestBase):
 
 class ReadInputRegistersResponse(ReadRegistersResponseBase):
     '''
-    This function code is used to read from 1 to approx. 125 contiguous
-    input registers in a remote device. The Request PDU specifies the
-    starting register address and the number of registers. In the PDU
-    Registers are addressed starting at zero. Therefore input registers
-    numbered 1-16 are addressed as 0-15.
+    This function code is used to read from  input registers
+
     '''
     function_code = 4
 
@@ -219,16 +203,8 @@ class ReadInputRegistersResponse(ReadRegistersResponseBase):
 
 class ReadWriteMultipleRegistersRequest(ModbusRequest):
     '''
-    This function code performs a combination of one read operation and one
-    write operation in a single MODBUS transaction. The write
-    operation is performed before the read.
-
-    Holding registers are addressed starting at zero. Therefore holding
-    registers 1-16 are addressed in the PDU as 0-15.
-
-    The request specifies the starting address and number of holding
-    registers to be read as well as the starting address, number of holding
-    registers, and the data to be written. The byte count specifies the
+    This function code performs a combination of  holding
+    registers to be read as well as the starting address, byte count specifies the
     number of bytes to follow in the write data field."
     '''
     function_code = 23
@@ -237,10 +213,7 @@ class ReadWriteMultipleRegistersRequest(ModbusRequest):
     def __init__(self, **kwargs):
         ''' Initializes a new request message
 
-        :param read_address: The address to start reading from
-        :param read_count: The number of registers to read from address
-        :param write_address: The address to start writing to
-        :param write_registers: The registers to write to the specified address
+
         '''
         ModbusRequest.__init__(self, **kwargs)
         self.read_address    = kwargs.get('read_address', 0x00)
@@ -320,9 +293,7 @@ class ReadWriteMultipleRegistersRequest(ModbusRequest):
 
 class ReadWriteMultipleRegistersResponse(ModbusResponse):
     '''
-    The normal response contains the data from the group of registers that
-    were read. The byte count field specifies the quantity of bytes to
-    follow in the read data field.
+    The normal response contains the data from the group of registers that specifies the quantity of bytes
     '''
     function_code = 23
     _rtu_byte_count_pos = 2
@@ -330,7 +301,7 @@ class ReadWriteMultipleRegistersResponse(ModbusResponse):
     def __init__(self, values=None, **kwargs):
         ''' Initializes a new instance
 
-        :param values: The register values to write
+
         '''
         ModbusResponse.__init__(self, **kwargs)
         self.registers = values or []

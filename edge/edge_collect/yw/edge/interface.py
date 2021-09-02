@@ -32,10 +32,8 @@ _logger = logging.getLogger(__name__)
 
 class BaseModbusClient(ModbusClientMixin):
     """
-    Inteface for a modbus synchronous client. Defined here are all the
-    methods for performing the related request methods.  Derived classes
-    simply need to implement the transport methods and set the correct
-    framer.
+    Inteface for a modbus synchronous client. Defined and Derived classes
+    simply need to implement the transport methods and set the correct VFD framer.
     """
     """
     Interface is extended for YW scenarios
@@ -87,7 +85,7 @@ class BaseModbusClient(ModbusClientMixin):
     def _send(self, request):
         """ Sends data on the underlying socket
 
-        :param request: The encoded request to send
+
         :return: The number of bytes written
         """
         raise NotImplementedException("Method not implemented by derived class")
@@ -98,7 +96,7 @@ class BaseModbusClient(ModbusClientMixin):
     def _recv(self, size):
         """ Reads data from the underlying descriptor
 
-        :param size: The number of bytes to read
+
         :return: The bytes read
         """
         raise NotImplementedException("Method not implemented by derived class")
@@ -108,7 +106,7 @@ class BaseModbusClient(ModbusClientMixin):
     # ----------------------------------------------------------------------- #
     def execute(self, request=None):
         """
-        :param request: The request to process
+
         :returns: The result of the request execution
         """
         if not self.connect():
@@ -168,7 +166,7 @@ class BaseModbusClient(ModbusClientMixin):
     def register(self, function):
         """
         Registers a function and sub function class with the decoder
-        :param function: Custom function class to register
+
         :return:
         """
         self.framer.decoder.register(function)
@@ -192,11 +190,6 @@ class ModbusTcpClient(BaseModbusClient):
         framer=ModbusSocketFramer, **kwargs):
         """ Initialize a client instance
 
-        :param host: The host to connect to (default 127.0.0.1)
-        :param port: The modbus port to connect to (default 502)
-        :param source_address: The source address tuple to bind to (default ('', 0))
-        :param timeout: The timeout to use for this socket (default Defaults.Timeout)
-        :param framer: The modbus framer to use (default ModbusSocketFramer)
 
         .. note:: The host argument will accept ipv4 and ipv6 hosts
         """
@@ -262,27 +255,13 @@ class ModbusTcpClient(BaseModbusClient):
         return 0
 
     def _recv(self, size):
-        """ Reads data from the underlying descriptor
-
-        :param size: The number of bytes to read
-        :return: The bytes read if the peer sent a response, or a zero-length
-                 response if no data packets were received from the client at
-                 all.
-        :raises: ConnectionException if the socket is not initialized, or the
-                 peer either has closed the connection before this method is
-                 invoked or closes it before sending any data before timeout.
+        """ Reads data from the underlying descriptor, raises ConnectionException if the socket is not initialized,
         """
         if not self.socket:
             raise ConnectionException(self.__str__())
 
-        # socket.recv(size) waits until it gets some data from the host but
-        # not necessarily the entire response that can be fragmented in
-        # many packets.
-        # To avoid the splitted responses to be recognized as invalid
-        # messages and to be discarded, loops socket.recv until full data
-        # is received or timeout is expired.
-        # If timeout expires returns the read data, also if its length is
-        # less than the expected size.
+
+
         self.socket.setblocking(0)
 
         timeout = self.timeout
@@ -321,20 +300,10 @@ class ModbusTcpClient(BaseModbusClient):
         return b"".join(data)
 
     def _handle_abrupt_socket_close(self, size, data, duration):
-        """ Handle unexpected socket close by remote end
-
-        Intended to be invoked after determining that the remote end
-        has unexpectedly closed the connection, to clean up and handle
+        """ Handle unexpected socket close by remote end and handle
         the situation appropriately.
 
-        :param size: The number of bytes that was attempted to read
-        :param data: The actual data returned
-        :param duration: Duration from the read was first attempted
-               until it was determined that the remote closed the
-               socket
-        :return: The more than zero bytes read from the remote end
-        :raises: ConnectionException If the remote end didn't send any
-                 data at all before closing the connection.
+
         """
         self.close()
         readsize = ("read of %s bytes" % size if size
@@ -376,14 +345,9 @@ class ModbusTlsClient(ModbusTcpClient):
 
     def __init__(self, host='localhost', port=Defaults.TLSPort, sslctx=None,
         framer=ModbusTlsFramer, **kwargs):
-        """ Initialize a client instance
+        """ Initialize a edge instance
 
-        :param host: The host to connect to (default localhost)
-        :param port: The modbus port to connect to (default 802)
-        :param sslctx: The SSLContext to use for TLS (default None and auto create)
-        :param source_address: The source address tuple to bind to (default ('', 0))
-        :param timeout: The timeout to use for this socket (default Defaults.Timeout)
-        :param framer: The modbus framer to use (default ModbusSocketFramer)
+
 
         .. note:: The host argument will accept ipv4 and ipv6 hosts
         """
@@ -426,14 +390,7 @@ class ModbusTlsClient(ModbusTcpClient):
         if not self.socket:
             raise ConnectionException(self.__str__())
 
-        # socket.recv(size) waits until it gets some data from the host but
-        # not necessarily the entire response that can be fragmented in
-        # many packets.
-        # To avoid the splitted responses to be recognized as invalid
-        # messages and to be discarded, loops socket.recv until full data
-        # is received or timeout is expired.
-        # If timeout expires returns the read data, also if its length is
-        # less than the expected size.
+
         timeout = self.timeout
 
         # If size isn't specified read 1 byte at a time.
@@ -453,9 +410,7 @@ class ModbusTlsClient(ModbusTcpClient):
             if size:
                 recv_size = size - len(data)
 
-            # Timeout is reduced also if some data has been received in order
-            # to avoid infinite loops when there isn't an expected response
-            # size and the slave sends noisy data continuosly.
+
             if time_ > end:
                 break
 
@@ -488,10 +443,7 @@ class ModbusUdpClient(BaseModbusClient):
                  framer=ModbusSocketFramer, **kwargs):
         """ Initialize a client instance
 
-        :param host: The host to connect to (default 127.0.0.1)
-        :param port: The modbus port to connect to (default 502)
-        :param framer: The modbus framer to use (default ModbusSocketFramer)
-        :param timeout: The timeout to use for this socket (default None)
+
         """
         self.host = host
         self.port = port
@@ -589,22 +541,7 @@ class YWSerialClient(BaseModbusClient):
     def __init__(self, method='ascii', **kwargs):
         """ Initialize a serial client instance
 
-        The methods to connect are::
 
-          - ascii
-          - rtu
-          - binary
-
-        :param method: The method to use for connection
-        :param port: The serial port to attach to
-        :param stopbits: The number of stop bits to use
-        :param bytesize: The bytesize of the serial messages
-        :param parity: Which kind of parity to use
-        :param baudrate: The baud rate to use for the serial device
-        :param timeout: The timeout between serial requests (default 3s)
-        :param strict:  Use Inter char timeout for baudrates <= 19200 (adhere
-        to modbus standards)
-        :param handle_local_echo: Handle local echo of the USB-to-RS485 adaptor
         """
         """
         :method:  custom implemented for YW scenarios  - Series 3, Series 4
@@ -697,15 +634,7 @@ class YWSerialClient(BaseModbusClient):
         return waitingbytes
 
     def _send(self, request):
-        """ Sends data on the underlying socket
-
-        If receive buffer still holds some data then flush it.
-
-        Sleep if last send finished less than 3.5 character
-        times ago.
-
-        :param request: The encoded request to send
-        :return: The number of bytes written
+        """ Sends data on the underlying socket with the number of bytes written
         """
         if not self.socket:
             raise ConnectionException(self.__str__())
