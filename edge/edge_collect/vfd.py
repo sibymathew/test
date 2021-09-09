@@ -209,11 +209,13 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         while True:
             for vfd_addr in vfd_addrs:
                 start_time = round(time.time() * 1000)
+                rawdata = {}
                 datapoints = []
 
                 log_hdlr.info(test)
                 if not test:
                     resp = drive_obj[vfd_addr].read(68, 11)
+                    rawdata[68] = resp
                     i = 0
                     for reg in resp:
                         datapoint = {}
@@ -330,6 +332,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     print("here2")
                     resp = drive_obj[vfd_addr].read(38, 1)
                     datapoint = {}
+                    rawdata[38] = resp
                     datapoint["k"] = "motor_amps"
                     datapoint["v"] = resp[0]/(10*len(motor_uuid[vfd_addr]))
                     datapoint["d"] = "Motor Amps"
@@ -337,10 +340,13 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
                     if motor_type[vfd_addr] == 1:
                         resp = drive_obj[vfd_addr].read(117, 1)
+                        rawdata[117] = resp
                     elif motor_type[vfd_addr] == 0:
                         resp = drive_obj[vfd_addr].read(2068, 1)
+                        rawdata[2068] = resp
                     else:
                         resp = drive_obj[vfd_addr].read(117, 1)
+                        rawdata[117] = resp
                     datapoint = {}
                     datapoint["k"] = "number_of_start_stop"
                     datapoint["v"] = resp[0]
@@ -349,6 +355,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
                     resp = drive_obj[vfd_addr].read(1797, 1)
                     datapoint = {}
+                    rawdata[1797] = resp
                     datapoint["k"] = "motor_in_rpm"
                     datapoint["v"] = ((motor_speed/resp[0])*rpm)/10
                     motor_in_rpm = datapoint["v"]
@@ -376,6 +383,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 print("here5")
                 for motor in motor_uuid[vfd_addr]:
                     data["motor_uuid"] = motor
+                    log_hdlr.info("Raw Data {} : {}".format(start_time, rawdata))
                     print(json.dumps(data, indent=4, sort_keys=True))
                     ingest_stream(data)
 
