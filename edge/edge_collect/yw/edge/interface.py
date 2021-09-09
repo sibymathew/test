@@ -45,8 +45,8 @@ class BaseModbusClient(ModbusClientMixin):
         """
         self.framer = framer
         self.transaction = DictTransactionManager(self, **kwargs)
-        self.series3_transaction = DictTransactionManagerSeries3(self, **kwargs)
-        self.series4_transaction = DictTransactionManagerSeries4(self, **kwargs)
+        #self.series3_transaction = DictTransactionManagerSeries3(self, **kwargs)
+        #self.series4_transaction = DictTransactionManagerSeries4(self, **kwargs)
         self._debug = False
         self._debugfd = None
         self.broadcast_enable = kwargs.get('broadcast_enable', Defaults.broadcast_enable)

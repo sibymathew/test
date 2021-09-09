@@ -172,7 +172,7 @@ def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode=
                 if 'Error' in str(resp):
                     r = False
         else:
-            log.hdlr.info("USB Port is not connected or having connectivity issues.")
+            log_hdlr.info("USB Port is not connected or having connectivity issues.")
             r = False
 
         if r is True:
@@ -347,7 +347,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     datapoint["d"] = "Total Motor Start/Stop"
                     datapoints.append(datapoint)
 
-                    resp = drive_obj[vfd_addr].read(773, 1)
+                    resp = drive_obj[vfd_addr].read(1797, 1)
                     datapoint = {}
                     datapoint["k"] = "motor_in_rpm"
                     datapoint["v"] = ((motor_speed/resp[0])*rpm)/10
