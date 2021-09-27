@@ -31,7 +31,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 hdlr.setFormatter(formatter)
 log_hdlr.addHandler(hdlr)
 
-__PUSH_INTERVAL__ = 120 #seconds
+__PUSH_INTERVAL__ = 60 * 60 #seconds
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -82,6 +82,7 @@ def push(card, motor_uuid):
         to_send = {}
         to_send["req"] = "web.post"
         to_send["route"] = "datapush"
+
         while True:
             start_time = time.time()
             da = get_motor_data("table", motor_uuid, 2)

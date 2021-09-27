@@ -21,7 +21,7 @@ log_hdlr.addHandler(hdlr)
 app = Flask(__name__)
 
 @app.route("/v1/data/push", methods = ['POST', 'GET'])
-def index():
+def data_push_index():
     try:
         resp = ast.literal_eval(request.data.decode('utf-8'))["data"]
         decodedData = base64.b64decode(resp)
@@ -42,6 +42,16 @@ def index():
         return {"status": 0, "msg": err}
     else:
         return {"status": 1, "msg": "Success"}
+
+@app.route("/v1/config/pull", methods = ['GET'])
+def config_pull_index():
+    try:
+        
+    except Exception as err:
+        return {"status": 0, "msg": err}
+    else:
+        return {"status": 1, "msg": "Success"}
+
 
 if __name__ == '__main__':
    app.run(host="0.0.0.0", port=443, debug = True)
