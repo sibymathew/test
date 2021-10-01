@@ -203,7 +203,7 @@ def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode=
 
     return r
 
-def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, test):
+def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, test):
 
     try:
         run_time = {}
@@ -214,7 +214,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
             run_time[vfd_addr] = 0
             counter[vfd_addr] = 1
             push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
-
 
         while True:
             for vfd_addr in vfd_addrs:
@@ -399,6 +398,26 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     datapoint["v"] = value
                     datapoint["d"] = "Limit Switch"
                     datapoints.append(datapoint)
+
+                    if load_cell:
+                        resp = drive_obj[vfd_addr].read(load_cell[0], 1)
+                        analog_data = resp[0]
+                        status = 0
+
+                        if len(load_cell) > 1:
+                            if load_cell[1] == 1:
+                                crane_weight = (load_cell[2] * analog_data) + load_cell[3]
+                            elif load_cell[1] == 2:
+                                crane_weight = (load_cell[2] * analog_data^2) + (load_cell[3] * analog_data) + load_cell[4]
+                        else:
+                            crane_weight = 0
+                            status = 1
+
+                        datapoint = {}
+                        datapoint["k"] = "loadcell"
+                        datapoint["v"] = {"status":status, "analog_data": analog_data, "crane_weight":crane_weight}
+                        datapoints.append(datapoint)
+
                 else:
                     datapoints = generate_test_data()
 
@@ -435,6 +454,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 time.sleep((__PULL_INTERVAL__-lapsed_time)/1000)
     except Exception as err:
         log_hdlr.info("Error in datapoints collections (read or dummy){}".format(err))
+        time.sleep(5)
         data = {}
         vfd_status = 1
         try:
@@ -484,9 +504,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     ingest_stream2(data)
                     previous_state = vfd_status
 
-
-        time.sleep(5)
-        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, test)
+        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, test)
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -498,6 +516,7 @@ def getargs():
     parser.add_argument('-mt', action='store', help='Motor Type', nargs="+", type=str)
     parser.add_argument('-ms', action='store', help='Motor Speciality', nargs="+", type=str)
     parser.add_argument('-rf', action='store', help='Motor Reduction Factor', nargs="+", type=str)
+    parser.add_argument('-lc', action='store', help='Load Cell Config', nargs="+", type=str)
     parser.add_argument('-m', action='store', help='Test Data', type=int)
 
     return parser.parse_args()
@@ -513,6 +532,7 @@ if __name__ == "__main__":
     motor_types = args.mt
     motor_spls = args.ms
     reduction_factors = args.rf
+    load_cell = args.lc
     test = args.m
 
     motor_map = {}
@@ -548,6 +568,6 @@ if __name__ == "__main__":
       for vfd_addr in vfd_addrs:
           drive_obj_map[vfd_addr] = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
 
-      read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, test)
+      read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, load_cell, test)
     else:
         read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, test)

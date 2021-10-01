@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+from edge_loader import get_motor_data
 import time
 
 def check_signal(motor_list):
