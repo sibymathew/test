@@ -12,7 +12,6 @@ import ast
 #in milliseconds
 __PULL_INTERVAL__ = 1000
 __SAMPLES_PER_SECOND__ = 60 * 60
-previous_state = "Connected"
 
 LOG_PATH = "/var/log/collect.log"
 log_hdlr = logging.getLogger(__name__)
@@ -203,13 +202,14 @@ def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode=
 
     return r
 
-def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, test):
+def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, previous_state, test):
 
     try:
         run_time = {}
         counter = {}
         push_counter = {}
         vfd_status = 2
+        previous_state = previous_state
         for vfd_addr in vfd_addrs:
             run_time[vfd_addr] = 0
             counter[vfd_addr] = 1
@@ -469,12 +469,12 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
         if previous_state == "Connected" or (previous_state == 1 and vfd_status != 1) or (previous_state != 1 and vfd_status == 1):
             for vfd_addr in vfd_addrs:
-                    data["edge_uuid"] = edge_uuid
-                    data["total_motors"] = len(motor_uuid[vfd_addr])
-                    data["timestamp"] = start_time
-                    data["vfd_status"] = vfd_status
+                data["edge_uuid"] = edge_uuid
+                data["total_motors"] = len(motor_uuid[vfd_addr])
+                data["timestamp"] = start_time
+                data["vfd_status"] = vfd_status
 
-                for motor in motor_uuid[vfd]:
+                for motor in motor_uuid[vfd_addr]:
                     content = get_motor_data("table", motor, 0)
 
                     run_time = 0
@@ -504,7 +504,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     ingest_stream2(data)
                     previous_state = vfd_status
 
-        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, test)
+        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, previous_state, test)
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -568,6 +568,6 @@ if __name__ == "__main__":
       for vfd_addr in vfd_addrs:
           drive_obj_map[vfd_addr] = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
 
-      read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, load_cell, test)
+      read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, load_cell, "Connected", test)
     else:
-        read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, test)
+        read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, rf_map, load_cell, "Connected", test)
