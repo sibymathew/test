@@ -458,7 +458,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         data = {}
         vfd_status = 1
         try:
-            with open("/var/run/daq_status", "r") as hdlr:
+            with open("/var/run/daq_port0", "r") as hdlr:
                 content = json.loads(hdlr.read())
 
             if "status" in content:
