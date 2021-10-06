@@ -56,7 +56,8 @@ def ingest_stream(crane_query_json):
             edge_uuid = crane_query_json["edge_uuid"]
             # edge_mac =  crane_query_json["edge_mac"]
             total_motors = crane_query_json["total_motors"]
-            query_timestamp= crane_query_json["timestamp"]        
+            query_timestamp= crane_query_json["timestamp"]
+            vfd_status = crane_query_json["vfd_status"]
             motor_data = str(crane_query_json["motor_data"])
             load_timestamp = datetime.datetime.now(timezone.utc)
             motor_uuid = crane_query_json["motor_uuid"]
@@ -64,10 +65,10 @@ def ingest_stream(crane_query_json):
             # single Insert Statement
             dbSession.edge_session.execute(
                     """
-                    insert into edge_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp) 
-                    values (%s,%s,%s,%s,%s,%s)
+                    insert into edge_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp,vfd_status) 
+                    values (%s,%s,%s,%s,%s,%s,,%s)
                     """,
-                    (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp)
+                    (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
                 )
 
         dbSession.shutCluster()
@@ -95,6 +96,7 @@ def ingest_stream2(crane_query_json):
             # edge_mac =  crane_query_json["edge_mac"]
             total_motors = crane_query_json["total_motors"]
             query_timestamp = crane_query_json["timestamp"]
+            vfd_status = crane_query_json["vfd_status"]
             motor_data = str(crane_query_json["motor_data"])
             # load_timestamp = datetime.datetime.today()
             load_timestamp = datetime.datetime.now(timezone.utc)
@@ -103,10 +105,10 @@ def ingest_stream2(crane_query_json):
             # single Insert Statement
             dbSession.edge_session.execute(
                 """
-                insert into edge_core.crane_details2 (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp) 
-                values (%s,%s,%s,%s,%s,%s)
+                insert into edge_core.crane_details2 (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp,vfd_status) 
+                values (%s,%s,%s,%s,%s,%s,%s)
                 """,
-                (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp)
+                (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
             )
 
         dbSession.shutCluster()
@@ -142,9 +144,9 @@ def get_motor_data(table_name,motor_list, interval):
 
         for motor_id in motor_list:
             if interval == 0:
-                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
             else:
-                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
 
             for motor_row in dbSession.edge_session.execute(motor_query):
                 #motor_rows.append(motor_row[0].replace("'", '"'))
