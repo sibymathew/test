@@ -31,7 +31,9 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 hdlr.setFormatter(formatter)
 log_hdlr.addHandler(hdlr)
 
-__PUSH_INTERVAL__ = 60 * 60 #seconds
+__EDGE_PREP__ = 60 * 60
+# No of records to be pushed per __EDGE_PUSH__
+__EDGE_PUSH__ = 1
 
 def getargs():
     parser = argparse.ArgumentParser()

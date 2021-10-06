@@ -38,6 +38,9 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                     with open("/var/run/daq_port0", "w") as hdlr:
                         hdlr.write(json.dumps(msg))
                         pstate_port0 = stop_mode
+            elif s[0] == "1":
+                resp = Popen(["rm", "-rf", "/var/run/daq_port0"], stdout=PIPE, stderr=PIPE)
+                o, e = resp.communicate()
 
             if s[1] == "0":
                 msg = {}
@@ -48,6 +51,9 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                     with open("/var/run/daq_port1", "w") as hdlr:
                         hdlr.write(json.dumps(msg))
                         pstate_port1 = 8
+            elif s[1] == "1":
+                resp = Popen(["rm", "-rf", "/var/run/daq_port1"], stdout=PIPE, stderr=PIPE)
+                o, e = resp.communicate()
         else:
             print("Error")
         time.sleep(1)

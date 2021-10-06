@@ -11,6 +11,7 @@ import argparse
 
 __EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
 
+
 def getargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)

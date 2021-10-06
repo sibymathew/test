@@ -13,6 +13,74 @@ import ast
 __PULL_INTERVAL__ = 1000
 __SAMPLES_PER_SECOND__ = 60 * 60
 
+__FAULT_STRINGS__ = {
+    "1840" : ["PUF - Fuse Blown",
+            "UV1 - DC Bus Undervoltage",
+            "UV2 - CTL PS Undervoltage",
+            "UV3 - MC Answerback",
+            "Not Used",
+            "GF - Ground Fault",
+            "OC - Over Current",
+            "OV - Overvoltage",
+            "OH - Heatsink Overtemperature",
+            "OH1 - Drive Overheat",
+            "OL1 - Motor Overload",
+            "OL2 - Drive Overload",
+            "OT1 - Overtorque 1",
+            "OT2 - Overtorque 2",
+            "RR - Dynamic Braking Resistor",
+            "RH - Dynamic Braking Resistor Overheat"],
+    "1841" : ["EF3 - External Fault 3",
+            "EF4 - External Fault 4",
+            "EF5 - External Fault 5",
+            "EF5 - External Fault 6",
+            "EF5 - External Fault 7",
+            "EF5 - External Fault 8",
+            "PGO-1-h - PG CH 1 Open (Hardware Detection)",
+            "OS-1 - CH 1 Overspeed",
+            "DEV-1 - Speed Deviation",
+            "PGO-1-S - PG CH 1 Open (Software Detection)",
+            "PF - Input Phase Loss",
+            "LF - Output Phase Loss",
+            "OH3 - Motor Overheat",
+            "OPR - Operator Disconnect",
+            "ERR - EEPROM R/W Error",
+            "OH4 - Motor Overheat 2"],
+    "1842": ["CE - Modbus Com Error",
+            "BUS - Option Communication Error",
+            "E15 - Serial Communcation Error",
+            "E10 - Option CPU Down",
+            "CF - Out of Control",
+            "SVE - Zero Servo Fault",
+            "EFO - Communication Option External Fault",
+            "FBL - PID Feedback Loss",
+            "UT1 - Undertorque 1",
+            "UT2 - Undertorque 2",
+            "OL7 - High Speed Slip Braking Overload",
+            "PGO-2-H - PG CH2 Open (Hardware Detection)",
+            "OS-2 - CH2 Overspeed",
+            "DEV-2 - CH2 Speed Deviation",
+            "PGO-S-S - PG CH2 Open (Software Detection)",
+            "Not Used"],
+    "1843": ["Not Used",
+            "Not Used",
+            "SNAP - Snapped Shaft",
+            "LC - Load Check Error",
+            "BE1 - Rollback Detected",
+            "BE2 - No Current",
+            "BE3 - Brake Relase No Good",
+            "BE7 - Brake Welded",
+            "UL3 - Upper Limit 3",
+            "Not Used",
+            "Not Used",
+            "Not Used",
+            "Not Used",
+            "Not Used",
+            "Not Used",
+            "Not Used"
+            ]
+}
+
 LOG_PATH = "/var/log/collect.log"
 log_hdlr = logging.getLogger(__name__)
 log_hdlr.setLevel(logging.DEBUG)
@@ -202,6 +270,17 @@ def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode=
 
     return r
 
+def read_faults(vfd_addr):
+    fault_list = []
+    fault_reg = 1840
+    faults = vfd_addr.read(1840, 4)
+    for fault in faults:
+        for i in range(0..15):
+            if (fault & (1<<i)) >> i:
+                fault_list.append(__FAULT_STRINGS__.get(str(fault_reg))[i])
+        fault_reg += 1
+    return(fault_list)
+
 def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, previous_state, test):
 
     try:
@@ -280,8 +359,18 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint = {}
                             datapoint["k"] = "drive_fault"
                             datapoint["v"] = (reg & (1<<7)) >> 7
+                            fault = (reg & (1<<7)) >> 7
                             datapoint["d"] = "Major Fault"
                             datapoints.append(datapoint)
+
+                            if fault:
+                                #Check for the faults registery
+                                resp = read_faults(drive_obj[vfd_addr])
+                                datapoint = {}
+                                datapoint["k"] = "drive_fault_list"
+                                datapoint["v"] = resp
+                                datapoint["d"] = "Fault List"
+                                datapoints.append(datapoint)
 
                             datapoint = {}
                             direction = reg & 5
@@ -400,15 +489,15 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     datapoints.append(datapoint)
 
                     if load_cell:
-                        resp = drive_obj[vfd_addr].read(load_cell[0], 1)
+                        resp = drive_obj[vfd_addr].read(int(load_cell[0]), 1)
                         analog_data = resp[0]
                         status = 0
 
                         if len(load_cell) > 1:
-                            if load_cell[1] == 1:
-                                crane_weight = (load_cell[2] * analog_data) + load_cell[3]
-                            elif load_cell[1] == 2:
-                                crane_weight = (load_cell[2] * analog_data^2) + (load_cell[3] * analog_data) + load_cell[4]
+                            if int(load_cell[1]) == 1:
+                                crane_weight = (float(load_cell[3]) * analog_data) + float(load_cell[4])
+                            elif int(load_cell[1]) == 2:
+                                crane_weight = (float(load_cell[2]) * analog_data^2) + (float(load_cell[3]) * analog_data) + float(load_cell[4])
                         else:
                             crane_weight = 0
                             status = 1
