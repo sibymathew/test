@@ -43,14 +43,17 @@ def data_push_index():
     else:
         return {"status": 1, "msg": "Success"}
 
-@app.route("/v1/config/pull", methods = ['GET'])
+@app.route("/v1/config/pull", methods = ['POST'])
 def config_pull_index():
     try:
-        
+        req = ast.literal_eval(request.data.decode('utf-8'))
+        resp = get_config_data(req["edge_mac"], req["version"])
     except Exception as err:
+        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
         return {"status": 0, "msg": err}
     else:
-        return {"status": 1, "msg": "Success"}
+        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], resp))
+        return {"status": 1, "msg": resp}
 
 
 if __name__ == '__main__':
