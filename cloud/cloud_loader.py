@@ -125,21 +125,7 @@ def get_config_data(edge_mac, version):
         if version is None:
             version = 0
 
-        # motor_rows = []
-
-        # for motor_id in motor_list:
-        #     if interval == 0:
-        #         motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
-        #     else:
-        #         motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
-        #
-        #     for motor_row in dbSession.edge_session.execute(motor_query):
-        #         #motor_rows.append(motor_row[0].replace("'", '"'))
-        #         motor_rows.append(motor_row[0])
-                # print( motor_rows)
-                # print(json.dumps( motor_rows))
-                #
-
+        # TO DO: Fix select  for multiple version with False
         config_rows = []
         config_query = "select json edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by,created_on from cloud_core.crane_config where  edge_mac = '" + edge_mac + "' "
 

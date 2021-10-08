@@ -201,6 +201,7 @@ def ingest_config(config_json):
 
 def update_config_data(edge_mac, version):
     # TODO: Log
+    # TO DO: Update Flag using param
 
     try:
 
