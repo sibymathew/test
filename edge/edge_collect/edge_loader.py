@@ -161,3 +161,60 @@ def get_motor_data(table_name,motor_list, interval):
     except Exception as e:
         error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
         return error_msg
+
+def ingest_config(config_json):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        # Check the given JSON is a list
+        if (isinstance(crane_query_json, list)):
+            # Loop thru the given JsON
+            print("List")
+        else:
+            edge_uuid = config_json["edge_uuid"]
+            edge_mac =  config_json["edge_mac"]
+            version = config_json["version"]
+            config_sync_flag = config_json["config_sync_flag"]
+            config_data = str(config_json["config_data"])
+            created_by = config_json["created_by"]
+            created_on = config_json["created_on"]
+
+            # single Insert Statement
+            dbSession.edge_session.execute(
+                """
+                insert into edge_core.crane_config (edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by, created_on)
+                values (%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by, created_on)
+            )
+
+        dbSession.shutCluster()
+        return "Config Ingested"
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
+        return error_msg
+
+def update_config_data(edge_mac, version):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        # single update Statement
+        update_query = "update edge_core.crane_config set config_sync_flag=True where edge_mac='" + edge_mac + "' and version= " + str(version)
+        dbSession.cosmos_session.execute(update_query )
+
+        dbSession.shutCluster()
+        return "Flag Updated as True in Edge Config"
+
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
+        return error_msg

@@ -119,19 +119,13 @@ def get_config_data(edge_mac, version):
         # Create a DB connection instance
         dbSession = DatabaseConnection()
 
-        if table_name is None:
-            table_name = 'cloud_core.crane_config_data'
+        if edge_mac is None:
+            edge_mac = '00:0a:bb:11:22:22'
 
-        if interval is None:
-            interval = 2
+        if version is None:
+            version = 0
 
-        edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'
-
-        now = datetime.datetime.now(timezone.utc)
-        query_timestamp = now - datetime.timedelta(minutes=interval)
-        epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
-
-        motor_rows = []
+        # motor_rows = []
 
         # for motor_id in motor_list:
         #     if interval == 0:
@@ -146,11 +140,40 @@ def get_config_data(edge_mac, version):
                 # print(json.dumps( motor_rows))
                 #
 
-        motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp, motor_data, total_motors from edge_core.crane_details where  edge_mac = '" + motor_id + "' "
+        config_rows = []
+        config_query = "select json edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by,created_on from cloud_core.crane_config where  edge_mac = '" + edge_mac + "' "
+
+        for config_row in dbSession.cosmos_session.execute(config_query):
+            #config_rows.append(config_row[0].replace("'", '"'))
+            config_rows.append(config_row[0])
+
+
+            # where version > " + version + " order by version DESC LIMIT 1"
 
         dbSession.shutCluster()
-        return json.dumps(motor_rows)
+        return json.dumps(config_rows)
 
     except Exception as e:
-        error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
+        error_msg = {"Status": "Failed to pull data for Edge MAC=" + edge_mac, "Error": str(e)}
+        return error_msg
+
+
+def update_config_data(edge_mac, version):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        # single update Statement
+        update_query = "update cloud_core.crane_config set config_sync_flag=True where edge_mac='" + edge_mac + "' and version= " + str(version)
+        dbSession.cosmos_session.execute(update_query )
+
+        dbSession.shutCluster()
+        return "Flag Updated as True at Cloud Config"
+
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
         return error_msg
