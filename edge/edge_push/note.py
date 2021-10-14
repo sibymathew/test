@@ -34,6 +34,8 @@ log_hdlr.addHandler(hdlr)
 __EDGE_PREP__ = 60 * 60
 # No of records to be pushed per __EDGE_PUSH__
 __EDGE_PUSH__ = 1
+__SLEEP__ = 5
+__PUSH_COUNTER__ = (60 * 30) / __SLEEP__
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -81,6 +83,7 @@ def connect(productUID, nodeport, noderate, motor_uuid):
 
 def push(card, motor_uuid):
     try:
+        counter = 0
         to_send = {}
         to_send["req"] = "web.post"
         to_send["route"] = "datapush"
@@ -109,28 +112,40 @@ def push(card, motor_uuid):
             except:
                 pass
 
-            start_time = time.time()
-            da = get_motor_data("table", motor_uuid, 2)
-            print(da)
+            if push_mode == 1:
+                start_time = time.time()
+                da = get_motor_data("edge_core.crane_details", motor_uuid, 5)
+            elif push_mode == 2:
+                start_time = time.time()
+                da = get_motor_data("edge_core.crane_details2", motor_uuid, -1)
+            else:
+                if counter == 0:
+                    start_time = time.time()
+                    da = get_motor_data("edge_core.crane_details2", motor_uuid, -1)
+                else:
+                    counter += 1
+                    if counter >= __PUSH_COUNTER__
+                        counter = 0
 
-            compressed_body = BytesIO()
-            gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
-            sz = gz.write(json.dumps(da).encode("utf-8"))
-            gz.close()
-            de = compressed_body.getvalue()
+            if da:
+                compressed_body = BytesIO()
+                gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
+                sz = gz.write(json.dumps(da).encode("utf-8"))
+                gz.close()
+                de = compressed_body.getvalue()
 
-            encodedData = base64.b64encode(de).decode('UTF-8')
-            to_send["body"] = {"data": encodedData}
+                encodedData = base64.b64encode(de).decode('UTF-8')
+                to_send["body"] = {"data": encodedData}
 
-            log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
-            resp = card.Transaction(to_send)
-            log_hdlr.info("Push Notecard Response {}".format(resp))
-            end_time = time.time()
+                log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
+                resp = card.Transaction(to_send)
+                log_hdlr.info("Push Notecard Response {}".format(resp))
+                end_time = time.time()
 
-            lapsed_time = end_time - start_time
-            log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
+                lapsed_time = end_time - start_time
+                log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
 
-            time.sleep(5)
+            time.sleep(__SLEEP__)
 
             """
             if 'err' in resp:

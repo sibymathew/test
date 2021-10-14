@@ -8,7 +8,7 @@ import ast
 import argparse
 import json
 
-from edge_loader import ingest_config
+from edge_loader import ingest_config, get_config_data
 import requests
 
 #import serial
@@ -78,13 +78,13 @@ def main():
             try:
                 main_config = ast.literal_eval(resp["body"]["msg"])
                 edge_config = json.loads(main_config[0])
-            except:
-                pass
-
-            if edge_config["edge_mac"] == __EDGE_MAC__ and edge_config["version"] != version:
-                with open("/var/run/yconfig.json", "w") as hdlr:
-                    hdlr.write(json.dumps(edge_config))
-                    update_flag = True
+            except Exception as e:
+                print("Error \n {}".format(e))
+            else:
+                if edge_config["edge_mac"] == __EDGE_MAC__ and edge_config["version"] != version:
+                    with open("/var/run/yconfig.json", "w") as hdlr:
+                        hdlr.write(json.dumps(edge_config))
+                        update_flag = True
 
             if update_flag:
                 config = ast.literal_eval(edge_config["config_data"])[0]

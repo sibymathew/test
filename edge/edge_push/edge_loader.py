@@ -171,7 +171,7 @@ def ingest_config(config_json):
         dbSession = DatabaseConnection()
 
         # Check the given JSON is a list
-        if (isinstance(crane_query_json, list)):
+        if (isinstance(config_json, list)):
             # Loop thru the given JsON
             print("List")
         else:

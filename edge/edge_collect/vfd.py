@@ -275,7 +275,7 @@ def read_faults(vfd_addr):
     fault_reg = 1840
     faults = vfd_addr.read(1840, 4)
     for fault in faults:
-        for i in range(0..15):
+        for i in range(15):
             if (fault & (1<<i)) >> i:
                 fault_list.append(__FAULT_STRINGS__.get(str(fault_reg))[i])
         fault_reg += 1
