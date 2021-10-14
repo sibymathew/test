@@ -21,7 +21,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
 
                 print(content)
 
-                if not content:
+                if not content or "Error" in content:
                     stop_mode = 5
                 else:
                     for row in json.loads(content):
@@ -51,12 +51,19 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                     with open("/var/run/daq_port1", "w") as hdlr:
                         hdlr.write(json.dumps(msg))
                         pstate_port1 = 8
+                else:
+                    with open("/var/run/daq_port1", "r") as hdlr:
+                        content = json.loads(hdlr.read())
+                        if "state" in content:
+                            if content["state"] = "Pushed":
+                                resp = Popen(["supervisorctl stop all"], stdout=PIPE, stderr=PIPE)
+                                o, e = resp.communicate()
             elif s[1] == "1":
                 resp = Popen(["rm", "-rf", "/var/run/daq_port1"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
         else:
             print("Error")
-        time.sleep(1)
+        time.sleep(5)
 
 def getargs():
     parser = argparse.ArgumentParser()

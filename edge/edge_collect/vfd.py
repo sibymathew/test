@@ -281,7 +281,7 @@ def read_faults(vfd_addr):
         fault_reg += 1
     return(fault_list)
 
-def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, previous_state, test):
+def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, labels, load_cell, previous_state, test):
 
     try:
         run_time = {}
@@ -377,14 +377,14 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint["k"] = "drive_direction"
                             datapoint["d"] = "Drive Direction"
                             if direction == 1 or direction == 3:
-                                datapoint["v"] = 0
+                                datapoint["v"] = labels[0] + " Running"
                                 vfd_status = 3
                             elif direction == 5 or direction == 7:
-                                datapoint["v"] = 1
+                                datapoint["v"] = labels[1] + " Running"
                                 vfd_status = 3
                             else:
                               #Drive is stopped
-                              datapoint["v"] = 3
+                              datapoint["v"] = "Idle"
                               vfd_status = 4
                             datapoints.append(datapoint)
                         elif i == 10 and motor_type == 1:
@@ -474,21 +474,21 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     rawdata[27] = resp
                     value = []
                     if (resp[0] & (1<<8)) >> 8:
-                        value.append("Forward_Label " + "Stop")
+                        value.append(labels[0] + " Stop")
                     elif (resp[0] & (1<<9)) >> 9:
-                        value.append("Reverse_Label " + "Stop")
+                        value.append(labels[1] + " Stop")
                     elif (resp[0] & (1<<10)) >> 10:
-                        value.append("Forward_Label " + "Slow Down")
+                        value.append(labels[0] + " Slow Down")
                     elif (resp[0] & (1<<11)) >> 11:
-                        value.append("Reverse_Label " + "Slow Down")
+                        value.append(labels[1] + " Slow Down")
                     elif (resp[0] & (1<<15)) >> 15:
-                        value.append("Forward_Label " + "Weighted")
+                        value.append(labels[0] + " Weighted")
                     datapoint["k"] = "limit_switch"
                     datapoint["v"] = value
                     datapoint["d"] = "Limit Switch"
                     datapoints.append(datapoint)
 
-                    if load_cell:
+                    if vfd_addr in load_cell:
                         resp = drive_obj[vfd_addr].read(int(load_cell[0]), 1)
                         analog_data = resp[0]
                         status = 0
@@ -606,6 +606,7 @@ def getargs():
     parser.add_argument('-ms', action='store', help='Motor Speciality', nargs="+", type=str)
     parser.add_argument('-rf', action='store', help='Motor Reduction Factor', nargs="+", type=str)
     parser.add_argument('-lc', action='store', help='Load Cell Config', nargs="+", type=str)
+    parser.add_argument('-lb', action='store', help='Label Config', nargs="+", type=str)
     parser.add_argument('-m', action='store', help='Test Data', type=int)
 
     return parser.parse_args()
@@ -622,6 +623,7 @@ if __name__ == "__main__":
     motor_spls = args.ms
     reduction_factors = args.rf
     load_cell = args.lc
+    label_conf = args.lb
     test = args.m
 
     motor_map = {}
@@ -650,6 +652,20 @@ if __name__ == "__main__":
             if vfd_addr in rf:
                 rf_map[vfd_addr] = float(rf.split(':')[1])
 
+    lb_map = {}
+    for vfd_addr in vfd_addrs:
+        lb_map[vfd_addr] = []
+        for lb in label_conf:
+            if vfd_addr in lb:
+                lb_map[vfd_addr].append(lb.split(':')[1])
+
+    lc_map = {}
+    for vfd_addr in vfd_addrs:
+        lc_map[vfd_addr] = []
+        for lc in load_cell:
+            if vfd_addr in lc:
+                lc_map[vfd_addr].append(lc.split(':')[1])
+
     log_hdlr.info(args)
 
     if not test:
@@ -657,6 +673,6 @@ if __name__ == "__main__":
       for vfd_addr in vfd_addrs:
           drive_obj_map[vfd_addr] = connect(vfd_addr, vfd_port, vfd_rate, "rtu")
 
-      read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, load_cell, "Connected", test)
+      read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, lb_map, lc_map, "Connected", test)
     else:
-        read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, rf_map, load_cell, "Connected", test)
+        read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, rf_map, lb_map, lc_map, "Connected", test)

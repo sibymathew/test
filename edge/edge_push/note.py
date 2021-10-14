@@ -86,6 +86,29 @@ def push(card, motor_uuid):
         to_send["route"] = "datapush"
 
         while True:
+            push_mode = 0
+            try:
+                with open("/var/run/daq_port0", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+                    if "status" in content:
+                        if content["status"] == "6":
+                            if "state" in content:
+                                if content["state"] != "Pushed":
+                                    push_mode = 1
+            except:
+                pass
+
+            try:
+                with open("/var/run/daq_port1", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+                    if "status" in content:
+                        if content["status"] == "8":
+                            if "state" in content:
+                                if content["state"] != "Pushed":
+                                    push_mode = 2
+            except:
+                pass
+
             start_time = time.time()
             da = get_motor_data("table", motor_uuid, 2)
             print(da)
@@ -107,7 +130,7 @@ def push(card, motor_uuid):
             lapsed_time = end_time - start_time
             log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
 
-            time.sleep(__PUSH_INTERVAL__-lapsed_time)
+            time.sleep(5)
 
             """
             if 'err' in resp:
