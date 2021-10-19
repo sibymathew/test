@@ -246,7 +246,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         dbSession = DatabaseConnection()
 
         dbSession.edge_session.row_factory = pandas_factory
-        dbSession.edge_session.default_fetch_size1 = None
+        dbSession.edge_session.default_fetch_size = None
 
         #from_query_timestamp = 1630609200000
         #to_query_timestamp = 1630612800000
@@ -349,4 +349,70 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
 
     except Exception as e:
         error_msg = {"Status": "Failed to ingest for Edge UUID=" + edge_uuid, "Error": str(e)}
+        return error_msg
+
+def del_motor_data(table_name,motor_list, interval):
+    # TODO: Log
+    # TODO: CONFIG
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+
+        return_status = []
+
+        if table_name is None:
+            table_name = 'edge_core.crane_details'
+
+        if interval is None:
+            interval = 3
+
+        #edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'
+
+        now = datetime.datetime.now(timezone.utc)
+        query_timestamp = now - datetime.timedelta(days=interval)
+        epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
+
+        motor_rows = []
+        if motor_list:
+            for motor_id in motor_list:
+                if table_name == 'edge_core.crane_details':
+                    motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
+                    msg = "Deleted for " + interval +" days"
+                    del_status = {"motor_uuid": motor_id, "msg": msg }
+                elif table_name == 'edge_core.crane_details2':
+                    motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
+                    msg = "Deleted for " + interval + " days"
+                    del_status = {"motor_uuid": motor_id, "msg": msg}
+                else:
+                    msg = "No right table passed"
+                    del_status = {"motor_uuid": motor_id, "msg": msg}
+        else:
+
+            motor_uuid_query = "select distinct motor_uuid from edge_core." + table_name
+
+            for motor_row in dbSession.edge_session.execute(motor_uuid_query):
+                motor_id = motor_row[0]
+                # print(motor_row[0])
+                if table_name == 'edge_core.crane_details':
+                    motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
+                    msg = "Deleted for " + interval +" days"
+                    del_status = {"motor_uuid": motor_id, "msg": msg }
+                elif table_name == 'edge_core.crane_details2':
+                    motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
+                    msg = "Deleted for " + interval + " days"
+                    del_status = {"motor_uuid": motor_id, "msg": msg}
+                else:
+                    msg = "No right table passed"
+                    del_status = {"motor_uuid": motor_id, "msg": msg}
+
+
+
+        dbSession.shutCluster()
+        return return_status
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
         return error_msg
