@@ -8,12 +8,12 @@ import ast
 import argparse
 import json
 
-from edge_loader import ingest_config, get_config_data
+from edge_loader import ingest_config, update_config_data
 import requests
 
 #import serial
 
-__EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
+#__EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
 __EDGE_MAC__ = "00:0a:bb:11:22:22"
 
 def getargs():
@@ -26,11 +26,15 @@ def getargs():
 
 def store(data):
 
-    ingest_config(data)
+    print(ingest_config(data))
     res = requests.post("http://10.0.1.20:5000/cranes/version/update", json={"token": "def05f77d7541bfa8a9c61f551d45639"})
 
-    if res.status_code == 400 or res.status_code == 401:
+    print(res)
+    if res.status_code == 400 or res.status_code == 401 or res.status_code == 500:
         return False
+
+    if res.status_code == 200:
+        print(update_config_data(__EDGE_MAC__, data["version"]))
 
     return True
 
@@ -74,20 +78,24 @@ def main():
             to_send["body"] = data
             print(to_send)
             resp = card.Transaction(to_send)
+            print(resp)
 
             try:
                 main_config = ast.literal_eval(resp["body"]["msg"])
-                edge_config = json.loads(main_config[0])
+                if main_config:
+                    edge_config = json.loads(main_config[0])
             except Exception as e:
                 print("Error \n {}".format(e))
             else:
-                if edge_config["edge_mac"] == __EDGE_MAC__ and edge_config["version"] != version:
-                    with open("/var/run/yconfig.json", "w") as hdlr:
-                        hdlr.write(json.dumps(edge_config))
-                        update_flag = True
+                if main_config:
+                    if edge_config["edge_mac"] == __EDGE_MAC__ and edge_config["version"] != version:
+                        with open("/var/run/yconfig.json", "w") as hdlr:
+                            hdlr.write(json.dumps(edge_config))
+                            update_flag = True
 
             if update_flag:
-                config = ast.literal_eval(edge_config["config_data"])[0]
+                print(edge_config["config_data"])
+                config = ast.literal_eval(edge_config["config_data"])
                 with open("config.supervisor") as hdlr:
                     supervisor_conf = hdlr.read()
                 with open("config.supervisor.template") as hdlr:
@@ -121,13 +129,19 @@ def main():
                             speciality.append(addr+":"+str(mapping["vfd_speciality"]))
                             types.append(addr+":"+str(mapping["vfd_type"]))
 
-                            if 'loadcell' in mapping:
+                            if 'loadcell' in mapping and mapping["loadcell"]["mode"] == 2:
                                 params = str(mapping["loadcell"]["register"]) + "," + \
                                             str(mapping["loadcell"]["mode"]) + "," + \
                                             str(mapping["loadcell"]["calibration"]["a"]) + "," + \
                                             str(mapping["loadcell"]["calibration"]["b"]) + "," + \
                                             str(mapping["loadcell"]["calibration"]["c"])
                                 loadcell.append(addr+":"+params)
+                            elif 'loadcell' in mapping and mapping["loadcell"]["mode"] == 1:
+                                params = str(mapping["loadcell"]["register"]) + "," + \
+                                            str(mapping["loadcell"]["mode"]) + "," + \
+                                            str(mapping["loadcell"]["calibration"]["a"]) + "," + \
+                                            str(mapping["loadcell"]["calibration"]["b"]) + ",0"
+                                loadcell.append(addr+":"+params) 
 
                             for motor in config["crane_details"]["motor_config"]:
                                 if addr+":"+motor["uuid"] in motors:
@@ -154,22 +168,22 @@ def main():
 
                         all_motor_list += motor_list + " "
 
-                cmd = "sudo docker run --privileged -e CASSANDRA_IP='10.0.1.20' sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_list)
-                name = "Cloud_Push_Service"
+                    cmd = "sudo docker run --privileged -e CASSANDRA_IP='10.0.1.20' sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_list)
+                    name = "Cloud_Push_Service"
 
-                temp_tmpl = supervisor_tmpl.replace("name", name)
-                temp_tmpl = temp_tmpl.replace("cmd", cmd)
+                    temp_tmpl = supervisor_tmpl.replace("name", name)
+                    temp_tmpl = temp_tmpl.replace("cmd", cmd)
 
-                result = result + temp_tmpl
+                    result = result + temp_tmpl
 
-                with open("supervisord.conf", "w") as hdlr:
-                    hdlr.write(result)
+                    with open("supervisord.conf", "w") as hdlr:
+                        hdlr.write(result)
 
-                if store(main_config):
+                if store(edge_config):
                     res = os.popen("supervisorctl restart all")
                     with open("/var/run/version", "w") as hdlr:
                         hdlr.write(str(edge_config["version"]))
-                        
+                    
                         update_flag = False
                         version = edge_config["version"]
 

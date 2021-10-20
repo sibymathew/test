@@ -1,6 +1,6 @@
 from yw.edge.interface import YWSerialClient as ModbusClient
-from edge_loader import ingest_stream,ingest_stream2
-from edge_loader import get_motor_data
+from edge_loader import ingest_stream, ingest_stream2
+from edge_loader import get_motor_data, ingest_hourly_stream
 
 import argparse
 import json
@@ -11,7 +11,8 @@ import ast
 
 #in milliseconds
 __PULL_INTERVAL__ = 1000
-__SAMPLES_PER_SECOND__ = 60 * 60
+#in seconds, data to be pushed to ingest_stream2
+__PUSH_INTERVAL__ = 60 * 60
 
 __FAULT_STRINGS__ = {
     "1840" : ["PUF - Fuse Blown",
@@ -526,11 +527,12 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     ingest_stream(data)
 
                 print("here6")
-                if counter[vfd_addr] == __SAMPLES_PER_SECOND__:
+                if counter[vfd_addr] == __PUSH_INTERVAL__:
                     for motor in motor_uuid[vfd_addr]:
                         data["motor_uuid"] = motor
                         ingest_stream2(data)
                     counter[vfd_addr] = 1
+                    ingest_hourly_stream(start_time, start_time - __PUSH_INTERVAL__)
                 else:
                     counter[vfd_addr] += 1
 
@@ -593,7 +595,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     ingest_stream2(data)
                     previous_state = vfd_status
 
-        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, load_cell, previous_state, test)
+        read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, labels, load_cell, previous_state, test)
 
 def getargs():
     parser = argparse.ArgumentParser()

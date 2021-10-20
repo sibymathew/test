@@ -411,7 +411,7 @@ def del_motor_data(table_name,motor_list, interval):
 
 
         dbSession.shutCluster()
-        return return_status
+        return del_status
 
     except Exception as e:
         error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}

@@ -13,7 +13,7 @@ import json
 import base64
 
 from serial import Serial
-from edge_loader import get_motor_data
+from edge_loader import get_motor_data, del_motor_data
 
 sys.path.insert(0, os.path.abspath(
                 os.path.join(os.path.dirname(__file__), '..')))
@@ -31,11 +31,12 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 hdlr.setFormatter(formatter)
 log_hdlr.addHandler(hdlr)
 
-__EDGE_PREP__ = 60 * 60
-# No of records to be pushed per __EDGE_PUSH__
-__EDGE_PUSH__ = 1
+# in seconds
 __SLEEP__ = 5
-__PUSH_COUNTER__ = (60 * 30) / __SLEEP__
+# in minutes    
+__CLOUD_PUSH__ = 60
+# DB Check time, in seconds
+__PUSH_COUNTER__ = (__CLOUD_PUSH__ * 60) / __SLEEP__
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -117,15 +118,17 @@ def push(card, motor_uuid):
                 da = get_motor_data("edge_core.crane_details", motor_uuid, 5)
             elif push_mode == 2:
                 start_time = time.time()
-                da = get_motor_data("edge_core.crane_details2", motor_uuid, -1)
+                da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
             else:
                 if counter == 0:
                     start_time = time.time()
-                    da = get_motor_data("edge_core.crane_details2", motor_uuid, -1)
+                    da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
+                    push_mode == 3
                 else:
                     counter += 1
-                    if counter >= __PUSH_COUNTER__
+                    if counter >= __PUSH_COUNTER__:
                         counter = 0
+
 
             if da:
                 compressed_body = BytesIO()
@@ -143,7 +146,31 @@ def push(card, motor_uuid):
                 end_time = time.time()
 
                 lapsed_time = end_time - start_time
-                log_hdlr.info("Total Lapsed Time {}".format(lapsed_time))
+                log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
+
+                if push_mode == 1:
+                    with open("/var/run/daq_port0", "r") as hdlr:
+                        content = json.loads(hdlr.read())
+                        if "status" in content:
+                            if content["status"] == "6":
+                                content["state"] = "Pushed"
+
+                    with open("/var/run/daq_port0", "w") as hdlr:
+                        hdlr.write(json.dumps(content))
+
+                if push_mode == 2:
+                    with open("/var/run/daq_port1", "r") as hdlr:
+                        content = json.loads(hdlr.read())
+                        if "status" in content:
+                            if content["status"] == "8":
+                                content["state"] = "Pushed"
+
+                    with open("/var/run/daq_port1", "w") as hdlr:
+                        hdlr.write(json.dumps(content))
+
+                if push_mode == 2 or push_mode == 3:
+                    # Delete all the entries in edge_core.crane_details2
+                    del_motor_data("edge_core.crane_details2", motor_uuid, None)
 
             time.sleep(__SLEEP__)
 
