@@ -292,14 +292,14 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         except:
             resp = {}
 
-        #run_time = {}
+        run_time = {}
         counter = {}
         push_counter = {}
         series3_run_time = {}
         vfd_status = 2
         previous_state = previous_state
         for vfd_addr in vfd_addrs:
-            run_time[vfd_addr] = 0
+            #run_time[vfd_addr] = 0
             counter[vfd_addr] = 1
             push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
 
@@ -417,11 +417,11 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                         if direction == 1 or direction == 3 or direction == 5 or direction == 7:
                             push_counter[vfd_addr] -= 1
 
-                        run_time = series3_run_time[motor_uuid[vfd_addr]]
+                        run_time = series3_run_time[motor_uuid[vfd_addr][0]]
 
-                        if push_counter[vfd_addr] == 0:
+                        if int(push_counter[vfd_addr]) == 0:
                             push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
-                            series3_run_time[motor_uuid[vfd_addr]] += 1
+                            series3_run_time[motor_uuid[vfd_addr][0]] += 1
                             
                             try:
                                 with open("/var/run/runtime", "r") as hdlr:
@@ -429,7 +429,9 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             except:
                                 resp = {}
                             finally:
-                                resp[motor_uuid[vfd_addr]] = series3_run_time[motor_uuid[vfd_addr]]
+                                resp[motor_uuid[vfd_addr]] = series3_run_time[motor_uuid[vfd_addr][0]]
+                                with open("/var/run/runtime", "w") as hdlr:
+                                    hdlr.write(json.dumps(resp))
 
                         print("here1.2")
                         datapoint = {}

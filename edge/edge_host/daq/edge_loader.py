@@ -82,7 +82,7 @@ def ingest_stream(crane_query_json):
             dbSession.edge_session.execute(
                     """
                     insert into edge_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp,vfd_status) 
-                    values (%s,%s,%s,%s,%s,%s,,%s)
+                    values (%s,%s,%s,%s,%s,%s,%s)
                     """,
                     (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
                 )
