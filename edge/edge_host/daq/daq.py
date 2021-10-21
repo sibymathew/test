@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
 from edge_loader import get_motor_data
 import time
+import json
 import argparse
 
 def check_signal(motor_list, pstate_port0, pstate_port1):
@@ -55,7 +56,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                     with open("/var/run/daq_port1", "r") as hdlr:
                         content = json.loads(hdlr.read())
                         if "state" in content:
-                            if content["state"] = "Pushed":
+                            if content["state"] == "Pushed":
                                 resp = Popen(["supervisorctl stop all"], stdout=PIPE, stderr=PIPE)
                                 o, e = resp.communicate()
             elif s[1] == "1":

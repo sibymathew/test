@@ -6,6 +6,7 @@ from dse.auth import PlainTextAuthProvider
 import uuid
 from datetime import timezone
 import datetime
+import time
 import calendar
 import json
 import os
@@ -74,7 +75,7 @@ def ingest_stream(crane_query_json):
             query_timestamp= crane_query_json["timestamp"]
             vfd_status = crane_query_json["vfd_status"]
             motor_data = str(crane_query_json["motor_data"])
-            load_timestamp = datetime.datetime.now(timezone.utc)
+            load_timestamp = round(time.time() * 1000)
             motor_uuid = crane_query_json["motor_uuid"]
 
             # single Insert Statement
@@ -114,7 +115,7 @@ def ingest_stream2(crane_query_json):
             vfd_status = crane_query_json["vfd_status"]
             motor_data = str(crane_query_json["motor_data"])
             # load_timestamp = datetime.datetime.today()
-            load_timestamp = datetime.datetime.now(timezone.utc)
+            load_timestamp = round(time.time() * 1000)
             motor_uuid = crane_query_json["motor_uuid"]
 
             # single Insert Statement

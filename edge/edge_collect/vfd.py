@@ -213,6 +213,7 @@ def connect(vfd_addr, vfd_port, vfd_rate, mode="rtu"):
 
     return drive_obj
 
+# As of now this function is deprecated. Could be used later with some changes.
 def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode="rtu"):
 
     while True:
@@ -285,15 +286,28 @@ def read_faults(vfd_addr):
 def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, labels, load_cell, previous_state, test):
 
     try:
-        run_time = {}
+        try:
+            with open("/var/run/runtime", "r") as hdlr:
+                resp = json.loads(hdlr.read())
+        except:
+            resp = {}
+
+        #run_time = {}
         counter = {}
         push_counter = {}
+        series3_run_time = {}
         vfd_status = 2
         previous_state = previous_state
         for vfd_addr in vfd_addrs:
             run_time[vfd_addr] = 0
             counter[vfd_addr] = 1
             push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
+
+            for motor in motor_uuid[vfd_addr]:
+                if motor in resp:
+                    series3_run_time[motor] = resp[motor]
+                else:
+                    series3_run_time[motor] = 0
 
         while True:
             for vfd_addr in vfd_addrs:
@@ -378,10 +392,10 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint["k"] = "drive_direction"
                             datapoint["d"] = "Drive Direction"
                             if direction == 1 or direction == 3:
-                                datapoint["v"] = labels[0] + " Running"
+                                datapoint["v"] = labels[vfd_addr][0] + " Running"
                                 vfd_status = 3
                             elif direction == 5 or direction == 7:
-                                datapoint["v"] = labels[1] + " Running"
+                                datapoint["v"] = labels[vfd_addr][1] + " Running"
                                 vfd_status = 3
                             else:
                               #Drive is stopped
@@ -403,23 +417,19 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                         if direction == 1 or direction == 3 or direction == 5 or direction == 7:
                             push_counter[vfd_addr] -= 1
 
-                        print(motor_uuid[vfd_addr])
-                        content = get_motor_data("table", motor_uuid, 0)
-
-                        print(content)
-                        if not content:
-                            run_time = 0
-                        else:
-                            for row in json.loads(content):
-                                i = json.loads(row)
-                                k = ast.literal_eval(i["motor_data"])
-                                for s in k:
-                                    if s["k"] == "run_time":
-                                        run_time[vfd_addr] = s["v"]
+                        run_time = series3_run_time[motor_uuid[vfd_addr]]
 
                         if push_counter[vfd_addr] == 0:
                             push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
-                            run_time[vfd_addr] += 1
+                            series3_run_time[motor_uuid[vfd_addr]] += 1
+                            
+                            try:
+                                with open("/var/run/runtime", "r") as hdlr:
+                                    resp = json.loads(hdlr.read())
+                            except:
+                                resp = {}
+                            finally:
+                                resp[motor_uuid[vfd_addr]] = series3_run_time[motor_uuid[vfd_addr]]
 
                         print("here1.2")
                         datapoint = {}
@@ -475,38 +485,42 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     rawdata[27] = resp
                     value = []
                     if (resp[0] & (1<<8)) >> 8:
-                        value.append(labels[0] + " Stop")
+                        value.append(labels[vfd_addr][0] + " Stop")
                     elif (resp[0] & (1<<9)) >> 9:
-                        value.append(labels[1] + " Stop")
+                        value.append(labels[vfd_addr][1] + " Stop")
                     elif (resp[0] & (1<<10)) >> 10:
-                        value.append(labels[0] + " Slow Down")
+                        value.append(labels[vfd_addr][0] + " Slow Down")
                     elif (resp[0] & (1<<11)) >> 11:
-                        value.append(labels[1] + " Slow Down")
+                        value.append(labels[vfd_addr][1] + " Slow Down")
                     elif (resp[0] & (1<<15)) >> 15:
-                        value.append(labels[0] + " Weighted")
+                        value.append(labels[vfd_addr][0] + " Weighted")
                     datapoint["k"] = "limit_switch"
                     datapoint["v"] = value
                     datapoint["d"] = "Limit Switch"
                     datapoints.append(datapoint)
 
+                    print("here3.1")
                     if vfd_addr in load_cell:
-                        resp = drive_obj[vfd_addr].read(int(load_cell[0]), 1)
-                        analog_data = resp[0]
-                        status = 0
+                        if load_cell[vfd_addr]:
+                            lc = load_cell[vfd_addr][0].split(",")
 
-                        if len(load_cell) > 1:
-                            if int(load_cell[1]) == 1:
-                                crane_weight = (float(load_cell[3]) * analog_data) + float(load_cell[4])
-                            elif int(load_cell[1]) == 2:
-                                crane_weight = (float(load_cell[2]) * analog_data^2) + (float(load_cell[3]) * analog_data) + float(load_cell[4])
-                        else:
-                            crane_weight = 0
-                            status = 1
+                            resp = drive_obj[vfd_addr].read(int(lc[0]), 1)
+                            analog_data = resp[0]
+                            status = 0
 
-                        datapoint = {}
-                        datapoint["k"] = "loadcell"
-                        datapoint["v"] = {"status":status, "analog_data": analog_data, "crane_weight":crane_weight}
-                        datapoints.append(datapoint)
+                            if len(lc) > 1:
+                                if int(lc[1]) == 1:
+                                    crane_weight = (float(lc[3]) * analog_data) + float(lc[4])
+                                elif int(lc[1]) == 2:
+                                    crane_weight = (float(lc[2]) * analog_data^2) + (float(lc[3]) * analog_data) + float(lc[4])
+                            else:
+                                crane_weight = 0
+                                status = 1
+
+                            datapoint = {}
+                            datapoint["k"] = "loadcell"
+                            datapoint["v"] = {"status":status, "analog_data": analog_data, "crane_weight":crane_weight}
+                            datapoints.append(datapoint)
 
                 else:
                     datapoints = generate_test_data()
@@ -526,7 +540,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     print(json.dumps(data, indent=4, sort_keys=True))
                     ingest_stream(data)
 
-                print("here6")
+                '''print("here6")
                 if counter[vfd_addr] == __PUSH_INTERVAL__:
                     for motor in motor_uuid[vfd_addr]:
                         data["motor_uuid"] = motor
@@ -534,9 +548,9 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     counter[vfd_addr] = 1
                     ingest_hourly_stream(start_time, start_time - __PUSH_INTERVAL__)
                 else:
-                    counter[vfd_addr] += 1
+                    counter[vfd_addr] += 1'''
 
-                print("here7")
+                print("here6")
                 end_time = round(time.time() * 1000)
                 lapsed_time = end_time - start_time
                 log_hdlr.info("Total Lapsed Time For Drive {} is {}".format(vfd_addr, lapsed_time))
@@ -564,35 +578,13 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 data["total_motors"] = len(motor_uuid[vfd_addr])
                 data["timestamp"] = start_time
                 data["vfd_status"] = vfd_status
-
-                for motor in motor_uuid[vfd_addr]:
-                    content = get_motor_data("table", motor, 0)
-
-                    run_time = 0
-                    if not content:
-                        run_time = 0
-                    else:
-                        for row in json.loads(content):
-                            i = json.loads(row)
-                            k = ast.literal_eval(i["motor_data"])
-                            for s in k:
-                                if s["k"] == "run_time":
-                                    run_time = s["v"]
-
-                    datapoint = {}
-                    datapoint["k"] = "run_time"
-                    datapoint["v"] = run_time
-                    datapoint["u"] = "Minutes"
-                    datapoint["d"] = "Run Time"
-
-                data["motor_data"] = datapoints
+                data["motor_data"] = []
 
                 for motor in motor_uuid[vfd_addr]:
                     data["motor_uuid"] = motor
                     log_hdlr.info("Raw Data {} : {}".format(start_time, rawdata))
                     print(json.dumps(data, indent=4, sort_keys=True))
                     ingest_stream(data)
-                    ingest_stream2(data)
                     previous_state = vfd_status
 
         read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, labels, load_cell, previous_state, test)

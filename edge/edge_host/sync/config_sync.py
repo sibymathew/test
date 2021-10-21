@@ -138,9 +138,9 @@ def main():
                                 loadcell.append(addr+":"+params)
                             elif 'loadcell' in mapping and mapping["loadcell"]["mode"] == 1:
                                 params = str(mapping["loadcell"]["register"]) + "," + \
-                                            str(mapping["loadcell"]["mode"]) + "," + \
+                                            str(mapping["loadcell"]["mode"]) + ",0" + \
                                             str(mapping["loadcell"]["calibration"]["a"]) + "," + \
-                                            str(mapping["loadcell"]["calibration"]["b"]) + ",0"
+                                            str(mapping["loadcell"]["calibration"]["b"])
                                 loadcell.append(addr+":"+params) 
 
                             for motor in config["crane_details"]["motor_config"]:
