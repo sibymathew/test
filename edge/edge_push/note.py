@@ -92,7 +92,7 @@ def push(card, motor_uuid):
         while True:
             push_mode = 0
             try:
-                with open("/var/run/daq_port0", "r") as hdlr:
+                with open("/etc/daq_port0", "r") as hdlr:
                     content = json.loads(hdlr.read())
                     if "status" in content:
                         if content["status"] == "6":
@@ -103,7 +103,7 @@ def push(card, motor_uuid):
                 pass
 
             try:
-                with open("/var/run/daq_port1", "r") as hdlr:
+                with open("/etc/daq_port1", "r") as hdlr:
                     content = json.loads(hdlr.read())
                     if "status" in content:
                         if content["status"] == "8":
@@ -149,23 +149,23 @@ def push(card, motor_uuid):
                 log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                 if push_mode == 1:
-                    with open("/var/run/daq_port0", "r") as hdlr:
+                    with open("/etc/daq_port0", "r") as hdlr:
                         content = json.loads(hdlr.read())
                         if "status" in content:
                             if content["status"] == "6":
                                 content["state"] = "Pushed"
 
-                    with open("/var/run/daq_port0", "w") as hdlr:
+                    with open("/etc/daq_port0", "w") as hdlr:
                         hdlr.write(json.dumps(content))
 
                 if push_mode == 2:
-                    with open("/var/run/daq_port1", "r") as hdlr:
+                    with open("/etc/daq_port1", "r") as hdlr:
                         content = json.loads(hdlr.read())
                         if "status" in content:
                             if content["status"] == "8":
                                 content["state"] = "Pushed"
 
-                    with open("/var/run/daq_port1", "w") as hdlr:
+                    with open("/etc/daq_port1", "w") as hdlr:
                         hdlr.write(json.dumps(content))
 
                 if push_mode == 2 or push_mode == 3:

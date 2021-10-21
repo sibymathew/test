@@ -65,7 +65,7 @@ def main():
         data["edge_mac"] = __EDGE_MAC__
 
         try:
-            with open("/var/run/version", "r") as hdlr:
+            with open("/etc/version", "r") as hdlr:
                 version = int(hdlr.readline().rstrip())
                 if version == '':
                     version = 0
@@ -89,7 +89,7 @@ def main():
             else:
                 if main_config:
                     if edge_config["edge_mac"] == __EDGE_MAC__ and edge_config["version"] != version:
-                        with open("/var/run/yconfig.json", "w") as hdlr:
+                        with open("/etc/yconfig.json", "w") as hdlr:
                             hdlr.write(json.dumps(edge_config))
                             update_flag = True
 
@@ -181,7 +181,7 @@ def main():
 
                 if store(edge_config):
                     res = os.popen("supervisorctl restart all")
-                    with open("/var/run/version", "w") as hdlr:
+                    with open("/etc/version", "w") as hdlr:
                         hdlr.write(str(edge_config["version"]))
                     
                         update_flag = False

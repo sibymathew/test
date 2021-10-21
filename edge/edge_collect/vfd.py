@@ -287,7 +287,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
     try:
         try:
-            with open("/var/run/runtime", "r") as hdlr:
+            with open("/etc/runtime", "r") as hdlr:
                 resp = json.loads(hdlr.read())
         except:
             resp = {}
@@ -424,13 +424,13 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             series3_run_time[motor_uuid[vfd_addr][0]] += 1
                             
                             try:
-                                with open("/var/run/runtime", "r") as hdlr:
+                                with open("/etc/runtime", "r") as hdlr:
                                     resp = json.loads(hdlr.read())
                             except:
                                 resp = {}
                             finally:
                                 resp[motor_uuid[vfd_addr]] = series3_run_time[motor_uuid[vfd_addr][0]]
-                                with open("/var/run/runtime", "w") as hdlr:
+                                with open("/etc/runtime", "w") as hdlr:
                                     hdlr.write(json.dumps(resp))
 
                         print("here1.2")
@@ -566,7 +566,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         data = {}
         vfd_status = 1
         try:
-            with open("/var/run/daq_port0", "r") as hdlr:
+            with open("/etc/daq_port0", "r") as hdlr:
                 content = json.loads(hdlr.read())
 
             if "status" in content:

@@ -37,11 +37,11 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                 msg["status"] = stop_mode
                 msg["timestamp"] = ping_time
                 if pstate_port0 != stop_mode:
-                    with open("/var/run/daq_port0", "w") as hdlr:
+                    with open("/etc/daq_port0", "w") as hdlr:
                         hdlr.write(json.dumps(msg))
                         pstate_port0 = stop_mode
             elif s[0] == "1":
-                resp = Popen(["rm", "-rf", "/var/run/daq_port0"], stdout=PIPE, stderr=PIPE)
+                resp = Popen(["rm", "-rf", "/etc/daq_port0"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
 
             if s[1] == "0":
@@ -50,18 +50,18 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                 msg["timestamp"] = ping_time
 
                 if pstate_port1 != 8:
-                    with open("/var/run/daq_port1", "w") as hdlr:
+                    with open("/etc/daq_port1", "w") as hdlr:
                         hdlr.write(json.dumps(msg))
                         pstate_port1 = 8
                 else:
-                    with open("/var/run/daq_port1", "r") as hdlr:
+                    with open("/etc/daq_port1", "r") as hdlr:
                         content = json.loads(hdlr.read())
                         if "state" in content:
                             if content["state"] == "Pushed":
                                 resp = Popen(["supervisorctl stop all"], stdout=PIPE, stderr=PIPE)
                                 o, e = resp.communicate()
             elif s[1] == "1":
-                resp = Popen(["rm", "-rf", "/var/run/daq_port1"], stdout=PIPE, stderr=PIPE)
+                resp = Popen(["rm", "-rf", "/etc/daq_port1"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
         else:
             print("Error")
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     motor_list = args.mu
 
     try:
-        with open("/var/run/daq_port0", "r") as hdlr:
+        with open("/etc/daq_port0", "r") as hdlr:
             a = json.loads(hdlr.read())
 
             if "status" in a:
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         previous_state_port0 = 0
 
     try:
-        with open("/var/run/daq_port1", "r") as hdlr:
+        with open("/etc/daq_port1", "r") as hdlr:
             a = json.loads(hdlr.read())
 
             if "status" in a:
