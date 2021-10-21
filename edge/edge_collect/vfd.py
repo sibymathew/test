@@ -514,7 +514,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                                 if int(lc[1]) == 1:
                                     crane_weight = (float(lc[3]) * analog_data) + float(lc[4])
                                 elif int(lc[1]) == 2:
-                                    crane_weight = (float(lc[2]) * analog_data^2) + (float(lc[3]) * analog_data) + float(lc[4])
+                                    crane_weight = (float(lc[2]) * (analog_data^2)) + (float(lc[3]) * analog_data) + float(lc[4])
                             else:
                                 crane_weight = 0
                                 status = 1
@@ -522,6 +522,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint = {}
                             datapoint["k"] = "loadcell"
                             datapoint["v"] = {"status":status, "analog_data": analog_data, "crane_weight":crane_weight}
+                            datapoint["u"] = {"analog_data":"Volt", "crane_weight":"ton"}
                             datapoints.append(datapoint)
 
                 else:

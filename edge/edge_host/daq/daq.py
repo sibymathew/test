@@ -11,7 +11,8 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
         print(o)
         print(e)
 
-        s = o.decode("utf-8")
+        x = o.decode("utf-8")
+        s = bin(int(x[0]))[2:]
         ping_time = round(time.time() * 1000)
 
         if not "error" in s:
