@@ -156,13 +156,20 @@ def get_motor_data(table_name,motor_list, interval):
         query_timestamp = now - datetime.timedelta(minutes=interval)
         epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
 
+
         motor_rows = []
 
         for motor_id in motor_list:
             if interval == 0:
-                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
+                #  uncomment it. This is just one time test for Blues Xfer to Cloud.
+                # motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
+
+                # comment it. This is just one time test for Blues Xfer to Cloud.
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp > 1634830958000"
+
             else:
                 motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
+
 
             for motor_row in dbSession.edge_session.execute(motor_query):
                 #motor_rows.append(motor_row[0].replace("'", '"'))
