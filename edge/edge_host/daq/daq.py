@@ -58,7 +58,9 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                         content = json.loads(hdlr.read())
                         if "state" in content:
                             if content["state"] == "Pushed":
-                                resp = Popen(["supervisorctl stop all"], stdout=PIPE, stderr=PIPE)
+                                resp = Popen(["supervisorctl stop all"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
+                                resp = Popen(["systemctl stop cassandra.service"], stdout=PIPE, stderr=PIPE, shell=True)
                                 o, e = resp.communicate()
             elif s[1] == "1":
                 resp = Popen(["rm", "-rf", "/etc/daq_port1"], stdout=PIPE, stderr=PIPE)

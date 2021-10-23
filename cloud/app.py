@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import request
 from io import BytesIO
-from cloud_loader import ingest_stream, get_config_data
+from cloud_loader import ingest_stream, get_config_data, update_config_data
 import json
 import gzip
 import base64
@@ -43,6 +43,29 @@ def data_push_index():
     else:
         return {"status": 1, "msg": "Success"}
 
+@app.route("/v1/data/push/rt", methods = ['POST', 'GET'])
+def data_push_index():
+    try:
+        resp = ast.literal_eval(request.data.decode('utf-8'))["data"]
+        decodedData = base64.b64decode(resp)
+        received_value = BytesIO(decodedData)
+        to_receive = gzip.GzipFile(fileobj=received_value, mode='rb').read()
+        data = to_receive.decode("utf-8")
+
+        r = ast.literal_eval(ast.literal_eval(data))
+        to_save = []
+        for i in r:
+            to_save.append(ast.literal_eval(i))
+        log_hdlr.info(to_save)
+        res = ingest_stream(to_save)
+        log_hdlr.info(res)
+        print(to_save)
+        print(res)
+    except Exception as err:
+        return {"status": 0, "msg": err}
+    else:
+        return {"status": 1, "msg": "Success"}
+
 @app.route("/v1/config/pull", methods = ['POST'])
 def config_pull_index():
     try:
@@ -55,6 +78,18 @@ def config_pull_index():
         log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], resp))
         return {"status": 1, "msg": resp}
 
+
+@app.route("/v1/config/pull/status", methods = ['POST'])
+def config_pull_index():
+    try:
+        req = ast.literal_eval(request.data.decode('utf-8'))
+        resp = update_config_data(req["edge_mac"], req["version"])
+    except Exception as err:
+        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
+        return {"status": 0, "msg": err}
+    else:
+        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], resp))
+        return {"status": 1, "msg": resp}
 
 if __name__ == '__main__':
    app.run(host="0.0.0.0", port=443, debug = True)

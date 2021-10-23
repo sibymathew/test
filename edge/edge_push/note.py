@@ -116,6 +116,7 @@ def push(card, motor_uuid):
             if push_mode == 1:
                 start_time = time.time()
                 da = get_motor_data("edge_core.crane_details", motor_uuid, 5)
+                to_send["route"] = "datapushrt"
             elif push_mode == 2:
                 start_time = time.time()
                 da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
