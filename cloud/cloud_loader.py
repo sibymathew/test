@@ -12,6 +12,7 @@ import uuid
 from datetime import timezone
 import datetime
 from datetime import datetime as datetime2
+import time
 import calendar
 import json
 
@@ -60,6 +61,7 @@ def ingest_stream(crane_query_json):
                 edge_uuid = json_motor_data["edge_uuid"]
                 # edge_mac =  json_motor_data["edge_mac"]
                 total_motors = json_motor_data["total_motors"]
+                vfd_status = crane_query_json["vfd_status"]
                 query_timestamp = json_motor_data["query_timestamp"]
                 utc_query_timestamp = datetime2.strptime(query_timestamp, "%Y-%m-%d %H:%M:%S.%fZ")
                 epoch_query_timestamp = (utc_query_timestamp - datetime2(1970, 1, 1)).total_seconds()
@@ -67,16 +69,17 @@ def ingest_stream(crane_query_json):
                 #print(epoch_query_timestamp)
                 motor_data = str(json_motor_data["motor_data"])
                 # print( motor_data )
-                load_timestamp = datetime.datetime.now(timezone.utc)
+                # load_timestamp = datetime.datetime.now(timezone.utc)
+                load_timestamp = round(time.time() * 1000)
                 motor_uuid = json_motor_data["motor_uuid"]
 
                 # single Insert Statement
                 dbSession.cosmos_session.execute(
                     """
-                    insert into cloud_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp) 
-                    values (%s,%s,%s,%s,%s,%s)
+                    insert into cloud_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp, vfd_status) 
+                    values (%s,%s,%s,%s,%s,%s,%s)
                     """,
-                    (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp)
+                    (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
                 )
 
             dbSession.shutCluster()
@@ -89,16 +92,87 @@ def ingest_stream(crane_query_json):
             query_timestamp = crane_query_json["timestamp"]
             motor_data = str(crane_query_json["motor_data"])
             # load_timestamp = datetime.datetime.today()
-            load_timestamp = datetime.datetime.now(timezone.utc)
+            # load_timestamp = datetime.datetime.now(timezone.utc)
+            load_timestamp = round(time.time() * 1000)
+            vfd_status = crane_query_json["vfd_status"]
             motor_uuid = crane_query_json["motor_uuid"]
 
             # single Insert Statement
             dbSession.cosmos_session.execute(
                 """
-                insert into cloud_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp) 
-                values (%s,%s,%s,%s,%s,%s)
+                insert into cloud_core.crane_details (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp, vfd_status) 
+                values (%s,%s,%s,%s,%s,%s,%s)
                 """,
-                (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp)
+                (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
+            )
+
+        dbSession.shutCluster()
+        return "Stream Ingested"
+
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to ingest for Edge UUID=" + edge_uuid, "Error": str(e)}
+        return error_msg
+
+def ingest_stream_hourly(crane_query_json):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        # Check the given JSON is a list
+        if (isinstance(crane_query_json, list)):
+            # Loop thru the given JsON
+            for motor_data in crane_query_json:
+                json_motor_data = motor_data
+                edge_uuid = json_motor_data["edge_uuid"]
+                # edge_mac =  json_motor_data["edge_mac"]
+                total_motors = json_motor_data["total_motors"]
+                vfd_status = crane_query_json["vfd_status"]
+                query_timestamp = json_motor_data["query_timestamp"]
+                utc_query_timestamp = datetime2.strptime(query_timestamp, "%Y-%m-%d %H:%M:%S.%fZ")
+                epoch_query_timestamp = (utc_query_timestamp - datetime2(1970, 1, 1)).total_seconds()
+                epoch_query_timestamp = int(epoch_query_timestamp * 1000)
+                #print(epoch_query_timestamp)
+                motor_data = str(json_motor_data["motor_data"])
+                # print( motor_data )
+                # load_timestamp = datetime.datetime.now(timezone.utc)
+                load_timestamp = round(time.time() * 1000)
+                motor_uuid = json_motor_data["motor_uuid"]
+
+                # single Insert Statement
+                dbSession.cosmos_session.execute(
+                    """
+                    insert into cloud_core.crane_details_hourly (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp, vfd_status) 
+                    values (%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
+                )
+
+            dbSession.shutCluster()
+            return "Stream(s) Ingested"
+
+        else:
+            edge_uuid = crane_query_json["edge_uuid"]
+            # edge_mac =  crane_query_json["edge_mac"]
+            total_motors = crane_query_json["total_motors"]
+            query_timestamp = crane_query_json["timestamp"]
+            motor_data = str(crane_query_json["motor_data"])
+            # load_timestamp = datetime.datetime.today()
+            # load_timestamp = datetime.datetime.now(timezone.utc)
+            load_timestamp = round(time.time() * 1000)
+            vfd_status = crane_query_json["vfd_status"]
+            motor_uuid = crane_query_json["motor_uuid"]
+
+            # single Insert Statement
+            dbSession.cosmos_session.execute(
+                """
+                insert into cloud_core.crane_details_hourly (edge_uuid, total_motors, query_timestamp,  motor_uuid, motor_data,load_timestamp, vfd_status) 
+                values (%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (edge_uuid, total_motors, query_timestamp, motor_uuid, motor_data, load_timestamp, vfd_status)
             )
 
         dbSession.shutCluster()

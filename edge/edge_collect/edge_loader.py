@@ -245,7 +245,6 @@ def update_config_data(edge_mac, version):
 
 
 def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
-
     try:
 
         ingest_status = []
@@ -256,19 +255,22 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         dbSession.edge_session.row_factory = pandas_factory
         dbSession.edge_session.default_fetch_size = None
 
-        #from_query_timestamp = 1630609200000
-        #to_query_timestamp = 1630612800000
+        # from_query_timestamp = 1630609200000
+        # to_query_timestamp = 1630612800000
 
         # query for given query_timestamp interval. Should be an hour
         # TO DO:  iteration for multiple hours, loop by hour
-        hourly_query = "SELECT edge_uuid,motor_uuid, motor_data FROM edge_core.crane_details where query_timestamp >= " + str(
+        hourly_query = "SELECT edge_uuid,motor_uuid,query_timestamp, motor_data FROM edge_core.crane_details where query_timestamp >= " + str(
             from_query_timestamp) + " and  query_timestamp <= " + str(to_query_timestamp) + " ALLOW FILTERING"
+
         hourly_df = pd.DataFrame(dbSession.edge_session.execute(hourly_query, timeout=None))
 
         # Remove empty motor_data
         hourly_df = hourly_df[hourly_df.motor_data.apply(lambda x: len(str(x)) > 5)]
         # Convert motor_data string column with double quotes
         hourly_df['motor_data'] = hourly_df['motor_data'].str.replace("'", '"')
+
+        # hourly_df0 = hourly_df
 
         # Column names that contain JSON
         json_cols = ['motor_data']
@@ -295,36 +297,58 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         #  Crane Odometer calculations (TBD)
         ####
 
-        # TO DO: Add Load Weight
-        # TO DO: [averaged only while drive is running]
-        # TO DO: [averaged only while drive is running. Note: over-speeding will be separately defined as an “event” that will trigger a high-res upload, so the “maximum” value is not needed]
-        # TO DO: “absolute” values - Motor RPM
+        # TO DO: Add Load Weight   == DONE
+        # TO DO: [averaged only while drive is running] == DONE
+        # TO DO: [averaged only while drive is running. Note: over-speeding will be separately defined as an “event” that will trigger a high-res upload, so the “maximum” value is not needed]  DONE
+        # TO DO: “absolute” values - Motor RPM  == DONE
         # Prepare the required columns and append to the dataframe
 
         hourly_df['motor_amps'] = hourly_df.apply(lambda row: add_column(row, 'motor_amps'), axis=1)
         hourly_df['motor_in_rpm'] = hourly_df.apply(lambda row: add_column(row, 'motor_in_rpm'), axis=1)
-
+        hourly_df['loadcell'] = hourly_df.apply(lambda row: add_column(row, 'loadcell'), axis=1)
+        hourly_df['run_time'] = hourly_df.apply(lambda row: add_column(row, 'run_time'), axis=1)
+        hourly_df['number_of_start_stop'] = hourly_df.apply(lambda row: add_column(row, 'number_of_start_stop'), axis=1)
 
         # prepare the motor_data for the hour, back to be ingested
         data = {}
+        datapoints = []
+
+        # Run Time, Total Motor Start/Stop
+        hourly_df.sort_values(by='query_timestamp', ascending=False, inplace=True)
+        row1 = hourly_df.iloc[0]
+        datapoint = {"k": "run_time", "v": row1['run_time'], "d": "Run Time"}
+        # print(datapoint)
+        datapoints.append(datapoint)
+
+        datapoint = {"k": "number_of_start_stop", "v": row1['number_of_start_stop'], "d": "Total Motor Start/Stop"}
+        # print(datapoint)
+        datapoints.append(datapoint)
 
         # Average motor_amps
         # to get mean and max values
-        hourly_calc_df1 = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'motor_amps': ['mean', 'max']})
-        # hourly_calc_df = hourly_df.groupby('motor_uuid')['motor_amps'].mean()
+        # hourly_calc_df1 = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'motor_amps': ['mean', 'max']})
+        # only when Drive is running, so select only amps > 0
+        hourly_calc_df1 = hourly_df[hourly_df['motor_amps'] > 0].groupby(['edge_uuid', 'motor_uuid']).agg(
+            {'motor_amps': ['mean', 'max']})
 
         # hourly_calc_df1.head()
 
-        hourly_calc_df2 = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'motor_in_rpm': ['mean']})
+        # hourly_calc_df2 = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'motor_in_rpm': ['mean']})
+        # only when Drive is running, so select only motor_in_rpm > 0  and only absolute values
+        hourly_calc_df2 = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(['edge_uuid', 'motor_uuid']).agg(
+            {'motor_in_rpm': ['mean', lambda x: abs(x.mean())]})
         # hourly_calc_df2.head()
 
-        hourly_final_df = pd.merge(hourly_calc_df1, hourly_calc_df2, on=['edge_uuid', 'motor_uuid'])
+        # only when Drive is running,
+        hourly_calc_df3 = hourly_df[hourly_df['loadcell'] > 0].groupby(['edge_uuid', 'motor_uuid']).agg(
+            {'loadcell': ['mean', 'max']})
 
-        hourly_final_df.head()
+        hourly_final_df = pd.merge(hourly_calc_df1, hourly_calc_df2, on=['edge_uuid', 'motor_uuid'])
+        hourly_final_df = pd.merge(hourly_final_df, hourly_calc_df3, on=['edge_uuid', 'motor_uuid'])
+
+        # hourly_final_df.head()
 
         for i, r in hourly_final_df.iterrows():
-            datapoints = []
-
             data["edge_uuid"] = i[0]
             data["motor_uuid"] = i[1]
             data["total_motors"] = 0
@@ -345,11 +369,15 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             datapoint = {"k": "motor_in_rpm_avg", "v": r['motor_in_rpm']['mean'], "d": "Motor In RPM"}
             datapoints.append(datapoint)
 
+            datapoint = {"k": "loadcell_weight_avg", "v": r['loadcell']['mean'], "d": "Loadcell Crane Weight Average"}
+            datapoints.append(datapoint)
+            datapoint = {"k": "loadcell_weight_max", "v": r['loadcell']['max'], "d": "Loadcell Crane Weight Max"}
+            datapoints.append(datapoint)
+
             data["motor_data"] = datapoints
             # print(json.dumps(data, indent=4, sort_keys=True))
 
-
-            stream_status = {"motor_uuid":data["motor_uuid"], "msg": ingest_stream2(data)}
+            stream_status = {"motor_uuid": data["motor_uuid"], "msg": ingest_stream2(data)}
             ingest_status.append(stream_status)
 
         return ingest_status
