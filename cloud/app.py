@@ -34,7 +34,7 @@ def data_push_index():
         for i in r:
             to_save.append(ast.literal_eval(i))
         log_hdlr.info(to_save)
-        res = ingest_stream(to_save)
+        res = ingest_stream_hourly(to_save)
         log_hdlr.info(res)
         print(to_save)
         print(res)
@@ -44,7 +44,7 @@ def data_push_index():
         return {"status": 1, "msg": "Success"}
 
 @app.route("/v1/data/push/rt", methods = ['POST', 'GET'])
-def data_push_index():
+def data_push_rt_index():
     try:
         resp = ast.literal_eval(request.data.decode('utf-8'))["data"]
         decodedData = base64.b64decode(resp)
@@ -80,7 +80,7 @@ def config_pull_index():
 
 
 @app.route("/v1/config/pull/status", methods = ['POST'])
-def config_pull_index():
+def config_pull_status_index():
     try:
         req = ast.literal_eval(request.data.decode('utf-8'))
         resp = update_config_data(req["edge_mac"], req["version"])

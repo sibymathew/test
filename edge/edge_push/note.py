@@ -124,7 +124,7 @@ def push(card, motor_uuid):
                 if counter == 0:
                     start_time = time.time()
                     da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
-                    push_mode == 3
+                    push_mode = 3
                 else:
                     counter += 1
                     if counter >= __PUSH_COUNTER__:
