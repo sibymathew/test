@@ -321,7 +321,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         datapoints = []
 
         # Run Time, Total Motor Start/Stop
-        #  {'k': 'run_time', 'v': 0, 'u': 'Minutes', 'd': 'Run Time'},
+        #  {'k': 'run_time', 'v': 0, 'u': 'Minutes', 'd': 'Run Time'}
         hourly_df.sort_values(by='query_timestamp', ascending=False, inplace=True)
         row1 = hourly_df.iloc[0]
         datapoint = {"k": "run_time", "v": row1['run_time'], 'u': 'Minutes', "d": "Run Time"}
