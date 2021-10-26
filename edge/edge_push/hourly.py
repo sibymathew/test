@@ -3,12 +3,8 @@ import time
 import ast
 
 try:
-	da = get_motor_data("edge_core.crane_details", motor_uuid, 0)
-
-	resp = ast.literal_eval(da)
-
-	for data in resp:
-		i = ast.literal_eval(data)
-		ingest_hourly_stream(i["query_timestamp"], 3600)
+	to_time = round(time.time() * 1000)
+	from_time = to_time - 3600000
+	ingest_hourly_stream(from_time, to_time)
 except Exception as err:
 	pass

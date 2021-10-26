@@ -3,6 +3,8 @@ from edge_loader import get_motor_data
 import time
 import json
 import argparse
+import logging
+from logging.handlers import RotatingFileHandler
 
 LOG_PATH = "/var/log/daq.log"
 log_hdlr = logging.getLogger(__name__)
@@ -15,7 +17,7 @@ log_hdlr.addHandler(hdlr)
 
 def check_signal(motor_list, pstate_port0, pstate_port1):
     while True:
-        resp = Popen(["./StaticDI"], stdout=PIPE, stderr=PIPE)
+        resp = Popen(["/home/utopia/test/edge/edge_host/daq/StaticDI"], stdout=PIPE, stderr=PIPE)
         o, e = resp.communicate()
         log_hdlr.info("DAQ Port Read {}".format(o))
         print(o)
