@@ -95,10 +95,12 @@ def push(card, motor_uuid):
                 with open("/etc/daq_port0", "r") as hdlr:
                     content = json.loads(hdlr.read())
                     if "status" in content:
-                        if content["status"] == "6":
+                        if content["status"] == 6:
                             if "state" in content:
                                 if content["state"] != "Pushed":
                                     push_mode = 1
+                            else:
+                                push_mode = 1
             except:
                 pass
 
@@ -106,10 +108,12 @@ def push(card, motor_uuid):
                 with open("/etc/daq_port1", "r") as hdlr:
                     content = json.loads(hdlr.read())
                     if "status" in content:
-                        if content["status"] == "8":
+                        if content["status"] == 8:
                             if "state" in content:
                                 if content["state"] != "Pushed":
                                     push_mode = 2
+                            else:
+                                push_mode = 2
             except:
                 pass
 
@@ -125,13 +129,14 @@ def push(card, motor_uuid):
                     start_time = time.time()
                     da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
                     push_mode = 3
+                    counter +=1 
+                elif counter >= __PUSH_COUNTER__:
+                    counter = 0
                 else:
-                    counter += 1
-                    if counter >= __PUSH_COUNTER__:
-                        counter = 0
+                    counter +=1
 
 
-            if da:
+            if da and push_mode != 0:
                 compressed_body = BytesIO()
                 gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
                 sz = gz.write(json.dumps(da).encode("utf-8"))
@@ -153,7 +158,7 @@ def push(card, motor_uuid):
                     with open("/etc/daq_port0", "r") as hdlr:
                         content = json.loads(hdlr.read())
                         if "status" in content:
-                            if content["status"] == "6":
+                            if content["status"] == 6:
                                 content["state"] = "Pushed"
 
                     with open("/etc/daq_port0", "w") as hdlr:
@@ -163,7 +168,7 @@ def push(card, motor_uuid):
                     with open("/etc/daq_port1", "r") as hdlr:
                         content = json.loads(hdlr.read())
                         if "status" in content:
-                            if content["status"] == "8":
+                            if content["status"] == 8:
                                 content["state"] = "Pushed"
 
                     with open("/etc/daq_port1", "w") as hdlr:
