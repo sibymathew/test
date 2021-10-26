@@ -4,10 +4,20 @@ import time
 import json
 import argparse
 
+LOG_PATH = "/var/log/daq.log"
+log_hdlr = logging.getLogger(__name__)
+log_hdlr.setLevel(logging.DEBUG)
+
+hdlr = RotatingFileHandler(LOG_PATH,maxBytes=5 * 1024 * 1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+hdlr.setFormatter(formatter)
+log_hdlr.addHandler(hdlr)
+
 def check_signal(motor_list, pstate_port0, pstate_port1):
     while True:
         resp = Popen(["./StaticDI"], stdout=PIPE, stderr=PIPE)
         o, e = resp.communicate()
+        log_hdlr.info("DAQ Port Read {}".format(o))
         print(o)
         print(e)
 
@@ -16,6 +26,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
         if len(s) == 1:
             s = "0" + s
         ping_time = round(time.time() * 1000)
+        log_hdlr.info("{} Formatted String {}".format(ping_time, s))
 
         if not "error" in s:
             if s[1] == "0":
