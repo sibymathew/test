@@ -11,6 +11,8 @@ import calendar
 import json
 import os
 
+import pandas as pd
+from pandas import json_normalize
 
 # Apache Cassandra DB connection (Edge)
 # TODO: CONFIG
@@ -50,10 +52,13 @@ def clean_json(x):
     return json.loads(x)
 
 
-def add_column(row, col_name):
+def add_column(row,col_name):
     for data in row['motor_data']:
-        if (data['k']) == col_name:
-            return (data['v'])
+         if (data['k']) == col_name:
+                if col_name == 'loadcell':
+                    return (data['v']['crane_weight'])
+                else:
+                    return(data['v'])
 
 
 def ingest_stream(crane_query_json):
@@ -160,12 +165,14 @@ def get_motor_data(table_name,motor_list, interval):
         motor_rows = []
 
         for motor_id in motor_list:
-            if interval == 0:
+            if table_name == 'crane_details' and interval == 0:
                 #  uncomment it. This is just one time test for Blues Xfer to Cloud.
-                # motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
 
                 # comment it. This is just one time test for Blues Xfer to Cloud.
-                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp > 1634830958000"
+                # motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp > 1634830958000"
+            elif table_name == 'crane_details' and interval > 0:
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
 
             else:
                 motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + epoch_query_timestamp
@@ -314,12 +321,13 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         datapoints = []
 
         # Run Time, Total Motor Start/Stop
+        #  {'k': 'run_time', 'v': 0, 'u': 'Minutes', 'd': 'Run Time'},
         hourly_df.sort_values(by='query_timestamp', ascending=False, inplace=True)
         row1 = hourly_df.iloc[0]
-        datapoint = {"k": "run_time", "v": row1['run_time'], "d": "Run Time"}
+        datapoint = {"k": "run_time", "v": row1['run_time'], 'u': 'Minutes', "d": "Run Time"}
         # print(datapoint)
         datapoints.append(datapoint)
-
+        # {'k': 'number_of_start_stop', 'v': 28642, 'd': 'Total Motor Start/Stop'}
         datapoint = {"k": "number_of_start_stop", "v": row1['number_of_start_stop'], "d": "Total Motor Start/Stop"}
         # print(datapoint)
         datapoints.append(datapoint)
@@ -351,6 +359,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         for i, r in hourly_final_df.iterrows():
             data["edge_uuid"] = i[0]
             data["motor_uuid"] = i[1]
+            data["edge_mac"] = "00:0a:bb:11:22:22"
             data["total_motors"] = 0
             data["timestamp"] = to_query_timestamp
             data["vfd_status"] = 0
@@ -360,19 +369,19 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             # utc_timestamp = utc_time.timestamp()
             data["load_timestamp"] = utc_time.timestamp()
 
-            datapoint = {"k": "motor_amps_avg", "v": r['motor_amps']['mean'], "d": "Motor Amps Average"}
+            datapoint = {"k": "motor_amps", "v": {"avg": r['motor_amps']['mean'], "max": r['motor_amps']['max']}, "u": "Amps", "d": "Motor Amps"}
             datapoints.append(datapoint)
 
-            datapoint = {"k": "motor_amps_max", "v": r['motor_amps']['max'], "d": "Motor Amps Max"}
+            # datapoint = {"k": "motor_amps_max", "v": r['motor_amps']['max'], "d": "Motor Amps Max"}
+            # datapoints.append(datapoint)
+
+            datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean']}, "u": "RPM", "d": "Motor In RPM"}
             datapoints.append(datapoint)
 
-            datapoint = {"k": "motor_in_rpm_avg", "v": r['motor_in_rpm']['mean'], "d": "Motor In RPM"}
+            datapoint = {"k": "loadcell", "v": {"avg": r['loadcell']['mean'], "max":r['loadcell']['max']},  "u": {"crane_weight":"ton"}}
             datapoints.append(datapoint)
-
-            datapoint = {"k": "loadcell_weight_avg", "v": r['loadcell']['mean'], "d": "Loadcell Crane Weight Average"}
-            datapoints.append(datapoint)
-            datapoint = {"k": "loadcell_weight_max", "v": r['loadcell']['max'], "d": "Loadcell Crane Weight Max"}
-            datapoints.append(datapoint)
+            # datapoint = {"k": "loadcell_weight_max", "v": r['loadcell']['max'], "d": "Loadcell Crane Weight Max"}
+            # datapoints.append(datapoint)
 
             data["motor_data"] = datapoints
             # print(json.dumps(data, indent=4, sort_keys=True))
