@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import request
 from io import BytesIO
-from cloud_loader import ingest_stream, get_config_data, update_config_data
+from cloud_loader import ingest_stream, get_config_data, update_config_data, ingest_stream_hourly
 import json
 import gzip
 import base64
