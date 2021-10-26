@@ -61,12 +61,12 @@ def ingest_stream(crane_query_json):
                 edge_uuid = json_motor_data["edge_uuid"]
                 # edge_mac =  json_motor_data["edge_mac"]
                 total_motors = json_motor_data["total_motors"]
-                vfd_status = crane_query_json["vfd_status"]
+                vfd_status = json_motor_data["vfd_status"]
                 query_timestamp = json_motor_data["query_timestamp"]
                 utc_query_timestamp = datetime2.strptime(query_timestamp, "%Y-%m-%d %H:%M:%S.%fZ")
                 epoch_query_timestamp = (utc_query_timestamp - datetime2(1970, 1, 1)).total_seconds()
                 epoch_query_timestamp = int(epoch_query_timestamp * 1000)
-                #print(epoch_query_timestamp)
+                # print(epoch_query_timestamp)
                 motor_data = str(json_motor_data["motor_data"])
                 # print( motor_data )
                 # load_timestamp = datetime.datetime.now(timezone.utc)
