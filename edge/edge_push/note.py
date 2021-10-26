@@ -192,7 +192,7 @@ def restart(card):
         resp = card.Transaction(req)
 
         log_hdlr.info("Restart Notecard Response {}".format(resp))
-
+    except:
         main()
         #Recursive
 

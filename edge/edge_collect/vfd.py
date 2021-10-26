@@ -292,7 +292,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         except:
             resp = {}
 
-        run_time = {}
         counter = {}
         push_counter = {}
         series3_run_time = {}
@@ -429,14 +428,14 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             except:
                                 resp = {}
                             finally:
-                                resp[motor_uuid[vfd_addr]] = series3_run_time[motor_uuid[vfd_addr][0]]
+                                resp[motor_uuid[vfd_addr][0]] = series3_run_time[motor_uuid[vfd_addr][0]]
                                 with open("/etc/runtime", "w") as hdlr:
                                     hdlr.write(json.dumps(resp))
 
                         print("here1.2")
                         datapoint = {}
                         datapoint["k"] = "run_time"
-                        datapoint["v"] = run_time[vfd_addr]
+                        datapoint["v"] = run_time
                         datapoint["u"] = "Minutes"
                         datapoint["d"] = "Run Time"   
                         datapoints.append(datapoint)                        
