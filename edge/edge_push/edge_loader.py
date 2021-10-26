@@ -21,6 +21,7 @@ EDGE_DB_PORT = 9042
 EDGE_DB_USER = 'cassandra'
 EDGE_DB_PASSWD = 'cassandra'
 EDGE_KEY_SPACE = 'edge_core'
+FALLBACK_CASSANDRA_IP = '10.0.1.20'
 
 # Connect to database
 class DatabaseConnection:
@@ -32,7 +33,8 @@ class DatabaseConnection:
 
     def openSession(self):
     
-        EDGE_DB_INSTANCE = os.environ["CASSANDRA_IP"]
+        # EDGE_DB_INSTANCE = os.environ["CASSANDRA_IP"]
+        EDGE_DB_INSTANCE = os.getenv("CASSANDRA_IP",FALLBACK_CASSANDRA_IP)
         self.edge_auth_provider = PlainTextAuthProvider(
             username=EDGE_DB_USER, password=EDGE_DB_PASSWD)        
         self.edge_cluster = Cluster(contact_points=[EDGE_DB_INSTANCE],port=EDGE_DB_PORT, auth_provider=self.edge_auth_provider)
@@ -455,11 +457,11 @@ def del_motor_data(table_name,motor_list, interval):
             for motor_id in motor_list:
                 if table_name == 'edge_core.crane_details':
                     motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
-                    msg = "Deleted for " + interval +" days"
+                    msg = "Deleted for " + str(interval) +" days"
                     del_status = {"motor_uuid": motor_id, "msg": msg }
                 elif table_name == 'edge_core.crane_details2':
                     motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
-                    msg = "Deleted for " + interval + " days"
+                    msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg}
                 else:
                     msg = "No right table passed"
@@ -473,11 +475,11 @@ def del_motor_data(table_name,motor_list, interval):
                 # print(motor_row[0])
                 if table_name == 'edge_core.crane_details':
                     motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
-                    msg = "Deleted for " + interval +" days"
+                    msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg }
                 elif table_name == 'edge_core.crane_details2':
                     motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
-                    msg = "Deleted for " + interval + " days"
+                    msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg}
                 else:
                     msg = "No right table passed"
