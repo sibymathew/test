@@ -386,7 +386,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             data["motor_uuid"] = i[1]
             data["total_motors"] = 0
             data["timestamp"] = to_query_timestamp
-            data["vfd_status"] = r['vfd_status']['mean']
+            data["vfd_status"] = int(r['vfd_status']['mean'])
 
             dt = datetime.datetime.now(timezone.utc)
             utc_time = dt.replace(tzinfo=timezone.utc)
