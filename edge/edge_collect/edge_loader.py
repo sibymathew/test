@@ -242,7 +242,7 @@ def update_config_data(edge_mac, version):
 
         # single update Statement
         update_query = "update edge_core.crane_config set config_sync_flag=True where edge_mac='" + edge_mac + "' and version= " + str(version)
-        dbSession.cosmos_session.execute(update_query )
+        dbSession.edge_session.execute(update_query )
 
         dbSession.shutCluster()
         return "Flag Updated as True in Edge Config"
@@ -457,10 +457,12 @@ def del_motor_data(table_name,motor_list, interval):
             for motor_id in motor_list:
                 if table_name == 'edge_core.crane_details':
                     motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) +" days"
                     del_status = {"motor_uuid": motor_id, "msg": msg }
                 elif table_name == 'edge_core.crane_details2':
                     motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg}
                 else:
@@ -475,10 +477,12 @@ def del_motor_data(table_name,motor_list, interval):
                 # print(motor_row[0])
                 if table_name == 'edge_core.crane_details':
                     motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg }
                 elif table_name == 'edge_core.crane_details2':
                     motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg}
                 else:
