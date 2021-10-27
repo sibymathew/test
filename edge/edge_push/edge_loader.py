@@ -331,6 +331,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
                 .reset_index(drop=True)
         )
 
+        # only one record but "mean" is just for uniform data structure to merge
         hourly_calc_runtime = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
             {'run_time': ['mean', lambda x: abs(x.mean())]})
         hourly_calc_start = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
