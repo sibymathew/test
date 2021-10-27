@@ -11,6 +11,8 @@ import calendar
 import json
 import os
 
+import math
+
 import pandas as pd
 from pandas import json_normalize
 
@@ -394,11 +396,11 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             # utc_timestamp = utc_time.timestamp()
             data["load_timestamp"] = utc_time.timestamp()
 
-            datapoint = {"k": "run_time", "v": r['run_time']['mean'], 'u': 'Minutes', "d": "Run Time"}
+            datapoint = {"k": "run_time", "v": int(r['run_time']['mean']), 'u': 'Minutes', "d": "Run Time"}
             # print(datapoint)
             datapoints.append(datapoint)
 
-            datapoint = {"k": "number_of_start_stop", "v": r['number_of_start_stop']['mean'],
+            datapoint = {"k": "number_of_start_stop", "v": int(r['number_of_start_stop']['mean']),
                          "d": "Total Motor Start/Stop"}
             # print(datapoint)
             datapoints.append(datapoint)
