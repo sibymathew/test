@@ -269,7 +269,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
 
         # query for given query_timestamp interval. Should be an hour
         # TO DO:  iteration for multiple hours, loop by hour
-        hourly_query = "SELECT edge_uuid,motor_uuid,query_timestamp, motor_data FROM edge_core.crane_details where query_timestamp >= " + str(
+        hourly_query = "SELECT edge_uuid,motor_uuid,query_timestamp, motor_data, vfd_status FROM edge_core.crane_details where query_timestamp >= " + str(
             from_query_timestamp) + " and  query_timestamp <= " + str(to_query_timestamp) + " ALLOW FILTERING"
 
         hourly_df = pd.DataFrame(dbSession.edge_session.execute(hourly_query, timeout=None))
@@ -338,6 +338,10 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         hourly_final_df0 = pd.merge(hourly_calc_runtime, hourly_calc_start, on=['edge_uuid', 'motor_uuid'],
                                     how="outer")
 
+        hourly_calc_status = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg({'vfd_status': ['mean', lambda x : abs(x.mean())]})
+        hourly_final_df0 = pd.merge(hourly_final_df0, hourly_calc_status, on=['edge_uuid', 'motor_uuid'], how="outer")
+
+
         # Run Time, Total Motor Start/Stop
         # hourly_df.sort_values(by='query_timestamp', ascending = False, inplace=True)
         # row1 = hourly_df.iloc[0]
@@ -382,7 +386,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             data["motor_uuid"] = i[1]
             data["total_motors"] = 0
             data["timestamp"] = to_query_timestamp
-            data["vfd_status"] = 0
+            data["vfd_status"] = r['vfd_status']['mean']
 
             dt = datetime.datetime.now(timezone.utc)
             utc_time = dt.replace(tzinfo=timezone.utc)
@@ -398,20 +402,23 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             # print(datapoint)
             datapoints.append(datapoint)
 
-            datapoint = {"k": "motor_amps", "v": {"avg": r['motor_amps']['mean'], "max": r['motor_amps']['max']},
+            if not math.isnan(r['motor_amps']['mean']):
+                datapoint = {"k": "motor_amps", "v": {"avg": r['motor_amps']['mean'], "max": r['motor_amps']['max']},
                          "u": "Amps", "d": "Motor Amps"}
-            datapoints.append(datapoint)
+                datapoints.append(datapoint)
 
             # datapoint = {"k": "motor_amps_max", "v": r['motor_amps']['max'], "d": "Motor Amps Max"}
             # datapoints.append(datapoint)
 
-            datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean']}, "u": "RPM",
+            if not math.isnan(r['motor_in_rpm']['mean']):
+                datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean']}, "u": "RPM",
                          "d": "Motor In RPM"}
-            datapoints.append(datapoint)
+                datapoints.append(datapoint)
 
-            datapoint = {"k": "loadcell", "v": {"avg": r['loadcell']['mean'], "max": r['loadcell']['max']},
+            if not math.isnan(r['loadcell']['mean']):
+                datapoint = {"k": "loadcell", "v": {"avg": r['loadcell']['mean'], "max": r['loadcell']['max']},
                          "u": {"crane_weight": "ton"}}
-            datapoints.append(datapoint)
+                datapoints.append(datapoint)
             # datapoint = {"k": "loadcell_weight_max", "v": r['loadcell']['max'], "d": "Loadcell Crane Weight Max"}
             # datapoints.append(datapoint)
 
