@@ -119,11 +119,11 @@ def push(card, motor_uuid):
 
             if push_mode == 1:
                 start_time = time.time()
-                da = get_motor_data("crane_details", motor_uuid, 5)
+                da = get_motor_data("crane_details", motor_uuid, 3)
                 to_send["route"] = "datapushrt"
             elif push_mode == 2:
                 start_time = time.time()
-                da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
+                da = get_motor_data("crane_details", motor_uuid, 3)
             else:
                 if counter == 0:
                     start_time = time.time()
@@ -136,7 +136,7 @@ def push(card, motor_uuid):
                     counter +=1
 
 
-            if da and push_mode != 0:
+            if da != "[]" and push_mode != 0:
                 compressed_body = BytesIO()
                 gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
                 sz = gz.write(json.dumps(da).encode("utf-8"))

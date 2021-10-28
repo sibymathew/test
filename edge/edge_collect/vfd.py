@@ -297,6 +297,8 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         series3_run_time = {}
         vfd_status = 2
         previous_state = previous_state
+        drive_idle_ts = {}
+        previous_vfd_status = {}
         for vfd_addr in vfd_addrs:
             #run_time[vfd_addr] = 0
             counter[vfd_addr] = 1
@@ -309,6 +311,18 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     series3_run_time[motor] = 0
 
         while True:
+            o_start_time = round(time.time() * 1000)
+
+            try:
+                with open("/etc/daq_port1", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+
+                if "status" in content:
+                    if content["status"] == 8:
+                        raise("Edge Box power is down!!!!")
+            except:
+                pass
+
             for vfd_addr in vfd_addrs:
                 start_time = round(time.time() * 1000)
                 rawdata = {}
@@ -399,7 +413,14 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             else:
                               #Drive is stopped
                               datapoint["v"] = "Idle"
-                              vfd_status = 4
+                              cur_ts = 
+                              if drive_idle_ts[vfd_addr] == 0 or (drive_idle_ts[vfd_addr] - start_time) >= 60:
+                                  vfd_status = 2
+                              else:
+                                  vfd_status = 4
+                                  if previous_vfd_status[vfd_addr] != 4:
+                                    drive_idle_ts[vfd_addr] = start_time
+
                             datapoints.append(datapoint)
                         elif i == 10 and motor_type == 1:
                             datapoint = {}
@@ -534,6 +555,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 data["timestamp"] = start_time
                 data["vfd_status"] = vfd_status
                 data["motor_data"] = datapoints
+                previous_vfd_status[vfd_addr] = vfd_status
 
                 print("here5")
                 for motor in motor_uuid[vfd_addr]:
@@ -556,14 +578,27 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 end_time = round(time.time() * 1000)
                 lapsed_time = end_time - start_time
                 log_hdlr.info("Total Lapsed Time For Drive {} is {}".format(vfd_addr, lapsed_time))
-                previous_state = "Connected"
+                previous_state = 0
 
-                time.sleep((__PULL_INTERVAL__-lapsed_time)/1000)
+            o_end_time = round(time.time() * 1000)
+            o_lapsed_time = o_end_time - o_start_time
+            time.sleep((__PULL_INTERVAL__- o_lapsed_time)/1000)
     except Exception as err:
         log_hdlr.info("Error in datapoints collections (read or dummy){}".format(err))
         time.sleep(5)
         data = {}
         vfd_status = 1
+
+        try:
+            with open("/etc/daq_port1", "r") as hdlr:
+                content = json.loads(hdlr.read())
+
+            if "status" in content:
+                vfd_status = content["status"]
+                start_time = content["timestamp"]
+        except:
+            pass
+
         try:
             with open("/etc/daq_port0", "r") as hdlr:
                 content = json.loads(hdlr.read())
@@ -574,7 +609,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         except:
             pass
 
-        if previous_state == "Connected" or (previous_state == 1 and vfd_status != 1) or (previous_state != 1 and vfd_status == 1):
+        if previous_state != vfd_status:
             for vfd_addr in vfd_addrs:
                 data["edge_uuid"] = edge_uuid
                 data["total_motors"] = len(motor_uuid[vfd_addr])
