@@ -162,7 +162,7 @@ def get_motor_data(table_name,motor_list, interval):
         edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'
 
         now = datetime.datetime.now(timezone.utc)
-        query_timestamp = now - datetime.timedelta(minutes=interval)
+        query_timestamp = now - datetime.timedelta(minutes=interval)\
         epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
 
 
@@ -233,27 +233,36 @@ def ingest_config(config_json):
         error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
         return error_msg
 
-def update_config_data(edge_mac, version):
+
+def update_config_data(edge_mac, version, sync_flag):
     # TODO: Log
-    # TO DO: Update Flag using param
 
     try:
 
         # Create a DB connection instance
         dbSession = DatabaseConnection()
 
+        if edge_mac is None:
+            edge_mac = '00:0a:bb:11:22:22'
+
+        # if version is None:
+        #    version = 1
+
+        # if sync_flag is None:
+        #    sync_flag = True
+
         # single update Statement
-        update_query = "update edge_core.crane_config set config_sync_flag=True where edge_mac='" + edge_mac + "' and version= " + str(version)
-        dbSession.edge_session.execute(update_query )
+        update_query = "update edge_core.crane_config set config_sync_flag = " + str(sync_flag) + "  where edge_mac='" + edge_mac + "' and version = " + str(
+            version)
+        dbSession.edge_session.execute(update_query)
 
         dbSession.shutCluster()
-        return "Flag Updated as True in Edge Config"
+        return "Flag Updated as " + str(sync_flag) + " at Edge Config"
 
 
     except Exception as e:
         error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
         return error_msg
-
 
 def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
     try:

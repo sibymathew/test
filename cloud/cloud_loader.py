@@ -97,6 +97,7 @@ def ingest_stream(crane_query_json):
             vfd_status = crane_query_json["vfd_status"]
             motor_uuid = crane_query_json["motor_uuid"]
 
+
             # single Insert Statement
             dbSession.cosmos_session.execute(
                 """
@@ -201,7 +202,7 @@ def get_config_data(edge_mac, version):
 
         # TO DO: Fix select  for multiple version with False
         config_rows = []
-        config_query = "select json edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by,created_on from cloud_core.crane_config where  edge_mac = '" + edge_mac + "' "
+        config_query = "select json edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by,created_on from cloud_core.crane_config where  edge_mac = '" + edge_mac + "' and version > " + str(version) + " LIMIT 1"
 
         for config_row in dbSession.cosmos_session.execute(config_query):
             #config_rows.append(config_row[0].replace("'", '"'))
@@ -218,7 +219,7 @@ def get_config_data(edge_mac, version):
         return error_msg
 
 
-def update_config_data(edge_mac, version):
+def update_config_data(edge_mac, version, sync_flag):
     # TODO: Log
 
     try:
@@ -226,12 +227,22 @@ def update_config_data(edge_mac, version):
         # Create a DB connection instance
         dbSession = DatabaseConnection()
 
+
+        if edge_mac is None:
+            edge_mac = '00:0a:bb:11:22:22'
+
+        # if version is None:
+        #    version = 1
+
+        # if sync_flag is None:
+        #    sync_flag = True
+
         # single update Statement
-        update_query = "update cloud_core.crane_config set config_sync_flag=True where edge_mac='" + edge_mac + "' and version= " + str(version)
+        update_query = "update cloud_core.crane_config set config_sync_flag = " + str(sync_flag) + "  where edge_mac='" + edge_mac + "' and version = " + str(version)
         dbSession.cosmos_session.execute(update_query )
 
         dbSession.shutCluster()
-        return "Flag Updated as True at Cloud Config"
+        return "Flag Updated as " + str(sync_flag) + "  at Cloud Config"
 
 
     except Exception as e:
