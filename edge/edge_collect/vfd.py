@@ -413,7 +413,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             else:
                               #Drive is stopped
                               datapoint["v"] = "Idle"
-                              cur_ts = 
                               if drive_idle_ts[vfd_addr] == 0 or (drive_idle_ts[vfd_addr] - start_time) >= 60:
                                   vfd_status = 2
                               else:

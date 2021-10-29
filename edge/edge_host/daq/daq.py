@@ -34,7 +34,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
             if s[1] == "0":
                 msg = {}
                 stop_mode = 5
-                content = get_motor_data("table", motor_list, 0)
+                content = get_motor_data("crane_details", motor_list, 0)
 
                 print(content)
 

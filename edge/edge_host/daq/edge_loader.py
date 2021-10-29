@@ -11,6 +11,8 @@ import calendar
 import json
 import os
 
+import math
+
 import pandas as pd
 from pandas import json_normalize
 
@@ -242,7 +244,7 @@ def update_config_data(edge_mac, version):
 
         # single update Statement
         update_query = "update edge_core.crane_config set config_sync_flag=True where edge_mac='" + edge_mac + "' and version= " + str(version)
-        dbSession.cosmos_session.execute(update_query )
+        dbSession.edge_session.execute(update_query )
 
         dbSession.shutCluster()
         return "Flag Updated as True in Edge Config"
@@ -269,7 +271,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
 
         # query for given query_timestamp interval. Should be an hour
         # TO DO:  iteration for multiple hours, loop by hour
-        hourly_query = "SELECT edge_uuid,motor_uuid,query_timestamp, motor_data FROM edge_core.crane_details where query_timestamp >= " + str(
+        hourly_query = "SELECT edge_uuid,motor_uuid,query_timestamp, motor_data, vfd_status FROM edge_core.crane_details where query_timestamp >= " + str(
             from_query_timestamp) + " and  query_timestamp <= " + str(to_query_timestamp) + " ALLOW FILTERING"
 
         hourly_df = pd.DataFrame(dbSession.edge_session.execute(hourly_query, timeout=None))
@@ -331,12 +333,17 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
                 .reset_index(drop=True)
         )
 
+        # only one record but "mean" is just for uniform data structure to merge
         hourly_calc_runtime = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
             {'run_time': ['mean', lambda x: abs(x.mean())]})
         hourly_calc_start = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
             {'number_of_start_stop': ['mean', lambda x: abs(x.mean())]})
         hourly_final_df0 = pd.merge(hourly_calc_runtime, hourly_calc_start, on=['edge_uuid', 'motor_uuid'],
                                     how="outer")
+
+        hourly_calc_status = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg({'vfd_status': ['mean', lambda x : abs(x.mean())]})
+        hourly_final_df0 = pd.merge(hourly_final_df0, hourly_calc_status, on=['edge_uuid', 'motor_uuid'], how="outer")
+
 
         # Run Time, Total Motor Start/Stop
         # hourly_df.sort_values(by='query_timestamp', ascending = False, inplace=True)
@@ -382,36 +389,39 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             data["motor_uuid"] = i[1]
             data["total_motors"] = 0
             data["timestamp"] = to_query_timestamp
-            data["vfd_status"] = 0
+            data["vfd_status"] = int(r['vfd_status']['mean'])
 
             dt = datetime.datetime.now(timezone.utc)
             utc_time = dt.replace(tzinfo=timezone.utc)
             # utc_timestamp = utc_time.timestamp()
             data["load_timestamp"] = utc_time.timestamp()
 
-            datapoint = {"k": "run_time", "v": r['run_time']['mean'], 'u': 'Minutes', "d": "Run Time"}
+            datapoint = {"k": "run_time", "v": int(r['run_time']['mean']), 'u': 'Minutes', "d": "Run Time"}
             # print(datapoint)
             datapoints.append(datapoint)
 
-            datapoint = {"k": "number_of_start_stop", "v": r['number_of_start_stop']['mean'],
+            datapoint = {"k": "number_of_start_stop", "v": int(r['number_of_start_stop']['mean']),
                          "d": "Total Motor Start/Stop"}
             # print(datapoint)
             datapoints.append(datapoint)
 
-            datapoint = {"k": "motor_amps", "v": {"avg": r['motor_amps']['mean'], "max": r['motor_amps']['max']},
+            if not math.isnan(r['motor_amps']['mean']):
+                datapoint = {"k": "motor_amps", "v": {"avg": r['motor_amps']['mean'], "max": r['motor_amps']['max']},
                          "u": "Amps", "d": "Motor Amps"}
-            datapoints.append(datapoint)
+                datapoints.append(datapoint)
 
             # datapoint = {"k": "motor_amps_max", "v": r['motor_amps']['max'], "d": "Motor Amps Max"}
             # datapoints.append(datapoint)
 
-            datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean']}, "u": "RPM",
+            if not math.isnan(r['motor_in_rpm']['mean']):
+                datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean']}, "u": "RPM",
                          "d": "Motor In RPM"}
-            datapoints.append(datapoint)
+                datapoints.append(datapoint)
 
-            datapoint = {"k": "loadcell", "v": {"avg": r['loadcell']['mean'], "max": r['loadcell']['max']},
+            if not math.isnan(r['loadcell']['mean']):
+                datapoint = {"k": "loadcell", "v": {"avg": r['loadcell']['mean'], "max": r['loadcell']['max']},
                          "u": {"crane_weight": "ton"}}
-            datapoints.append(datapoint)
+                datapoints.append(datapoint)
             # datapoint = {"k": "loadcell_weight_max", "v": r['loadcell']['max'], "d": "Loadcell Crane Weight Max"}
             # datapoints.append(datapoint)
 
@@ -457,10 +467,12 @@ def del_motor_data(table_name,motor_list, interval):
             for motor_id in motor_list:
                 if table_name == 'edge_core.crane_details':
                     motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) +" days"
                     del_status = {"motor_uuid": motor_id, "msg": msg }
                 elif table_name == 'edge_core.crane_details2':
                     motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg}
                 else:
@@ -475,10 +487,12 @@ def del_motor_data(table_name,motor_list, interval):
                 # print(motor_row[0])
                 if table_name == 'edge_core.crane_details':
                     motor_query = "delete from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp < " + epoch_query_timestamp
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg }
                 elif table_name == 'edge_core.crane_details2':
                     motor_query = "delete from edge_core.crane_details2 where  motor_uuid = '" + motor_id + "'"
+                    dbSession.edge_session.execute(motor_query)
                     msg = "Deleted for " + str(interval) + " days"
                     del_status = {"motor_uuid": motor_id, "msg": msg}
                 else:
