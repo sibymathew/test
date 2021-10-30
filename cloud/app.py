@@ -83,7 +83,8 @@ def config_pull_index():
 def config_pull_status_index():
     try:
         req = ast.literal_eval(request.data.decode('utf-8'))
-        resp = update_config_data(req["edge_mac"], req["version"])
+        resp = update_config_data(req["edge_mac"], req["applied_version"], True)
+        resp = update_config_data(req["edge_mac"], req["current_version"], False)
     except Exception as err:
         log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
         return {"status": 0, "msg": err}

@@ -24,7 +24,7 @@ def getargs():
 
     return parser.parse_args()
 
-def store(card, data):
+def store(card, data, current_version):
 
     print(ingest_config(data))
     res = requests.post("http://10.0.1.20:5000/cranes/version/update", json={"token": "def05f77d7541bfa8a9c61f551d45639"})
@@ -34,14 +34,16 @@ def store(card, data):
         return False
 
     if res.status_code == 200:
-        print(update_config_data(__EDGE_MAC__, data["version"]))
+        update_config_data(__EDGE_MAC__, data["version"], True)
+        update_config_data(__EDGE_MAC__, version, False)
         to_send = {}
         to_send["req"] = "web.post"
         to_send["route"] = "configpullsuccess"
 
         data = {}
         data["edge_mac"] = __EDGE_MAC__
-        data["version"] = version
+        data["applied_version"] = version
+        data["current_version"] = current_version
 
         to_send["body"] = data
         resp = card.Transaction(to_send)
@@ -189,7 +191,7 @@ def main():
                     with open("supervisord.conf", "w") as hdlr:
                         hdlr.write(result)
 
-                if store(card, edge_config):
+                if store(card, edge_config, version):
                     res = os.popen("supervisorctl restart all")
                     with open("/etc/version", "w") as hdlr:
                         hdlr.write(str(edge_config["version"]))
