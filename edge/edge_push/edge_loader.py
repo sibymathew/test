@@ -162,7 +162,7 @@ def get_motor_data(table_name,motor_list, interval):
         edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'
 
         now = datetime.datetime.now(timezone.utc)
-        query_timestamp = now - datetime.timedelta(minutes=interval)\
+        query_timestamp = now - datetime.timedelta(minutes=interval)
         epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
 
 
