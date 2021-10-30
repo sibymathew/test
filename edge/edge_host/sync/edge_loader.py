@@ -343,12 +343,16 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         )
 
         # only one record but "mean" is just for uniform data structure to merge
-        hourly_calc_runtime = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
-            {'run_time': ['mean', lambda x: abs(x.mean())]})
-        hourly_calc_start = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
-            {'number_of_start_stop': ['mean', lambda x: abs(x.mean())]})
-        hourly_final_df0 = pd.merge(hourly_calc_runtime, hourly_calc_start, on=['edge_uuid', 'motor_uuid'],
-                                    how="outer")
+        # hourly_calc_runtime = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
+        #    {'run_time': ['mean', lambda x: abs(x.mean())]})
+        # hourly_calc_start = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg(
+        #    {'number_of_start_stop': ['mean', lambda x: abs(x.mean())]})
+        # hourly_final_df0 = pd.merge(hourly_calc_runtime, hourly_calc_start, on=['edge_uuid', 'motor_uuid'],
+        #                            how="outer")
+
+        hourly_calc_runtime = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'run_time': ['min', 'max']})
+        hourly_calc_start = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'number_of_start_stop': ['min', 'max']})
+        hourly_final_df0 =  pd.merge(hourly_calc_runtime, hourly_calc_start, on=['edge_uuid', 'motor_uuid'], how="outer")
 
         hourly_calc_status = hourly_top.groupby(['edge_uuid', 'motor_uuid']).agg({'vfd_status': ['mean', lambda x : abs(x.mean())]})
         hourly_final_df0 = pd.merge(hourly_final_df0, hourly_calc_status, on=['edge_uuid', 'motor_uuid'], how="outer")
@@ -405,11 +409,17 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             # utc_timestamp = utc_time.timestamp()
             data["load_timestamp"] = utc_time.timestamp()
 
-            datapoint = {"k": "run_time", "v": int(r['run_time']['mean']), 'u': 'Minutes', "d": "Run Time"}
+            hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+
+            datapoint = {"k": "run_time", "v": {"cumulative": r['run_time']['max'], "hourly": hourly_runtime},
+                         'u': 'Minutes', "d": "Run Time"}
             # print(datapoint)
             datapoints.append(datapoint)
 
-            datapoint = {"k": "number_of_start_stop", "v": int(r['number_of_start_stop']['mean']),
+            hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']) + 1)
+
+            datapoint = {"k": "number_of_start_stop",
+                         "v": {"cumulative": r['number_of_start_stop']['max'], "hourly": hourly_starts},
                          "d": "Total Motor Start/Stop"}
             # print(datapoint)
             datapoints.append(datapoint)
