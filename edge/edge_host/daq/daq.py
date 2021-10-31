@@ -1,4 +1,4 @@
-from subprocess import Popen, PIPE
+from subprocess import check_output, STDOUT
 from edge_loader import get_motor_data
 import time
 import json
@@ -16,21 +16,23 @@ hdlr.setFormatter(formatter)
 log_hdlr.addHandler(hdlr)
 
 def check_signal(motor_list, pstate_port0, pstate_port1):
+    command = "/home/utopia/test/edge/edge_host/daq/StaticDI"
+    seconds = 5
     while True:
-        resp = Popen(["/home/utopia/test/edge/edge_host/daq/StaticDI"], stdout=PIPE, stderr=PIPE)
-        o, e = resp.communicate()
-        log_hdlr.info("DAQ Port Read {}".format(o))
-        print(o)
-        print(e)
+        try:
+            o = check_output(cmd, stderr=STDOUT, timeout=seconds)
+            log_hdlr.info("DAQ Port Read {}".format(o))
+            print(o)
+        except Exception as err:
+            log_hdlr.info("DAQ Read Port Timedout")
+        else:
+            x = o.decode("utf-8")
+            s = bin(int(x[0]))[2:]
+            if len(s) == 1:
+                s = "0" + s
+            ping_time = round(time.time() * 1000)
+            log_hdlr.info("{} Formatted String {}".format(ping_time, s))
 
-        x = o.decode("utf-8")
-        s = bin(int(x[0]))[2:]
-        if len(s) == 1:
-            s = "0" + s
-        ping_time = round(time.time() * 1000)
-        log_hdlr.info("{} Formatted String {}".format(ping_time, s))
-
-        if not "error" in s:
             if s[1] == "0":
                 msg = {}
                 stop_mode = 5
@@ -82,9 +84,8 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                 resp = Popen(["rm", "-rf", "/etc/daq_port1"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
                 pstate_port1 = 0
-        else:
-            print("Error")
-        time.sleep(5)
+
+        time.sleep(2)
 
 def getargs():
     parser = argparse.ArgumentParser()

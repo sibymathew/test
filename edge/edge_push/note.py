@@ -154,29 +154,32 @@ def push(card, motor_uuid):
                 lapsed_time = end_time - start_time
                 log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
-                if push_mode == 1:
-                    with open("/etc/daq_port0", "r") as hdlr:
-                        content = json.loads(hdlr.read())
-                        if "status" in content:
-                            if content["status"] == 6:
-                                content["state"] = "Pushed"
 
-                    with open("/etc/daq_port0", "w") as hdlr:
-                        hdlr.write(json.dumps(content))
-
-                if push_mode == 2:
-                    with open("/etc/daq_port1", "r") as hdlr:
-                        content = json.loads(hdlr.read())
-                        if "status" in content:
-                            if content["status"] == 8:
-                                content["state"] = "Pushed"
-
-                    with open("/etc/daq_port1", "w") as hdlr:
-                        hdlr.write(json.dumps(content))
-
-                if push_mode == 2 or push_mode == 3:
+                if push_mode == 3:
                     # Delete all the entries in edge_core.crane_details2
                     del_motor_data("edge_core.crane_details2", motor_uuid, None)
+            elif push_mode != 0:
+                log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
+
+            if push_mode == 1:
+                with open("/etc/daq_port0", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+                    if "status" in content:
+                        if content["status"] == 6:
+                            content["state"] = "Pushed"
+
+                with open("/etc/daq_port0", "w") as hdlr:
+                    hdlr.write(json.dumps(content))
+
+            if push_mode == 2:
+                with open("/etc/daq_port1", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+                    if "status" in content:
+                        if content["status"] == 8:
+                            content["state"] = "Pushed"
+
+                with open("/etc/daq_port1", "w") as hdlr:
+                    hdlr.write(json.dumps(content))
 
             time.sleep(__SLEEP__)
 
