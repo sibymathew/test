@@ -1,5 +1,6 @@
 
 [program:name]
+directory=dirs
 command=cmd
 autostart=true
 autorestart=true

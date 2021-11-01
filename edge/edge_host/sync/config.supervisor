@@ -7,7 +7,7 @@ port=0.0.0.0:9001
 [supervisord]
 nodaemon=true
 logfile=/var/log/supervisord.log
-loglevel=critical
+loglevel=debug
 logfile_maxbytes=5000000
 logfile_backups=5
 

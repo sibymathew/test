@@ -1,4 +1,4 @@
-from subprocess import check_output, STDOUT
+from subprocess import Popen, check_output, STDOUT
 from edge_loader import get_motor_data
 import time
 import json
@@ -20,7 +20,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
     seconds = 5
     while True:
         try:
-            o = check_output(cmd, stderr=STDOUT, timeout=seconds)
+            o = check_output(command, stderr=STDOUT, timeout=seconds)
             log_hdlr.info("DAQ Port Read {}".format(o))
             print(o)
         except Exception as err:

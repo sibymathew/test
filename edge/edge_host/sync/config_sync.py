@@ -171,25 +171,40 @@ def main():
                         loadcell_list = " ".join(loadcell)
 
                         name = "Collect_Service_" + port
-                        cmd = "sudo docker run --privileged -e CASSANDRA_IP='10.0.1.20' sibymath/edge_collect:v1 -a {} -p {} -r {} -eu {} -mu {} -mt {} -ms {} -rf {} -lb {} -lc {} -m {}".format(address_list, port_name, rate, edge_uuid, motor_list, types_list, speciality_list, red_factor_list, label_list, loadcell_list, "0")
+                        dirs = "/home/utopia/test/edge/edge_collect"
+                        cmd = "sudo python3 vfd.py -a {} -p {} -r {} -eu {} -mu {} -mt {} -ms {} -rf {} -lb {} -lc {} -m {}".format(address_list, port_name, rate, edge_uuid, motor_list, types_list, speciality_list, red_factor_list, label_list, loadcell_list, "0")
 
                         temp_tmpl = supervisor_tmpl.replace("name", name)
+                        temp_tmpl = temp_tmpl.replace("dirs", dirs)
                         temp_tmpl = temp_tmpl.replace("cmd", cmd)
 
                         result = result + temp_tmpl
 
                         all_motor_list += motor_list + " "
 
-                    cmd = "sudo docker run --privileged -e CASSANDRA_IP='10.0.1.20' sibymath/edge_push:v1 -puuid 'world.youtopian.siby.mathew:drill_bit' -port '/dev/ttyACM0' -rate 9600 -mu {}".format(all_motor_list)
-                    name = "Cloud_Push_Service"
+                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0 -rate 9600 -mu {}".format(all_motor_list)
+                name = "Cloud_Push_Service"
+                dirs = "/home/utopia/test/edge/edge_push"
 
-                    temp_tmpl = supervisor_tmpl.replace("name", name)
-                    temp_tmpl = temp_tmpl.replace("cmd", cmd)
+                temp_tmpl = supervisor_tmpl.replace("name", name)
+                temp_tmpl = temp_tmpl.replace("dirs", dirs)
+                temp_tmpl = temp_tmpl.replace("cmd", cmd)
 
-                    result = result + temp_tmpl
+                result = result + temp_tmpl
 
-                    with open("supervisord.conf", "w") as hdlr:
-                        hdlr.write(result)
+                cmd = "python3 daq.py -mu {}".format(all_motor_list)
+                name = "DAQ_Status"
+                dirs = "/home/utopia/test/edge/edge_host/daq"
+
+                temp_tmpl = supervisor_tmpl.replace("name", name)
+                temp_tmpl = temp_tmpl.replace("dirs", dirs)
+                temp_tmpl = temp_tmpl.replace("cmd", cmd)
+
+                result = result + temp_tmpl
+
+
+                with open("supervisord.conf", "w") as hdlr:
+                    hdlr.write(result)
 
                 if store(card, edge_config, version):
                     res = os.popen("supervisorctl restart all")
