@@ -202,7 +202,7 @@ def get_config_data(edge_mac, version):
 
         # TO DO: Fix select  for multiple version with False
         config_rows = []
-        config_query = "select json edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by,created_on from cloud_core.crane_config where  edge_mac = '" + edge_mac + "' and version > " + str(version) + " LIMIT 1"
+        config_query = "select json edge_uuid ,edge_mac ,version,config_sync_flag,config_data ,created_by,created_on from cloud_core.crane_config where  edge_mac = '" + edge_mac + "' and version > " + str(version) + " order by version desc LIMIT 1 ALLOW FILTERING"
 
         for config_row in dbSession.cosmos_session.execute(config_query):
             #config_rows.append(config_row[0].replace("'", '"'))
