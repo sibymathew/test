@@ -150,7 +150,7 @@ def main():
                                 loadcell.append(addr+":"+params)
                             elif 'loadcell' in mapping and mapping["loadcell"]["mode"] == 1:
                                 params = str(mapping["loadcell"]["register"]) + "," + \
-                                            str(mapping["loadcell"]["mode"]) + ",0" + \
+                                            str(mapping["loadcell"]["mode"]) + ",0," + \
                                             str(mapping["loadcell"]["calibration"]["a"]) + "," + \
                                             str(mapping["loadcell"]["calibration"]["b"])
                                 loadcell.append(addr+":"+params) 
@@ -180,9 +180,9 @@ def main():
 
                         result = result + temp_tmpl
 
-                        all_motor_list += motor_list + " "
+                        all_motor_list = " ".join([i.split(":")[1] for i in motor_list.split(" ")])
 
-                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0 -rate 9600 -mu {}".format(all_motor_list)
+                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0  -rate 9600 -mu {}".format(all_motor_list)
                 name = "Cloud_Push_Service"
                 dirs = "/home/utopia/test/edge/edge_push"
 
