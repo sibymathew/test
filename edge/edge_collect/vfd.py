@@ -295,7 +295,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         counter = {}
         push_counter = {}
         series3_run_time = {}
-        vfd_status = 2
         previous_state = previous_state
         drive_idle_ts = {}
         previous_vfd_status = {}
@@ -314,14 +313,30 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
             o_start_time = round(time.time() * 1000)
 
             try:
+                error = 0
+                with open("/etc/daq_port0", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+
+                if "status" in content:
+                    if content["status"] == 5 or content["status"] == 6:
+                        error = 1
+                        log_hdlr.info("Crane is manual or estopped!!!!")
+
                 with open("/etc/daq_port1", "r") as hdlr:
                     content = json.loads(hdlr.read())
 
                 if "status" in content:
                     if content["status"] == 8:
-                        raise("Edge Box power is down!!!!")
+                        error = 2
+                        log_hdlr.info("Edge Box power is down!!!!")
             except:
                 pass
+
+            if error == 1:
+                raise Exception("Crane is manual or estopped!!!!")
+            elif error == 2:
+                raise Exception("Edge Box power is down!!!!")
+
 
             for vfd_addr in vfd_addrs:
                 start_time = round(time.time() * 1000)
@@ -372,6 +387,9 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint["d"] = "Output Horsepower"
                             datapoints.append(datapoint)
                         elif i == 7:
+                            bit0 = (reg & (1<<0)) >> 0
+                            bit1 = (reg & (1<<1)) >> 1
+                            bit5 = (reg & (1<<5)) >> 5
                             datapoint = {}
                             datapoint["k"] = "drive_ready"
                             datapoint["v"] = (reg & (1<<5)) >> 5
@@ -406,11 +424,9 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint["d"] = "Drive Direction"
                             if direction == 1 or direction == 3:
                                 datapoint["v"] = labels[vfd_addr][0] + " Running"
-                                vfd_status = 3
                             elif direction == 5 or direction == 7:
                                 datapoint["v"] = labels[vfd_addr][1] + " Running"
-                                vfd_status = 3
-                            else:
+                            """else:
                               #Drive is stopped
                               datapoint["v"] = "Idle"
                               if drive_idle_ts[vfd_addr] == 0 or (drive_idle_ts[vfd_addr] - start_time) >= 60:
@@ -418,7 +434,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                               else:
                                   vfd_status = 4
                                   if previous_vfd_status[vfd_addr] != 4:
-                                    drive_idle_ts[vfd_addr] = start_time
+                                    drive_idle_ts[vfd_addr] = start_time"""
 
                             datapoints.append(datapoint)
                         elif i == 10 and motor_type == 1:
@@ -547,6 +563,17 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 else:
                     datapoints = generate_test_data()
 
+                if bit0 == 0 and bit1 == 1 and bit5 == 1:
+                    vfd_status = 2
+                elif bit0 == 0 and bit1 == 0 and bit5 == 1:
+                    vfd_status = 3
+                elif bit0 == 0 and bit1 == 1 and bit5 == 0:
+                    vfd_status = 4
+                elif bit0 == 1 and bit1 == 1 and bit5 == 1:
+                    vfd_status = 9
+                else:
+                    vfd_status = -1
+                    
                 print("here4")
                 data = {}
                 data["edge_uuid"] = edge_uuid
@@ -594,7 +621,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             if "status" in content:
                 vfd_status = content["status"]
-                start_time = content["timestamp"]
+                start_time = content["timestamp"] + 1500
         except:
             pass
 
@@ -604,7 +631,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             if "status" in content:
                 vfd_status = content["status"]
-                start_time = content["timestamp"]
+                start_time = content["timestamp"] + 1500
         except:
             pass
 
@@ -618,7 +645,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
                 for motor in motor_uuid[vfd_addr]:
                     data["motor_uuid"] = motor
-                    log_hdlr.info("Raw Data {} : {}".format(start_time, rawdata))
                     print(json.dumps(data, indent=4, sort_keys=True))
                     ingest_stream(data)
                     previous_state = vfd_status

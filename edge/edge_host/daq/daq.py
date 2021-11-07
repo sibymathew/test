@@ -1,4 +1,4 @@
-from subprocess import Popen, check_output, STDOUT
+from subprocess import Popen, PIPE, check_output, STDOUT
 from edge_loader import get_motor_data
 import time
 import json
@@ -85,7 +85,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                 o, e = resp.communicate()
                 pstate_port1 = 0
 
-        time.sleep(2)
+        time.sleep(0.1)
 
 def getargs():
     parser = argparse.ArgumentParser()
