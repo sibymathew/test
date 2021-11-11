@@ -117,18 +117,34 @@ def push(card, motor_uuid):
             except:
                 pass
 
-            if push_mode == 1:
+            if push_mode == 1 or push_mode == 2:
                 start_time = time.time()
-                da = get_motor_data("crane_details", motor_uuid, 3)
                 to_send["route"] = "datapushrt"
-            elif push_mode == 2:
-                start_time = time.time()
-                da = get_motor_data("crane_details", motor_uuid, 3)
+
+                for m in motor_uuid:
+                    da = get_motor_data("crane_details", m, 3)
+
+                    if da != "[]":
+                        log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
+                        push_blues(card, da)
+                    else:
+                        log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
+                
             else:
                 if counter == 0:
                     start_time = time.time()
-                    da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
                     push_mode = 3
+                    da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
+
+                    if da != "[]":
+                        log_hdlr.info("Push Mode {}. Push Data for All Motors".format(push_mode))
+                        push_blues(card, da)
+
+                        # Delete all the entries in edge_core.crane_details2
+                        del_motor_data("edge_core.crane_details2", motor_uuid, None)
+                    else:
+                        log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
+
                     counter +=1 
                 elif counter >= __PUSH_COUNTER__:
                     counter = 0
@@ -136,30 +152,10 @@ def push(card, motor_uuid):
                     counter +=1
 
 
-            if da != "[]" and push_mode != 0:
-                compressed_body = BytesIO()
-                gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
-                sz = gz.write(json.dumps(da).encode("utf-8"))
-                gz.close()
-                de = compressed_body.getvalue()
-
-                encodedData = base64.b64encode(de).decode('UTF-8')
-                to_send["body"] = {"data": encodedData}
-
-                log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
-                resp = card.Transaction(to_send)
-                log_hdlr.info("Push Notecard Response {}".format(resp))
+            if push_mode != 0:
                 end_time = time.time()
-
                 lapsed_time = end_time - start_time
-                log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
-
-
-                if push_mode == 3:
-                    # Delete all the entries in edge_core.crane_details2
-                    del_motor_data("edge_core.crane_details2", motor_uuid, None)
-            elif push_mode != 0:
-                log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
+                log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))            
 
             if push_mode == 1:
                 with open("/etc/daq_port0", "r") as hdlr:
@@ -181,6 +177,7 @@ def push(card, motor_uuid):
                 with open("/etc/daq_port1", "w") as hdlr:
                     hdlr.write(json.dumps(content))
 
+            push_mode = 0
             time.sleep(__SLEEP__)
 
             """
@@ -193,6 +190,24 @@ def push(card, motor_uuid):
         time.sleep(5)
         # Not a correct way to code, as it is recursive. But very rare happening. Will change it later.
         push()
+
+def push_blues(card, da):
+
+    try:
+        compressed_body = BytesIO()
+        gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
+        sz = gz.write(json.dumps(da).encode("utf-8"))
+        gz.close()
+        de = compressed_body.getvalue()
+
+        encodedData = base64.b64encode(de).decode('UTF-8')
+        to_send["body"] = {"data": encodedData}
+
+        log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
+        resp = card.Transaction(to_send)
+        log_hdlr.info("Push Notecard Response {}".format(resp))
+    except Exception as err:
+        raise(err)
 
 def restart(card):
     try:

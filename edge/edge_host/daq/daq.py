@@ -19,6 +19,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
     command = "/home/utopia/test/edge/edge_host/daq/StaticDI"
     seconds = 5
     while True:
+        log_hdlr.info("Pre State P0:{} P1:{}".format(pstate_port0, pstate_port1))
         try:
             o = check_output(command, stderr=STDOUT, timeout=seconds)
             log_hdlr.info("DAQ Port Read {}".format(o))
@@ -36,23 +37,25 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
             if s[1] == "0":
                 msg = {}
                 stop_mode = 5
-                content = get_motor_data("crane_details", motor_list, 0)
+                content = get_motor_data("crane_details", motor_list, 5)
 
-                print(content)
+                log_hdlr.info(content)
 
-                if not content or "Error" in content:
+                if "Error" in content:
                     stop_mode = 5
                 else:
                     for row in json.loads(content):
                         i = json.loads(row)
                         if "vfd_status" in i:
                             k = i["vfd_status"]
-                            if k == 3:
+                            if k == 3 or k == 6:
                                 stop_mode = 6
                                 break
 
+
                 msg["status"] = stop_mode
                 msg["timestamp"] = ping_time
+                log_hdlr.info("Msg: {}".format(msg))
                 if pstate_port0 != stop_mode:
                     with open("/etc/daq_port0", "w") as hdlr:
                         hdlr.write(json.dumps(msg))
@@ -66,6 +69,7 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                 msg = {}
                 msg["status"] = 8
                 msg["timestamp"] = ping_time
+                log_hdlr.info("Msg: {}".format(msg))
 
                 if pstate_port1 != 8:
                     with open("/etc/daq_port1", "w") as hdlr:

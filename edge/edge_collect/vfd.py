@@ -314,13 +314,14 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             try:
                 error = 0
+                log_hdlr.info("Previous State {}".format(previous_state))
                 with open("/etc/daq_port0", "r") as hdlr:
                     content = json.loads(hdlr.read())
 
                 if "status" in content:
                     if content["status"] == 5 or content["status"] == 6:
                         error = 1
-                        log_hdlr.info("Crane is manual or estopped!!!!")
+                        log_hdlr.info("Crane is manual or estopped ({})!!!!".format(content["status"]))
 
                 with open("/etc/daq_port1", "r") as hdlr:
                     content = json.loads(hdlr.read())
@@ -557,18 +558,26 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint = {}
                             datapoint["k"] = "loadcell"
                             datapoint["v"] = {"status":status, "analog_data": analog_data, "crane_weight":crane_weight}
-                            datapoint["u"] = {"analog_data":"Volt", "crane_weight":"ton"}
+                            datapoint["u"] = {"analog_data":"Volt", "crane_weight":str(lc[5])}
                             datapoints.append(datapoint)
 
                 else:
                     datapoints = generate_test_data()
 
-                if bit0 == 0 and bit1 == 1 and bit5 == 1:
-                    vfd_status = 2
+                if bit0 == 0 and bit1 == 0 and bit5 == 0:
+                    vfd_status = 10
                 elif bit0 == 0 and bit1 == 0 and bit5 == 1:
-                    vfd_status = 3
+                    vfd_status = 11
                 elif bit0 == 0 and bit1 == 1 and bit5 == 0:
                     vfd_status = 4
+                elif bit0 == 0 and bit1 == 1 and bit5 == 1:
+                    vfd_status = 2
+                elif bit0 == 1 and bit1 == 0 and bit5 == 0:
+                    vfd_status = 11
+                elif bit0 == 1 and bit1 == 0 and bit5 == 1:
+                    vfd_status = 3
+                elif bit0 == 1 and bit1 == 1 and bit5 == 0:
+                    vfd_status = 11
                 elif bit0 == 1 and bit1 == 1 and bit5 == 1:
                     vfd_status = 9
                 else:
@@ -621,7 +630,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             if "status" in content:
                 vfd_status = content["status"]
-                start_time = content["timestamp"] + 1500
+                start_time = content["timestamp"] + 3500
         except:
             pass
 
@@ -631,9 +640,11 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             if "status" in content:
                 vfd_status = content["status"]
-                start_time = content["timestamp"] + 1500
+                start_time = content["timestamp"] + 3500
         except:
             pass
+
+        log_hdlr.info("VFD Status {}".format(vfd_status))
 
         if previous_state != vfd_status:
             for vfd_addr in vfd_addrs:
