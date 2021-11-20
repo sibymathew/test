@@ -98,6 +98,7 @@ def main():
 
 
         while True:
+            time.sleep(29)
             data["version"] = version
             to_send["body"] = data
             log_hdlr.info("Config Change Check Req: {}".format(to_send))
@@ -239,7 +240,6 @@ def main():
                         update_flag = False
                         version = edge_config["version"]
 
-            time.sleep(30)
     except Exception as exception:
         raise Exception("error opening notecard: {}".format(exception))
 

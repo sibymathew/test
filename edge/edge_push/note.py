@@ -122,11 +122,11 @@ def push(card, motor_uuid):
                 to_send["route"] = "datapushrt"
 
                 for m in motor_uuid:
-                    da = get_motor_data("crane_details", m, 3)
+                    da = get_motor_data("crane_details", [m], 3)
 
                     if da != "[]":
                         log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
-                        push_blues(card, da)
+                        push_blues(card, da, to_send)
                     else:
                         log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
                 
@@ -138,7 +138,7 @@ def push(card, motor_uuid):
 
                     if da != "[]":
                         log_hdlr.info("Push Mode {}. Push Data for All Motors".format(push_mode))
-                        push_blues(card, da)
+                        push_blues(card, da, to_send)
 
                         # Delete all the entries in edge_core.crane_details2
                         del_motor_data("edge_core.crane_details2", motor_uuid, None)
@@ -189,10 +189,11 @@ def push(card, motor_uuid):
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
         # Not a correct way to code, as it is recursive. But very rare happening. Will change it later.
-        push()
+        push(card, motor_uuid)
 
-def push_blues(card, da):
+def push_blues(card, da, to_send):
 
+    try_send = 0
     try:
         compressed_body = BytesIO()
         gz = gzip.GzipFile(fileobj=compressed_body, mode="wb")
@@ -203,9 +204,16 @@ def push_blues(card, da):
         encodedData = base64.b64encode(de).decode('UTF-8')
         to_send["body"] = {"data": encodedData}
 
-        log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
-        resp = card.Transaction(to_send)
-        log_hdlr.info("Push Notecard Response {}".format(resp))
+        log_hdlr.info("\nSending {} bytes of data".format(compressed_body.getbuffer().nbytes))
+        while try_send < 3:
+            resp = card.Transaction(to_send)
+            log_hdlr.info("Push Notecard Response {}".format(resp))
+            if "err" in resp:
+                try_send += 1
+            else:
+                break
+
+
     except Exception as err:
         raise(err)
 

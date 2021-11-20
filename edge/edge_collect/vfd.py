@@ -1,6 +1,7 @@
 from yw.edge.interface import YWSerialClient as ModbusClient
 from edge_loader import ingest_stream, ingest_stream2
 from edge_loader import get_motor_data, ingest_hourly_stream
+from subprocess import Popen, PIPE, check_output, STDOUT
 
 import argparse
 import json
@@ -297,9 +298,13 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         series3_run_time = {}
         previous_state = previous_state
         drive_idle_ts = {}
-        previous_vfd_status = {}
+
+        motor_list = []
+        for i in motor_uuid:
+            for x in motor_uuid[i]:
+                motor_list.append(x)
+
         for vfd_addr in vfd_addrs:
-            #run_time[vfd_addr] = 0
             counter[vfd_addr] = 1
             push_counter[vfd_addr] = (1000 / __PULL_INTERVAL__) * 60
 
@@ -309,40 +314,84 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 else:
                     series3_run_time[motor] = 0
 
+        print("1")
         while True:
             o_start_time = round(time.time() * 1000)
+            log_hdlr.info("Previous State {}".format(previous_state))
+            error = 0
 
             try:
-                error = 0
-                log_hdlr.info("Previous State {}".format(previous_state))
-                with open("/etc/daq_port0", "r") as hdlr:
-                    content = json.loads(hdlr.read())
-
-                if "status" in content:
-                    if content["status"] == 5 or content["status"] == 6:
-                        error = 1
-                        log_hdlr.info("Crane is manual or estopped ({})!!!!".format(content["status"]))
-
                 with open("/etc/daq_port1", "r") as hdlr:
                     content = json.loads(hdlr.read())
 
                 if "status" in content:
                     if content["status"] == 8:
-                        error = 2
+                        error = 1
                         log_hdlr.info("Edge Box power is down!!!!")
-            except:
+            except Exception as err:
+                log_hdlr.info("DAQ Port1 Check Exception \n{}".format(err))
+                pass
+
+            try:
+                for vfd_addr in vfd_addrs:
+                    if motor_spl[vfd_addr] == 0:
+                        term_s6 = drive_obj[vfd_addr].read(43, 1)
+                        power = (term_s6[0] & (1<<5)) >> 5
+
+                        if power == 0:
+                            msg = {}
+                            log_hdlr.info("May Day... May Day..\n")
+                            content = get_motor_data("crane_details", motor_list, 0)
+                            log_hdlr.info("Last Record \n {}".format(content))
+
+                            for row in json.loads(content):
+                                i = json.loads(row)
+                                if "vfd_status" in i:
+                                    k = i["vfd_status"]
+                                    if k == 3 or k == 6:
+                                        error = 2
+                                        if k == 3:
+                                            msg["status"] = 6
+                                            msg["timestamp"] = o_start_time
+                                        break
+
+                            if error != 2:
+                                for row in json.loads(content):
+                                    i = json.loads(row)
+                                    if "vfd_status" in i:
+                                        k = i["vfd_status"]
+                                        if k == 5:
+                                            error = 3
+                                            break
+                                if error != 3:
+                                    error = 3
+                                    msg["status"] = 5
+                                    msg["timestamp"] = o_start_time
+
+                            if msg and (error == 2 or error == 3):
+                                with open("/etc/daq_port0", "w") as hdlr:
+                                    hdlr.write(json.dumps(msg))
+                        """elif power == 1:
+                            resp = Popen(["rm", "-rf", "/etc/daq_port0"], stdout=PIPE, stderr=PIPE)
+                            o, e = resp.communicate()"""
+            except Exception as err:
+                log_hdlr.info("Power Bit Check Exception \n{}".format(err))
                 pass
 
             if error == 1:
-                raise Exception("Crane is manual or estopped!!!!")
-            elif error == 2:
                 raise Exception("Edge Box power is down!!!!")
+            elif error == 2:
+                raise Exception("Crane is estopped !!!!")
+            elif error == 3:
+                raise Exception("Crane is manual stopped !!!!")
 
 
+            print("2")
             for vfd_addr in vfd_addrs:
                 start_time = round(time.time() * 1000)
                 rawdata = {}
                 datapoints = []
+                bit0=bit1=bit2=bit5=0
 
                 log_hdlr.info(test)
                 if not test:
@@ -353,6 +402,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                         datapoint = {}
                         if i == 0:
                             if motor_spl[vfd_addr] == 1:
+                                #Hoist Specific Read
                                 datapoint["k"] = "motor_speed"
                                 datapoint["v"] = reg
                                 motor_speed = datapoint["v"]
@@ -361,6 +411,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                                 datapoint["d"] = "Motor Speed in Hz"
                                 datapoints.append(datapoint)
                             elif motor_spl[vfd_addr] == 0:
+                                #Bridge Specific Read
                                 speed = drive_obj[vfd_addr].read(65, 1)
                                 datapoint["k"] = "motor_speed"
                                 datapoint["v"] = speed[0]
@@ -390,6 +441,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                         elif i == 7:
                             bit0 = (reg & (1<<0)) >> 0
                             bit1 = (reg & (1<<1)) >> 1
+                            bit2 = (reg & (1<<2)) >> 2
                             bit5 = (reg & (1<<5)) >> 5
                             datapoint = {}
                             datapoint["k"] = "drive_ready"
@@ -419,25 +471,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                                 datapoint["d"] = "Fault List"
                                 datapoints.append(datapoint)
 
-                            datapoint = {}
-                            direction = reg & 5
-                            datapoint["k"] = "drive_direction"
-                            datapoint["d"] = "Drive Direction"
-                            if direction == 1 or direction == 3:
-                                datapoint["v"] = labels[vfd_addr][0] + " Running"
-                            elif direction == 5 or direction == 7:
-                                datapoint["v"] = labels[vfd_addr][1] + " Running"
-                            """else:
-                              #Drive is stopped
-                              datapoint["v"] = "Idle"
-                              if drive_idle_ts[vfd_addr] == 0 or (drive_idle_ts[vfd_addr] - start_time) >= 60:
-                                  vfd_status = 2
-                              else:
-                                  vfd_status = 4
-                                  if previous_vfd_status[vfd_addr] != 4:
-                                    drive_idle_ts[vfd_addr] = start_time"""
-
-                            datapoints.append(datapoint)
                         elif i == 10 and motor_type == 1:
                             datapoint = {}
                             datapoint["k"] = "run_time"
@@ -445,12 +478,32 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint["u"] = "Minutes"
                             datapoint["d"] = "Run Time"   
                             datapoints.append(datapoint)
-                        i+=1
-
-                    print("here1")
+                        i+=1                   
                     
+
+                    print("3")
+                    resp = drive_obj[vfd_addr].read(38, 1)
+                    datapoint = {}
+                    rawdata[38] = resp
+                    motor_amps_raw = resp[0]
+                    datapoint["k"] = "motor_amps"
+                    datapoint["v"] = resp[0]/(10*len(motor_uuid[vfd_addr]))
+                    datapoint["d"] = "Motor Amps"
+                    datapoints.append(datapoint)
+
+                    datapoint = {}
+                    datapoint["k"] = "drive_direction"
+                    datapoint["d"] = "Drive Direction"
+                    if bit0 == 1 and bit1 == 0 and bit2 == 0 and motor_amps_raw > 0:
+                        datapoint["v"] = labels[vfd_addr][0] + " Running"
+                    elif bit0 == 1 and bit1 == 0 and bit2 == 1 and motor_amps_raw > 0:
+                        datapoint["v"] = labels[vfd_addr][1] + " Running"
+                    datapoints.append(datapoint)
+                    
+
+                    print("4")
                     if motor_type[vfd_addr] == 0:
-                        if direction == 1 or direction == 3 or direction == 5 or direction == 7:
+                        if bit0 == 1 and bit1 == 0 and motor_amps_raw > 0:
                             push_counter[vfd_addr] -= 1
 
                         run_time = series3_run_time[motor_uuid[vfd_addr][0]]
@@ -469,23 +522,13 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                                 with open("/etc/runtime", "w") as hdlr:
                                     hdlr.write(json.dumps(resp))
 
-                        print("here1.2")
+                        print("5")
                         datapoint = {}
                         datapoint["k"] = "run_time"
                         datapoint["v"] = run_time
                         datapoint["u"] = "Minutes"
                         datapoint["d"] = "Run Time"   
-                        datapoints.append(datapoint)                        
-                    
-
-                    print("here2")
-                    resp = drive_obj[vfd_addr].read(38, 1)
-                    datapoint = {}
-                    rawdata[38] = resp
-                    datapoint["k"] = "motor_amps"
-                    datapoint["v"] = resp[0]/(10*len(motor_uuid[vfd_addr]))
-                    datapoint["d"] = "Motor Amps"
-                    datapoints.append(datapoint)
+                        datapoints.append(datapoint)  
 
                     if motor_type[vfd_addr] == 1:
                         resp = drive_obj[vfd_addr].read(117, 1)
@@ -511,7 +554,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     datapoint["d"] = "Motor in RPM"
                     datapoints.append(datapoint)
 
-                    print("here3")
+                    print("6")
                     datapoint = {}
                     datapoint["k"] = "speed_in_fpm"
                     datapoint["v"] = motor_in_rpm/reduction_factor[vfd_addr]
@@ -537,7 +580,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     datapoint["d"] = "Limit Switch"
                     datapoints.append(datapoint)
 
-                    print("here3.1")
+                    print("7")
                     if vfd_addr in load_cell:
                         if load_cell[vfd_addr]:
                             lc = load_cell[vfd_addr][0].split(",")
@@ -558,58 +601,50 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             datapoint = {}
                             datapoint["k"] = "loadcell"
                             datapoint["v"] = {"status":status, "analog_data": analog_data, "crane_weight":crane_weight}
-                            datapoint["u"] = {"analog_data":"Volt", "crane_weight":str(lc[5])}
+                            datapoint["u"] = {"analog_data":"Counts", "crane_weight":str(lc[5])}
                             datapoints.append(datapoint)
 
+                    if bit0 == 0 and bit1 == 0 and bit5 == 0:
+                        vfd_status = 10
+                    elif bit0 == 0 and bit1 == 0 and bit5 == 1:
+                        vfd_status = 11
+                    elif bit0 == 0 and bit1 == 1 and bit5 == 0 and motor_amps_raw == 0:
+                        vfd_status = 4
+                    elif bit0 == 0 and bit1 == 1 and bit5 == 1 and motor_amps_raw == 0:
+                        vfd_status = 2
+                    elif bit0 == 1 and bit1 == 0 and bit5 == 0:
+                        vfd_status = 11
+                    elif bit0 == 1 and bit1 == 0 and bit5 == 1 and motor_amps_raw > 0:
+                        vfd_status = 3
+                    elif bit0 == 1 and bit1 == 1 and bit5 == 0:
+                        vfd_status = 11
+                    elif bit0 == 1 and bit1 == 1 and bit5 == 1 and motor_amps_raw > 0:
+                        vfd_status = 9
+                    elif bit0 == 1 and bit1 == 1 and bit5 == 1 and motor_amps_raw == 0:
+                        vfd_status = 12
+                    else:
+                        vfd_status = -1
                 else:
                     datapoints = generate_test_data()
-
-                if bit0 == 0 and bit1 == 0 and bit5 == 0:
-                    vfd_status = 10
-                elif bit0 == 0 and bit1 == 0 and bit5 == 1:
-                    vfd_status = 11
-                elif bit0 == 0 and bit1 == 1 and bit5 == 0:
-                    vfd_status = 4
-                elif bit0 == 0 and bit1 == 1 and bit5 == 1:
-                    vfd_status = 2
-                elif bit0 == 1 and bit1 == 0 and bit5 == 0:
-                    vfd_status = 11
-                elif bit0 == 1 and bit1 == 0 and bit5 == 1:
-                    vfd_status = 3
-                elif bit0 == 1 and bit1 == 1 and bit5 == 0:
-                    vfd_status = 11
-                elif bit0 == 1 and bit1 == 1 and bit5 == 1:
-                    vfd_status = 9
-                else:
                     vfd_status = -1
+
                     
-                print("here4")
+                print("8")
                 data = {}
                 data["edge_uuid"] = edge_uuid
                 data["total_motors"] = len(motor_uuid[vfd_addr])
                 data["timestamp"] = start_time
                 data["vfd_status"] = vfd_status
                 data["motor_data"] = datapoints
-                previous_vfd_status[vfd_addr] = vfd_status
 
-                print("here5")
+                print("9")
                 for motor in motor_uuid[vfd_addr]:
                     data["motor_uuid"] = motor
                     log_hdlr.info("Raw Data {} : {}".format(start_time, rawdata))
                     print(json.dumps(data, indent=4, sort_keys=True))
                     ingest_stream(data)
 
-                '''print("here6")
-                if counter[vfd_addr] == __PUSH_INTERVAL__:
-                    for motor in motor_uuid[vfd_addr]:
-                        data["motor_uuid"] = motor
-                        ingest_stream2(data)
-                    counter[vfd_addr] = 1
-                    ingest_hourly_stream(start_time, start_time - __PUSH_INTERVAL__)
-                else:
-                    counter[vfd_addr] += 1'''
-
-                print("here6")
+                print("10")
                 end_time = round(time.time() * 1000)
                 lapsed_time = end_time - start_time
                 log_hdlr.info("Total Lapsed Time For Drive {} is {}".format(vfd_addr, lapsed_time))
@@ -620,7 +655,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
             time.sleep((__PULL_INTERVAL__- o_lapsed_time)/1000)
     except Exception as err:
         log_hdlr.info("Error in datapoints collections (read or dummy){}".format(err))
-        time.sleep(5)
+        time.sleep(1)
         data = {}
         vfd_status = 1
 
@@ -630,7 +665,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             if "status" in content:
                 vfd_status = content["status"]
-                start_time = content["timestamp"] + 3500
+                start_time = content["timestamp"] + 500
         except:
             pass
 
@@ -640,7 +675,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
             if "status" in content:
                 vfd_status = content["status"]
-                start_time = content["timestamp"] + 3500
+                start_time = content["timestamp"] + 500
         except:
             pass
 
@@ -659,6 +694,8 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     print(json.dumps(data, indent=4, sort_keys=True))
                     ingest_stream(data)
                     previous_state = vfd_status
+
+        time.sleep(4)
 
         read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, labels, load_cell, previous_state, test)
 

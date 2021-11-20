@@ -34,32 +34,37 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
             ping_time = round(time.time() * 1000)
             log_hdlr.info("{} Formatted String {}".format(ping_time, s))
 
+            # Overriding Port0 as per ACECO we should read Power status from 02BH register.
+            t0 = s[0]
+            s = t0+"2"
             if s[1] == "0":
-                msg = {}
-                stop_mode = 5
-                content = get_motor_data("crane_details", motor_list, 5)
-
-                log_hdlr.info(content)
-
-                if "Error" in content:
+                # If pstate_port0 is already 6, then stop checking.
+                if pstate_port0 == 0 or pstate_port0 == 5:
+                    msg = {}
                     stop_mode = 5
-                else:
-                    for row in json.loads(content):
-                        i = json.loads(row)
-                        if "vfd_status" in i:
-                            k = i["vfd_status"]
-                            if k == 3 or k == 6:
-                                stop_mode = 6
-                                break
+                    content = get_motor_data("crane_details", motor_list, 5)
+
+                    log_hdlr.info(content)
+
+                    if "Error" in content:
+                        stop_mode = 5
+                    else:
+                        for row in json.loads(content):
+                            i = json.loads(row)
+                            if "vfd_status" in i:
+                                k = i["vfd_status"]
+                                if k == 3 or k == 6:
+                                    stop_mode = 6
+                                    break
 
 
-                msg["status"] = stop_mode
-                msg["timestamp"] = ping_time
-                log_hdlr.info("Msg: {}".format(msg))
-                if pstate_port0 != stop_mode:
-                    with open("/etc/daq_port0", "w") as hdlr:
-                        hdlr.write(json.dumps(msg))
-                        pstate_port0 = stop_mode
+                    msg["status"] = stop_mode
+                    msg["timestamp"] = ping_time
+                    log_hdlr.info("Msg: {}".format(msg))
+                    if pstate_port0 != stop_mode:
+                        with open("/etc/daq_port0", "w") as hdlr:
+                            hdlr.write(json.dumps(msg))
+                            pstate_port0 = stop_mode
             elif s[1] == "1":
                 resp = Popen(["rm", "-rf", "/etc/daq_port0"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
