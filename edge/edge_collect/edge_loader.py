@@ -526,3 +526,4 @@ def del_motor_data(table_name,motor_list, interval):
     except Exception as e:
         error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
         return error_msg
+

@@ -38,6 +38,30 @@ __CLOUD_PUSH__ = 60
 # DB Check time, in seconds
 __PUSH_COUNTER__ = (__CLOUD_PUSH__ * 60) / __SLEEP__
 
+# Read Events from configuration
+event_config = []
+try:
+    with open("/etc/yconfig.json", "r") as hdlr:
+        content = json.loads(hdlr.read())
+
+        if "event_details" in content:
+            events = content["event_details"]
+
+            if events:
+                for event in events:
+                    e = {}
+                    e["name"] = event["event_name"]
+                    e["uuid"] = event["event_uuid"]
+
+                    for actions in event["event_actions"]:
+                        if action == 1:
+                            e["email"] = True
+                        elif action == 2:
+                            e["cloudpush"] = True
+                    event_config.append(e)
+except Exception as err:
+    log_hdlr.info("Read Events Failed: {}".format(err))
+
 def getargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)
@@ -101,6 +125,7 @@ def push(card, motor_uuid):
                                     push_mode = 1
                             else:
                                 push_mode = 1
+                            add_notification(push_mode, timestamp=content["timestamp"], pushed=None)
             except:
                 pass
 
@@ -167,6 +192,8 @@ def push(card, motor_uuid):
                 with open("/etc/daq_port0", "w") as hdlr:
                     hdlr.write(json.dumps(content))
 
+                add_notification(push_mode, timestamp=None, pushed=True)
+
             if push_mode == 2:
                 with open("/etc/daq_port1", "r") as hdlr:
                     content = json.loads(hdlr.read())
@@ -176,6 +203,21 @@ def push(card, motor_uuid):
 
                 with open("/etc/daq_port1", "w") as hdlr:
                     hdlr.write(json.dumps(content))
+
+            # Loop to check for user-defined and system-defined events
+            # Other than estop event
+            try:
+                with open("/etc/events", "r") as hdlr:
+                    content = json.loads(hdlr.read())
+                    if "status" in content:
+                        if content["status"] == 8:
+                            if "state" in content:
+                                if content["state"] != "Pushed":
+                                    push_mode = 4
+                            else:
+                                push_mode = 4
+            except:
+                pass
 
             push_mode = 0
             time.sleep(__SLEEP__)
@@ -190,6 +232,13 @@ def push(card, motor_uuid):
         time.sleep(5)
         # Not a correct way to code, as it is recursive. But very rare happening. Will change it later.
         push(card, motor_uuid)
+
+def add_notification(push_mode, timestamp, pushed):
+    to_send = {}
+    to_send["req"] = "web.post"
+    to_send["route"] = "datapush"
+
+
 
 def push_blues(card, da, to_send):
 
@@ -212,8 +261,6 @@ def push_blues(card, da, to_send):
                 try_send += 1
             else:
                 break
-
-
     except Exception as err:
         raise(err)
 

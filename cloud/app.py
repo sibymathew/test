@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import request
 from io import BytesIO
-from cloud_loader import ingest_stream, get_config_data, update_config_data, ingest_stream_hourly
+from cloud_loader import ingest_stream, get_config_data, update_config_data, ingest_stream_hourly, update_notification
 import json
 import gzip
 import base64
@@ -78,13 +78,24 @@ def config_pull_index():
         log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], resp))
         return {"status": 1, "msg": resp}
 
-
 @app.route("/v1/config/pull/status", methods = ['POST'])
 def config_pull_status_index():
     try:
         req = ast.literal_eval(request.data.decode('utf-8'))
         resp = update_config_data(req["edge_mac"], req["applied_version"], True)
         resp = update_config_data(req["edge_mac"], req["current_version"], False)
+    except Exception as err:
+        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
+        return {"status": 0, "msg": err}
+    else:
+        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], resp))
+        return {"status": 1, "msg": resp}
+
+@app.route("/v1/notification", methods = ['POST', 'PUT'])
+def notification():
+    try:
+        req = ast.literal_eval(request.data.decode('utf-8'))
+        resp = update_notification(req)
     except Exception as err:
         log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
         return {"status": 0, "msg": err}

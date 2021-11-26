@@ -1,7 +1,6 @@
 from yw.edge.interface import YWSerialClient as ModbusClient
 from edge_loader import ingest_stream, ingest_stream2
 from edge_loader import get_motor_data, ingest_hourly_stream
-from subprocess import Popen, PIPE, check_output, STDOUT
 
 import argparse
 import json
@@ -371,9 +370,6 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                             if msg and (error == 2 or error == 3):
                                 with open("/etc/daq_port0", "w") as hdlr:
                                     hdlr.write(json.dumps(msg))
-                        """elif power == 1:
-                            resp = Popen(["rm", "-rf", "/etc/daq_port0"], stdout=PIPE, stderr=PIPE)
-                            o, e = resp.communicate()"""
             except Exception as err:
                 log_hdlr.info("Power Bit Check Exception \n{}".format(err))
                 pass
@@ -780,3 +776,4 @@ if __name__ == "__main__":
       read(drive_obj_map, vfd_addrs, edge_uuid, motor_map, type_map, spl_map, rf_map, lb_map, lc_map, "Connected", test)
     else:
         read(False, vfd_addrs, edge_uuid, motor_map, type_map, rf_map, spl_map, rf_map, lb_map, lc_map, "Connected", test)
+

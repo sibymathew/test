@@ -226,6 +226,16 @@ def main():
 
                 result = result + temp_tmpl
 
+                cmd = "sudo python3 app.py"
+                name = "API_Int"
+                dirs = "/home/utopia/test/edge/edge_host/sync"
+
+                temp_tmpl = supervisor_tmpl.replace("name", name)
+                temp_tmpl = temp_tmpl.replace("dirs", dirs)
+                temp_tmpl = temp_tmpl.replace("cmd", cmd)
+
+                result = result + temp_tmpl
+
                 with open("supervisord.conf", "w") as hdlr:
                     hdlr.write(result)
 
