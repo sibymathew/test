@@ -527,3 +527,108 @@ def del_motor_data(table_name,motor_list, interval):
         error_msg = {"Status": "Failed to pull data for Edge UUID=" + edge_uuid, "Error": str(e)}
         return error_msg
 
+def ingest_notifications(notify_json):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        # Check the given JSON is a list
+        if (isinstance(notify_json, list)):
+            # Loop thru the given JsON
+            print("List but single row expected, Exiting")
+        else:
+            edge_uuid = notify_json["edge_uuid"]
+            motor_uuid = notify_json["motor_uuid"]
+            event_uuid = notify_json["event_uuid"]
+            event_name = notify_json["event_name"]
+            event_action = notify_json["event_action"]
+            action_status = notify_json["action_status"]
+            created_on = notify_json["created_on"]
+
+            # single Insert Statement
+            dbSession.edge_session.execute(
+                """
+                insert into edge_core.crane_notifications(motor_uuid, event_uuid, action_status, created_on, edge_uuid, event_action, event_name)
+                values (%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (motor_uuid, event_uuid, action_status, created_on, edge_uuid, event_action, event_name)
+            )
+
+        dbSession.shutCluster()
+        return "Notification Ingested"
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to ingest for Event UUID=" + event_uuid, "Error": str(e)}
+        return error_msg
+
+def update_notify_data(motor_uuid, event_uuid, action_status):
+    # TODO: Log
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        #if edge_mac is None:
+        #    edge_mac = '00:0a:bb:11:22:22'
+
+        # if version is None:
+        #    version = 1
+
+        # if sync_flag is None:
+        #    sync_flag = True
+
+        # single update Statement
+        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "'"
+        dbSession.edge_session.execute(update_query)
+
+        dbSession.shutCluster()
+        return "Event Action Status Updated as " + str(action_status) + " at Edge Notifications"
+
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to update for Event UUID =" + event_uuid, "Error": str(e)}
+        return error_msg
+
+
+def get_notify_data(motor_list, interval):
+    # TODO: Log
+    # TODO: CONFIG
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        #if table_name is None:
+        #    table_name = 'edge_core.crane_details2'
+
+        if interval is None:
+            interval = 5
+
+        #edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'
+
+        now = datetime.datetime.now(timezone.utc)
+        query_timestamp = now - datetime.timedelta(minutes=interval)
+        epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
+
+
+        motor_rows = []
+
+        for motor_id in motor_list:
+
+            motor_query = "select json motor_uuid, event_uuid, action_status, created_on, edge_uuid, event_action, event_name from edge_core.crane_notifications where  motor_uuid = '" + motor_id + "' and created_on >= " + epoch_query_timestamp + "  and action_status  = False ALLOW FILTERING "
+
+
+            for motor_row in dbSession.edge_session.execute(motor_query):
+                #motor_rows.append(motor_row[0].replace("'", '"'))
+                motor_rows.append(motor_row[0])
+                # print( motor_rows)
+                # print(json.dumps( motor_rows))
+                #
+
+        dbSession.shutCluster()
+        return json.dumps(motor_rows)
