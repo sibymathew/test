@@ -1,7 +1,8 @@
 from flask import Flask
 from flask import request
 from io import BytesIO
-from cloud_loader import ingest_stream, get_config_data, update_config_data, ingest_stream_hourly, update_notification
+from cloud_loader import ingest_stream, get_config_data, update_config_data, ingest_stream_hourly
+from cloud_loader import ingest_notifications, update_notify_data
 import json
 import gzip
 import base64
@@ -94,8 +95,12 @@ def config_pull_status_index():
 @app.route("/v1/notification", methods = ['POST', 'PUT'])
 def notification():
     try:
-        req = ast.literal_eval(request.data.decode('utf-8'))
-        resp = update_notification(req)
+        req = ast.literal_eval(request.data.decode('utf-8'))["data"]
+
+        if req["method"] == "add":
+            resp = ingest_notifications(req["notify"])
+        elif req["method"] == "update":
+            resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True)
     except Exception as err:
         log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
         return {"status": 0, "msg": err}

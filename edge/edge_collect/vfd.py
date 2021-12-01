@@ -1,6 +1,6 @@
 from yw.edge.interface import YWSerialClient as ModbusClient
 from edge_loader import ingest_stream, ingest_stream2
-from edge_loader import get_motor_data, ingest_hourly_stream
+from edge_loader import get_motor_data, ingest_hourly_stream, ingest_notifications
 
 import argparse
 import json
@@ -8,6 +8,7 @@ import time
 import logging
 from logging.handlers import RotatingFileHandler
 import ast
+import sys
 
 #in milliseconds
 __PULL_INTERVAL__ = 1000
@@ -90,6 +91,32 @@ hdlr = RotatingFileHandler(LOG_PATH,maxBytes=5 * 1024 * 1024, backupCount=5)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 hdlr.setFormatter(formatter)
 log_hdlr.addHandler(hdlr)
+
+#EStop UUID
+try:
+    notify_json = {}
+    with open("/etc/yconfig.json", "r") as hdlr:
+        content = json.loads(hdlr.read())
+
+        notify_json["edge_uuid"] = content["edge_uuid"]
+        # As this event is global event, motor_uuid is replaced with edge_uuid
+        notify_json["motor_uuid"] = content["edge_uuid"]
+        notify_json["event_name"] = "E-stop"
+        notify_json["event_action"] = 3
+        notify_json["event_uuid"] = None
+        if "event_details" in content:
+            events = content["event_details"]
+
+            if events:
+                for event in events:
+                    if event["event_name"] == "E-stop":
+                        notify_json["event_uuid"] = event["event_uuid"]
+
+        if not notify_json["event_uuid"]:
+            raise Exception("Configuration Missing")
+except Exception as err:
+    log_hdlr.info("Read E-stop Event Failed: {}".format(err))
+    sys.exit(2)
 
 class Connect_Modbus:
 
@@ -377,6 +404,9 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
             if error == 1:
                 raise Exception("Edge Box power is down!!!!")
             elif error == 2:
+                notify_json["created_on"] = round(time.time() * 1000)
+                notify_json["action_status"] = False
+                ingest_notifications(notify_json)
                 raise Exception("Crane is estopped !!!!")
             elif error == 3:
                 raise Exception("Crane is manual stopped !!!!")

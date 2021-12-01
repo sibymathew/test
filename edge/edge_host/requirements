@@ -17,5 +17,6 @@ sudo pip3 install supervisor
 sudo apt-get install supervisor
 sudo apt-get install vim
 sudo pip3 install pyserial==3.5
+sudo pip3 install flask
 
 Install Advantech Drivers

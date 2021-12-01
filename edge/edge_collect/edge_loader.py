@@ -544,7 +544,7 @@ def ingest_notifications(notify_json):
             motor_uuid = notify_json["motor_uuid"]
             event_uuid = notify_json["event_uuid"]
             event_name = notify_json["event_name"]
-            event_action = notify_json["event_action"]
+            event_action = str(notify_json["event_action"])
             action_status = notify_json["action_status"]
             created_on = notify_json["created_on"]
 
