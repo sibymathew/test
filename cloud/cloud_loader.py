@@ -287,7 +287,7 @@ def ingest_notifications(notify_json):
         error_msg = {"Status": "Failed to ingest for Event UUID=" + event_uuid, "Error": str(e)}
         return error_msg
 
-def update_notify_data(motor_uuid, event_uuid, action_status):
+def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
     # TODO: Log
 
     try:
@@ -305,7 +305,7 @@ def update_notify_data(motor_uuid, event_uuid, action_status):
         #    sync_flag = True
 
         # single update Statement
-        update_query = "update cloud_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "'"
+        update_query = "update cloud_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "' and created_on = " + str(created_on)
         dbSession.cosmos_session.execute(update_query)
 
         dbSession.shutCluster()
