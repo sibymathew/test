@@ -144,7 +144,7 @@ def ingest_stream2(crane_query_json):
         return error_msg
 
 
-def get_motor_data(table_name,motor_list, interval):
+def get_motor_data(table_name,motor_list, interval, from_date,to_date):
     # TODO: Log
     # TODO: CONFIG
 
@@ -169,7 +169,10 @@ def get_motor_data(table_name,motor_list, interval):
         motor_rows = []
 
         for motor_id in motor_list:
-            if table_name == 'crane_details' and interval == 0:
+            if table_name == 'crane_details' and from_date is not None and to_date is not None:
+                motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' and query_timestamp >= " + str(from_date) + " and query_timestamp <= " + str(to_date)
+
+            elif table_name == 'crane_details' and interval == 0:
                 #  uncomment it. This is just one time test for Blues Xfer to Cloud.
                 motor_query = "select json edge_uuid, motor_uuid, query_timestamp,  load_timestamp,vfd_status, motor_data, total_motors from edge_core.crane_details where  motor_uuid = '" + motor_id + "' order by query_timestamp desc LIMIT 1"
 
@@ -564,7 +567,7 @@ def ingest_notifications(notify_json):
         error_msg = {"Status": "Failed to ingest for Event UUID=" + event_uuid, "Error": str(e)}
         return error_msg
 
-def update_notify_data(motor_uuid, event_uuid, action_status):
+def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
     # TODO: Log
 
     try:
@@ -582,7 +585,7 @@ def update_notify_data(motor_uuid, event_uuid, action_status):
         #    sync_flag = True
 
         # single update Statement
-        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "'"
+        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "' and created_on = " + str(created_on)
         dbSession.edge_session.execute(update_query)
 
         dbSession.shutCluster()
@@ -632,8 +635,4 @@ def get_notify_data(motor_list, interval):
 
         dbSession.shutCluster()
         return json.dumps(motor_rows)
-
-    except Exception as e:
-        error_msg = {"Status": "Failed to update for Event UUID =" + event_uuid, "Error": str(e)}
-        return error_msg
 

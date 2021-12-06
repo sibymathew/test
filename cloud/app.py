@@ -100,7 +100,7 @@ def notification():
         if req["method"] == "add":
             resp = ingest_notifications(req["notify"])
         elif req["method"] == "update":
-            resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True)
+            resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
     except Exception as err:
         log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
         return {"status": 0, "msg": err}

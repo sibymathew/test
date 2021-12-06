@@ -63,7 +63,7 @@ def configure_notecard(productUID, card):
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
 
-def connect(productUID, nodeport, noderate, motor_uuid, edge_uuid):
+def connect(productUID, nodeport, noderate, motor_uuid, edge_uuid, send_email):
 
     print("Opening port...")
     try:
@@ -84,9 +84,9 @@ def connect(productUID, nodeport, noderate, motor_uuid, edge_uuid):
     except Exception as exception:
         log_hdlr.info("Error opening notecard: {}".format(exception))
 
-    push(card, motor_uuid, edge_uuid)
+    push(card, motor_uuid, edge_uuid, send_email)
 
-def push(card, motor_uuid, edge_uuid):
+def push(card, motor_uuid, edge_uuid, send_email):
     try:
         counter = 0
         to_send = {}
@@ -104,7 +104,7 @@ def push(card, motor_uuid, edge_uuid):
                 for notif in active_notifications:
                     cloud_notification("add", notif, card)
                     if notif["event_action"] == 1 or notif["event_action"] == 3:
-                        send_email(notif["event_uuid"])
+                        send_email(notif["event_uuid"], send_email)
                     if notif["event_action"] == 2 or notif["event_action"] == 3:
                         if notif["created_on"] > h_time:
                             h_time = notif["created_on"]
@@ -118,7 +118,7 @@ def push(card, motor_uuid, edge_uuid):
                     start_time = time.time()
                     to_send["route"] = "datapush"
 
-                    da = get_motor_data("crane_details", [m], h_time, l_time)
+                    da = get_motor_data("crane_details", [m], None, h_time, l_time)
                     if da != "[]":
                         log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
                         push_blues(card, da, to_send)
@@ -129,7 +129,7 @@ def push(card, motor_uuid, edge_uuid):
                     log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                 for notif in active_notifications:
-                    update_notify_data(notif["motor_uuid"], notif["event_uuid"], True)
+                    update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
                     cloud_notification("update", notif, card)
             except Exception as err:
                 raise Exception(err)
@@ -146,7 +146,7 @@ def push(card, motor_uuid, edge_uuid):
                 to_send["route"] = "datapush"
                 start_time = time.time()
                 push_mode = 3
-                da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__)
+                da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__, None, None)
 
                 if da != "[]":
                     log_hdlr.info("Push Mode {}. Push Data for All Motors".format(push_mode))
@@ -182,7 +182,7 @@ def push(card, motor_uuid, edge_uuid):
                     start_time = time.time()
                     to_send["route"] = "datapushrt"
                     for m in motor_uuid:
-                        da = get_motor_data("crane_details", [m], 3)
+                        da = get_motor_data("crane_details", [m], 3, None, None)
                         if da != "[]":
                             log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
                             push_blues(card, da, to_send)
@@ -203,7 +203,7 @@ def push(card, motor_uuid, edge_uuid):
             except Exception as err:
                 raise Exception(err)
 
-            # Read Active System Events
+            # Read Active User Events
             try:
                 for m in motor_uuid:
                     active_notifications = get_notify_data([m], 30)
@@ -213,7 +213,7 @@ def push(card, motor_uuid, edge_uuid):
                     for notif in active_notifications:
                         cloud_notification("add", notif, card)
                         if notif["event_action"] == 1 or notif["event_action"] == 3:
-                            send_email(notif["event_uuid"])
+                            send_email(notif["event_uuid"], send_email)
                         if notif["event_action"] == 2 or notif["event_action"] == 3:
                             if notif["created_on"] > h_time:
                                 h_time = notif["created_on"]
@@ -227,7 +227,7 @@ def push(card, motor_uuid, edge_uuid):
                         start_time = time.time()
                         to_send["route"] = "datapush"
 
-                        da = get_motor_data("crane_details", [m], h_time, l_time)
+                        da = get_motor_data("crane_details", [m], None, h_time, l_time)
                         if da != "[]":
                             log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
                             push_blues(card, da, to_send)
@@ -238,7 +238,7 @@ def push(card, motor_uuid, edge_uuid):
                         log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                     for notif in active_notifications:
-                        update_notify_data(notif["motor_uuid"], notif["event_uuid"], True)
+                        update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
                         cloud_notification("update", notif, card)
             except Exception as err:
                 raise Exception(err)
@@ -255,7 +255,7 @@ def push(card, motor_uuid, edge_uuid):
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
         # Not a correct way to code, as it is recursive. But very rare happening. Will change it later.
-        push(card, motor_uuid)
+        push(card, motor_uuid, send_email)
 
 def cloud_notification(method, notif, card):
     to_send = {}
@@ -303,12 +303,47 @@ def restart(card):
         main()
         #Recursive
 
-def send_mail():
+def send_mail(event_uuid, send_email):
+    with open("/etc/yconfig.json", "r") as hdlr:
+        content = json.loads(hdlr.read())
+
+        crane_name = content["crane_details"]["crane_name"]
+        motor_conf = content["crane_details"]["motor_config"]
+        subject = "Alert from crane: {}".format(crane_name)
+        html_content = "<strong> No Event UUID found in the Configuration. Check the config.</strong>"
+        if "event_details" in content:
+            events = content["event_details"]
+
+            if events:
+                for event in events:
+                    if event["event_uuid"] == event_uuid:
+                        for motor in motor_conf:
+                            if motor["uuid"] == event["event_formula"]["motor_uuid"]:
+                                event_motor_name = motor["name"]
+                        event_nam = event["event_name"]
+                        event_key = event["event_formula"]["key"]
+                        event_con = event["event_formula"]["condition"]
+                        event_val = event["event_formula"]["value"]
+                        event_sec = event["event_seconds"]
+
+                    html_content = f"""
+                                    <b> Hi Team </b>
+                                    <h1> Alert from {event_motor_name} </h1>
+
+                                    <h2> Event {event_nam} has occurred </h2>
+                                    <h2> {event_key} was {event_con} {event_val} for past {event_sec} seconds </h2>
+
+                                    <b> Thanks </b>
+                                    """
+
+        if not notify_json["event_uuid"]:
+            raise Exception("Configuration Missing")
+
     message = Mail(
         from_email='siby.mathew@youtopian.world',
-        to_emails='siby.mathew@youtopian.world',
-        subject='Sending with Twilio SendGrid is Fun',
-        html_content='<strong>and easy to do anywhere, even with Python</strong>')
+        to_emails=send_email,
+        subject=subject,
+        html_content=html_content)
     try:
         print(os.environ.get('SENDGRID_API_KEY'))
         sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
@@ -327,8 +362,9 @@ def main():
     noderate = args.rate
     motor_uuid = args.mu
     edge_uuid = args.eu
+    send_email = args.se
 
-    connect(productUID, nodeport, noderate, motor_uuid, edge_uuid)
+    connect(productUID, nodeport, noderate, motor_uuid, edge_uuid, send_email)
 
 main()
 

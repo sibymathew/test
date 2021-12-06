@@ -102,7 +102,7 @@ try:
         # As this event is global event, motor_uuid is replaced with edge_uuid
         notify_json["motor_uuid"] = content["edge_uuid"]
         notify_json["event_name"] = "E-stop"
-        notify_json["event_action"] = 3
+        notify_json["event_action"] = 2
         notify_json["event_uuid"] = None
         if "event_details" in content:
             events = content["event_details"]
@@ -273,7 +273,7 @@ def connection_check(vfd_addrs, vfd_port, vfd_rate, edge_uuid, motor_uuid, mode=
                 for motor in motor_uuid[vfd]:
                     data["motor_uuid"] = motor
 
-                    content = get_motor_data("table", motor_uuid, 0)
+                    content = get_motor_data("table", motor_uuid, 0, None, None)
 
                     run_time = 0
                     if not content:
@@ -367,7 +367,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                         if power == 0:
                             msg = {}
                             log_hdlr.info("May Day... May Day..\n")
-                            content = get_motor_data("crane_details", motor_list, 0)
+                            content = get_motor_data("crane_details", motor_list, 0, None, None)
                             log_hdlr.info("Last Record \n {}".format(content))
 
                             for row in json.loads(content):

@@ -34,7 +34,7 @@ def fe_request():
             # As this event is global event, motor_uuid is replaced with edge_uuid
             notify_json["motor_uuid"] = content["edge_uuid"]
             notify_json["event_name"] = "On-Demand"
-            notify_json["event_action"] = 3
+            notify_json["event_action"] = 2
             notify_json["event_uuid"] = None
             if "event_details" in content:
                 events = content["event_details"]
