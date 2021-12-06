@@ -95,17 +95,17 @@ def config_pull_status_index():
 @app.route("/v1/notification", methods = ['POST', 'PUT'])
 def notification():
     try:
-        req = ast.literal_eval(request.data.decode('utf-8'))["data"]
-
+        req = json.loads(request.data.decode('utf-8'))
+        print(req)
         if req["method"] == "add":
-            resp = ingest_notifications(req["notify"])
+            resp = ingest_notifications(req["notif"])
         elif req["method"] == "update":
-            resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
+            resp = update_notify_data(req["notif"]["motor_uuid"], req["notif"]["event_uuid"], True, req["notif"]["created_on"])
     except Exception as err:
-        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], err))
+        log_hdlr.info("{} \n {} \n".format(req["notif"]["edge_uuid"], err))
         return {"status": 0, "msg": err}
     else:
-        log_hdlr.info("{} {} \n {} \n".format(req["edge_mac"], req["version"], resp))
+        log_hdlr.info("{} \n {} \n".format(req["notif"]["edge_uuid"], resp))
         return {"status": 1, "msg": resp}
 
 if __name__ == '__main__':

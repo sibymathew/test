@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.abspath(
 import notecard
 import logging
 from logging.handlers import RotatingFileHandler
+import ast
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -99,17 +100,19 @@ def push(card, motor_uuid, edge_uuid, send_email):
 
             # Read Active System Events
             try:
-                active_notifications = get_notify_data([edge_uuid], 30)
+                active_notifications = ast.literal_eval(get_notify_data([edge_uuid], 30))
 
                 h_time = 0
                 l_time = round(time.time() * 1000)
                 for notif in active_notifications:
+                    notif = json.loads(notif)
                     cloud_notification("add", notif, card)
-                    if notif["event_action"] == 1 or notif["event_action"] == 3:
+                    if notif["event_action"] == "1" or notif["event_action"] == "3":
                         send_email(notif["event_uuid"], send_email)
-                    if notif["event_action"] == 2 or notif["event_action"] == 3:
-                        if notif["created_on"] > h_time:
-                            h_time = notif["created_on"]
+                    if notif["event_action"] == "2" or notif["event_action"] == "3":
+                        timestamp = int(parse(notif["created_on"]).strftime("%s")) * 1000
+                        if timestamp > h_time:
+                            h_time = timestamp
                             interval = h_time - 180000
 
                             if l_time <= interval:
@@ -120,53 +123,50 @@ def push(card, motor_uuid, edge_uuid, send_email):
                     start_time = time.time()
                     to_send["route"] = "datapush"
 
-                    da = get_motor_data("crane_details", [m], None, h_time, l_time)
-                    if da != "[]":
-                        log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
-                        push_blues(card, da, to_send)
-                    else:
-                        log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
-                    end_time = time.time()
-                    lapsed_time = end_time - start_time
-                    log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
+                    for m in motor_uuid:
+                        da = get_motor_data("crane_details", [m], None, h_time, l_time)
+                        if da != "[]":
+                            log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
+                            push_blues(card, da, to_send)
+                        else:
+                            log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
+                        end_time = time.time()
+                        lapsed_time = end_time - start_time
+                        log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                 for notif in active_notifications:
+                    notif = json.loads(notif)
                     update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
                     cloud_notification("update", notif, card)
             except Exception as err:
-                raise Exception(err)
+                log_hdlr.info("Failed Checking Active System Alerts: {}".format(err))
 
             try:
-                # Read Active User Events
-                active_notifications = get_notify_data([edge_uuid], 30)
-                for notif in active_notifications:
-                    notif
-            except Exception as err:
-                raise Exception(err)
+                if counter == 0:
+                    to_send["route"] = "datapush"
+                    start_time = time.time()
+                    push_mode = 3
+                    da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__, None, None)
 
-            if counter == 0:
-                to_send["route"] = "datapush"
-                start_time = time.time()
-                push_mode = 3
-                da = get_motor_data("edge_core.crane_details2", motor_uuid, __CLOUD_PUSH__, None, None)
+                    if da != "[]":
+                        log_hdlr.info("Push Mode {}. Push Data for All Motors".format(push_mode))
+                        push_blues(card, da, to_send)
 
-                if da != "[]":
-                    log_hdlr.info("Push Mode {}. Push Data for All Motors".format(push_mode))
-                    push_blues(card, da, to_send)
+                        # Delete all the entries in edge_core.crane_details2
+                        del_motor_data("edge_core.crane_details2", motor_uuid, None)
+                        end_time = time.time()
+                        lapsed_time = end_time - start_time
+                        log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
+                    else:
+                        log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
 
-                    # Delete all the entries in edge_core.crane_details2
-                    del_motor_data("edge_core.crane_details2", motor_uuid, None)
-                    end_time = time.time()
-                    lapsed_time = end_time - start_time
-                    log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
+                    counter +=1 
+                elif counter >= __PUSH_COUNTER__:
+                    counter = 0
                 else:
-                    log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
-
-                counter +=1 
-            elif counter >= __PUSH_COUNTER__:
-                counter = 0
-            else:
-                counter +=1
+                    counter +=1
+            except Exception as err:
+                log_hdlr.info("Failed Checking Hourly Send: {}".format(err))
 
             try:
                 with open("/etc/daq_port1", "r") as hdlr:
@@ -202,23 +202,27 @@ def push(card, motor_uuid, edge_uuid, send_email):
 
                     with open("/etc/daq_port1", "w") as hdlr:
                         hdlr.write(json.dumps(content))
+            except FileNotFoundError:
+                pass
             except Exception as err:
-                raise Exception(err)
+                log_hdlr.info("Failed Checking Edge Power Down: {}".format(err))
 
             # Read Active User Events
             try:
                 for m in motor_uuid:
-                    active_notifications = get_notify_data([m], 30)
+                    active_notifications = ast.literal_eval(get_notify_data([m], 30))
 
                     h_time = 0
                     l_time = round(time.time() * 1000)
                     for notif in active_notifications:
+                        notif = json.loads(notif)
                         cloud_notification("add", notif, card)
-                        if notif["event_action"] == 1 or notif["event_action"] == 3:
+                        if notif["event_action"] == "1" or notif["event_action"] == "3":
                             send_email(notif["event_uuid"], send_email)
-                        if notif["event_action"] == 2 or notif["event_action"] == 3:
-                            if notif["created_on"] > h_time:
-                                h_time = notif["created_on"]
+                        if notif["event_action"] == "2" or notif["event_action"] == "3":
+                            timestamp = int(parse(notif["created_on"]).strftime("%s")) * 1000
+                            if timestamp > h_time:
+                                h_time = timestamp
                                 interval = h_time - 180000
 
                                 if l_time <= interval:
@@ -240,10 +244,11 @@ def push(card, motor_uuid, edge_uuid, send_email):
                         log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                     for notif in active_notifications:
+                        notif = json.loads(notif)
                         update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
                         cloud_notification("update", notif, card)
             except Exception as err:
-                raise Exception(err)
+                log_hdlr.info("Failed Checking Active User Alerts: {}".format(err))
 
             push_mode = 0
             time.sleep(__SLEEP__)
