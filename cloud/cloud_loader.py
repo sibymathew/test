@@ -355,3 +355,6 @@ def get_notify_data(motor_list, interval):
 
         dbSession.shutCluster()
         return json.dumps(motor_rows)
+    except Exception as e:
+        error_msg = {"Status": "Failed to update for Event UUID =" + event_uuid, "Error": str(e)}
+        return error_msg
