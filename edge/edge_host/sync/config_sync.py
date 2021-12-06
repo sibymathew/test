@@ -130,7 +130,7 @@ def main():
 
                 edge_uuid = config["edge_uuid"]
                 port_map = {"1":[], "2":[], "3":[], "4": []}
-                send_email_list = config["edge_details"]["send_event_to_emails"]
+                send_email_list = " ".join(config["edge_details"]["send_event_to_emails"])
                 for mapping in config["crane_details"]["vfd_mapping"]:
                     port = mapping["network"]["usb_port"]
                     port_map[str(port)].append(mapping["vfd_uuid"]) 
@@ -197,7 +197,7 @@ def main():
 
                         all_motor_list = " ".join([i.split(":")[1] for i in motor_list.split(" ")])
 
-                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0  -rate 9600 -mu {} -se {}".format(all_motor_list, send_email_list)
+                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0  -rate 9600 -mu {} -eu {} -se {}".format(all_motor_list, edge_uuid, send_email_list)
                 name = "Cloud_Push_Service"
                 dirs = "/home/utopia/test/edge/edge_push"
 

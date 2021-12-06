@@ -48,6 +48,8 @@ def getargs():
     parser.add_argument('-port', action='store', help='Notecard Comm Port', type=str)
     parser.add_argument('-rate', action='store', help='Notecard Baud Rate', type=int, default=115200)
     parser.add_argument('-mu', action='store', help='Motor UUID', nargs="+", type=str)
+    parser.add_argument('-eu', action='store', help='Edge UUID', type=str)
+    parser.add_argument('-se', action='store', help='Send Email', nargs="+", type=str)
 
     return parser.parse_args()
 
@@ -193,7 +195,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
                     log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                     with open("/etc/daq_port1", "r") as hdlr:
-                    content = json.loads(hdlr.read())
+                        content = json.loads(hdlr.read())
                     if "status" in content:
                         if content["status"] == 8:
                             content["state"] = "Pushed"
@@ -255,7 +257,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
         log_hdlr.info("Transaction error: {}".format(exception))
         time.sleep(5)
         # Not a correct way to code, as it is recursive. But very rare happening. Will change it later.
-        push(card, motor_uuid, send_email)
+        push(card, motor_uuid, edge_uuid, send_email)
 
 def cloud_notification(method, notif, card):
     to_send = {}
