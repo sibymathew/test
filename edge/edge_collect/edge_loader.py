@@ -579,9 +579,12 @@ def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
         dbSession = DatabaseConnection()
 
         # convert created_on to epoch
-        utc_created_on = time.strptime(created_on, "%Y-%m-%d %H:%M:%S.%fZ")
-        epoch_created_on = str(calendar.timegm(utc_created_on)) + '000'
+        #utc_created_on = time.strptime(created_on, "%Y-%m-%d %H:%M:%S.%fZ")
+        #epoch_created_on = str(calendar.timegm(utc_created_on)) + '000'
 
+        utc_created_on = datetime.datetime.strptime(created_on, "%Y-%m-%d %H:%M:%S.%fZ")
+        epoch_created_on = (utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000
+        epoch_created_on = int(epoch_created_on)
 
         #if edge_mac is None:
         #    edge_mac = '00:0a:bb:11:22:22'
@@ -593,7 +596,7 @@ def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
         #    sync_flag = True
 
         # single update Statement
-        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "' and created_on = " + epoch_created_on
+        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "' and created_on = " + str(epoch_created_on)
         dbSession.edge_session.execute(update_query)
 
         dbSession.shutCluster()
