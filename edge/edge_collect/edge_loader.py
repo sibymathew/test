@@ -299,6 +299,9 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         json_cols = ['motor_data']
 
         # Apply the function column wise to each column of interest
+
+
+
         for x in json_cols:
             hourly_df[x] = hourly_df[x].apply(clean_json)
 
@@ -599,7 +602,8 @@ def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
 
     except Exception as e:
         error_msg = {"Status": "Failed to update for Event UUID =" + event_uuid, "Error": str(e)}
-        return error_msg
+        # return error_msg
+        return update_query
 
 
 def get_notify_data(motor_list, interval):
