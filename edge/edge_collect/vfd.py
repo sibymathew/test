@@ -97,19 +97,20 @@ try:
     notify_json = {}
     with open("/etc/yconfig.json", "r") as hdlr:
         content = json.loads(hdlr.read())
+        config_content = json.loads(content["config_data"])
 
         notify_json["edge_uuid"] = content["edge_uuid"]
         # As this event is global event, motor_uuid is replaced with edge_uuid
         notify_json["motor_uuid"] = content["edge_uuid"]
-        notify_json["event_name"] = "E-stop"
+        notify_json["event_name"] = "E-Stop"
         notify_json["event_action"] = 2
         notify_json["event_uuid"] = None
-        if "event_details" in content:
-            events = content["event_details"]
+        if "event_details" in config_content:
+            events = config_content["event_details"]
 
             if events:
                 for event in events:
-                    if event["event_name"] == "E-stop":
+                    if event["event_name"] == "E-Stop":
                         notify_json["event_uuid"] = event["event_uuid"]
 
         if not notify_json["event_uuid"]:

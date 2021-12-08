@@ -109,7 +109,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
                     notif = json.loads(notif)
                     cloud_notification("add", notif, card)
                     if notif["event_action"] == "1" or notif["event_action"] == "3":
-                        send_email(notif["event_uuid"], send_email)
+                        send_mail(notif["event_uuid"], send_email)
                     if notif["event_action"] == "2" or notif["event_action"] == "3":
                         timestamp = int(parse(notif["created_on"]).strftime("%s")) * 1000
                         if timestamp > h_time:
@@ -219,7 +219,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
                         notif = json.loads(notif)
                         cloud_notification("add", notif, card)
                         if notif["event_action"] == "1" or notif["event_action"] == "3":
-                            send_email(notif["event_uuid"], send_email)
+                            send_mail(notif["event_uuid"], send_email)
                         if notif["event_action"] == "2" or notif["event_action"] == "3":
                             timestamp = int(parse(notif["created_on"]).strftime("%s")) * 1000
                             if timestamp > h_time:
@@ -313,7 +313,8 @@ def restart(card):
 
 def send_mail(event_uuid, send_email):
     with open("/etc/yconfig.json", "r") as hdlr:
-        content = json.loads(hdlr.read())
+        con = json.loads(hdlr.read())
+        content = json.loads(con["config_data"])
 
         crane_name = content["crane_details"]["crane_name"]
         motor_conf = content["crane_details"]["motor_config"]

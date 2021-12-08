@@ -29,6 +29,7 @@ def fe_request():
         notify_json = {}
         with open("/etc/yconfig.json", "r") as hdlr:
             content = json.loads(hdlr.read())
+            config_content = json.loads(content["config_data"])
 
             notify_json["edge_uuid"] = content["edge_uuid"]
             # As this event is global event, motor_uuid is replaced with edge_uuid
@@ -36,8 +37,9 @@ def fe_request():
             notify_json["event_name"] = "On-Demand"
             notify_json["event_action"] = 2
             notify_json["event_uuid"] = None
-            if "event_details" in content:
-                events = content["event_details"]
+            config_content = content["config_data"]
+            if "event_details" in config_content:
+                events = config_content["event_details"]
 
                 if events:
                     for event in events:
