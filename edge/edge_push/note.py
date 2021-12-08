@@ -340,20 +340,22 @@ def send_mail(event_uuid, send_email):
                         event_sec = event["event_seconds"]
 
                     html_content = f"""
-                                    <b> Hi Team </b>
                                     <h1> Alert from {event_motor_name} </h1>
+                                    
+                                    <h4> ----------------------------------------- </h4>
+                                    <h4> Event {event_nam} has occurred </h4>
+                                    <h4> ----------------------------------------- </h4>
+                                    <h4> {event_key} was {event_con} {event_val} for past {event_sec} seconds </h4>
 
-                                    <h2> Event {event_nam} has occurred </h2>
-                                    <h2> {event_key} was {event_con} {event_val} for past {event_sec} seconds </h2>
-
-                                    <b> Thanks </b>
+                                    <b> Thank You, </b>
+                                    <b> Predictive Maintenance Team from ACECO</b>
                                     """
 
         if not notify_json["event_uuid"]:
             raise Exception("Configuration Missing")
 
     message = Mail(
-        from_email='siby.mathew@youtopian.world',
+        from_email='predictive_maintenance@americancrane.com',
         to_emails=send_email,
         subject=subject,
         html_content=html_content)
