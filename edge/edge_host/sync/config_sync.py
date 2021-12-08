@@ -84,6 +84,7 @@ def main():
         to_send = {}
         to_send["req"] = "web.post"
         to_send["route"] = "configpull"
+        to_send["max"] = 16384
 
         data = {}
         data["edge_mac"] = __EDGE_MAC__

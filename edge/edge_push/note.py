@@ -14,7 +14,7 @@ import base64
 
 from serial import Serial
 import time
-from dateutil.parser import parse
+import datetime
 from edge_loader import get_motor_data, del_motor_data, get_notify_data, update_notify_data
 
 sys.path.insert(0, os.path.abspath(
@@ -107,11 +107,13 @@ def push(card, motor_uuid, edge_uuid, send_email):
                 l_time = round(time.time() * 1000)
                 for notif in active_notifications:
                     notif = json.loads(notif)
+                    log_hdlr.info(notif)
                     cloud_notification("add", notif, card)
                     if notif["event_action"] == "1" or notif["event_action"] == "3":
                         send_mail(notif["event_uuid"], send_email)
                     if notif["event_action"] == "2" or notif["event_action"] == "3":
-                        timestamp = int(parse(notif["created_on"]).strftime("%s")) * 1000
+                        utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
+                        timestamp = int(utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000
                         if timestamp > h_time:
                             h_time = timestamp
                             interval = h_time - 180000
@@ -120,7 +122,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
                                 l_time = interval
 
                 if h_time != 0:
-                    push_mode = 4
+                    push_mode = 5
                     start_time = time.time()
                     to_send["route"] = "datapush"
 
@@ -217,11 +219,13 @@ def push(card, motor_uuid, edge_uuid, send_email):
                     l_time = round(time.time() * 1000)
                     for notif in active_notifications:
                         notif = json.loads(notif)
+                        log_hdlr.info(notif)
                         cloud_notification("add", notif, card)
                         if notif["event_action"] == "1" or notif["event_action"] == "3":
                             send_mail(notif["event_uuid"], send_email)
                         if notif["event_action"] == "2" or notif["event_action"] == "3":
-                            timestamp = int(parse(notif["created_on"]).strftime("%s")) * 1000
+                            utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
+                            timestamp = int(utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000
                             if timestamp > h_time:
                                 h_time = timestamp
                                 interval = h_time - 180000

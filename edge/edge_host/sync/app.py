@@ -37,7 +37,6 @@ def fe_request():
             notify_json["event_name"] = "On-Demand"
             notify_json["event_action"] = 2
             notify_json["event_uuid"] = None
-            config_content = content["config_data"]
             if "event_details" in config_content:
                 events = config_content["event_details"]
 

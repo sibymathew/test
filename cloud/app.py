@@ -96,7 +96,6 @@ def config_pull_status_index():
 def notification():
     try:
         req = json.loads(request.data.decode('utf-8'))
-        print(req)
         if req["method"] == "add":
             resp = ingest_notifications(req["notif"])
         elif req["method"] == "update":
