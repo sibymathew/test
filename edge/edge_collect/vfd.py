@@ -354,53 +354,57 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                 if "status" in content:
                     if content["status"] == 8:
                         error = 1
-                        log_hdlr.info("Edge Box power is down!!!!")
+                        log_hdlr.info("May Day... May Day..\n")
+            except FileNotFoundError:
+                pass
             except Exception as err:
                 log_hdlr.info("DAQ Port1 Check Exception \n{}".format(err))
                 pass
 
             try:
-                for vfd_addr in vfd_addrs:
-                    if motor_spl[vfd_addr] == 0:
-                        term_s6 = drive_obj[vfd_addr].read(43, 1)
-                        power = (term_s6[0] & (1<<5)) >> 5
+                if error != 1:
+                    for vfd_addr in vfd_addrs:
+                        if motor_spl[vfd_addr] == 0:
+                            term_s6 = drive_obj[vfd_addr].read(43, 1)
+                            power = (term_s6[0] & (1<<5)) >> 5
 
-                        if power == 0:
-                            msg = {}
-                            log_hdlr.info("May Day... May Day..\n")
-                            content = get_motor_data("crane_details", motor_list, 0, None, None)
-                            log_hdlr.info("Last Record \n {}".format(content))
+                            if power == 0:
+                                msg = {}
+                                log_hdlr.info("May Day... May Day..\n")
+                                content = get_motor_data("crane_details", motor_list, 0, None, None)
+                                log_hdlr.info("Last Record \n {}".format(content))
 
-                            for row in json.loads(content):
-                                i = json.loads(row)
-                                if "vfd_status" in i:
-                                    k = i["vfd_status"]
-                                    if k == 3 or k == 6:
-                                        error = 2
-                                        if k == 3:
-                                            msg["status"] = 6
-                                            msg["timestamp"] = o_start_time
-                                        break
-
-                            if error != 2:
                                 for row in json.loads(content):
                                     i = json.loads(row)
                                     if "vfd_status" in i:
                                         k = i["vfd_status"]
-                                        if k == 5:
-                                            error = 3
+                                        if k == 3 or k == 6:
+                                            error = 2
+                                            if k == 3:
+                                                msg["status"] = 6
+                                                msg["timestamp"] = o_start_time
                                             break
-                                if error != 3:
-                                    error = 3
-                                    msg["status"] = 5
-                                    msg["timestamp"] = o_start_time
 
-                            if msg and (error == 2 or error == 3):
-                                with open("/etc/daq_port0", "w") as hdlr:
-                                    hdlr.write(json.dumps(msg))
+                                if error != 2:
+                                    for row in json.loads(content):
+                                        i = json.loads(row)
+                                        if "vfd_status" in i:
+                                            k = i["vfd_status"]
+                                            if k == 5:
+                                                error = 3
+                                                break
+                                    if error != 3:
+                                        error = 3
+                                        msg["status"] = 5
+                                        msg["timestamp"] = o_start_time
+
+                                if msg and (error == 2 or error == 3):
+                                    with open("/etc/daq_port0", "w") as hdlr:
+                                        hdlr.write(json.dumps(msg))
             except Exception as err:
                 log_hdlr.info("Power Bit Check Exception \n{}".format(err))
                 pass
+
 
             if error == 1:
                 raise Exception("Edge Box power is down!!!!")
@@ -687,7 +691,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
         vfd_status = 1
 
         try:
-            with open("/etc/daq_port1", "r") as hdlr:
+            with open("/etc/daq_port0", "r") as hdlr:
                 content = json.loads(hdlr.read())
 
             if "status" in content:
@@ -697,7 +701,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
             pass
 
         try:
-            with open("/etc/daq_port0", "r") as hdlr:
+            with open("/etc/daq_port1", "r") as hdlr:
                 content = json.loads(hdlr.read())
 
             if "status" in content:

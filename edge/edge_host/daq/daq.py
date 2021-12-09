@@ -85,14 +85,25 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                         content = json.loads(hdlr.read())
                         if "state" in content:
                             if content["state"] == "Pushed":
-                                resp = Popen(["supervisorctl stop all"], stdout=PIPE, stderr=PIPE, shell=True)
+                                resp = Popen(["supervisorctl stop API_Int"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
+                                resp = Popen(["supervisorctl stop Cloud_Push_Service"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
+                                resp = Popen(["supervisorctl stop Collect_Service_1"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
+                                resp = Popen(["supervisorctl stop Config_Sync"], stdout=PIPE, stderr=PIPE, shell=True)
                                 o, e = resp.communicate()
                                 resp = Popen(["systemctl stop cassandra.service"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
+                                resp = Popen(["systemctl restart sshd"], stdout=PIPE, stderr=PIPE, shell=True)
                                 o, e = resp.communicate()
             elif s[0] == "1":
                 resp = Popen(["rm", "-rf", "/etc/daq_port1"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
-                pstate_port1 = 0
+                if pstate_port1 == 8:
+                    pstate_port1 = 0
+                    resp = Popen(["reboot --reboot"], stdout=PIPE, stderr=PIPE, shell=True)
+                    o, e = resp.communicate()
 
         time.sleep(0.1)
 
