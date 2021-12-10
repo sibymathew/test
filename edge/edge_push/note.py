@@ -113,7 +113,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
                         send_mail(notif["event_uuid"], send_email)
                     if notif["event_action"] == "2" or notif["event_action"] == "3":
                         utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
-                        timestamp = int(utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000
+                        timestamp = int((utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
                         if timestamp > h_time:
                             h_time = timestamp
                             interval = h_time - 180000
@@ -133,9 +133,10 @@ def push(card, motor_uuid, edge_uuid, send_email):
                             push_blues(card, da, to_send)
                         else:
                             log_hdlr.info("Push Mode {}. But nothing to push to cloud.".format(push_mode))
-                        end_time = time.time()
-                        lapsed_time = end_time - start_time
-                        log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
+
+                    end_time = time.time()
+                    lapsed_time = end_time - start_time
+                    log_hdlr.info("Push Mode {}. Total Lapsed Time {}".format(push_mode, lapsed_time))
 
                 for notif in active_notifications:
                     notif = json.loads(notif)
@@ -225,7 +226,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
                             send_mail(notif["event_uuid"], send_email)
                         if notif["event_action"] == "2" or notif["event_action"] == "3":
                             utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
-                            timestamp = int(utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000
+                            timestamp = int((utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
                             if timestamp > h_time:
                                 h_time = timestamp
                                 interval = h_time - 180000
@@ -294,16 +295,18 @@ def push_blues(card, da, to_send):
             encodedData = base64.b64encode(de).decode('UTF-8')
             to_send["body"] = {"data": encodedData}
 
-            log_hdlr.info("\nSending {} bytes of data".format(compressed_body.getbuffer().nbytes))
+            log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
         while try_send < 3:
             resp = card.Transaction(to_send)
-            log_hdlr.info("Push Notecard Response {}".format(resp))
+            log_hdlr.info("Push Notecard Response {} {}".format(to_send[route], resp))
             if "err" in resp:
                 try_send += 1
             else:
                 break
+            time.sleep(5)
     except Exception as err:
-        raise(err)
+        time.sleep(5)
+        raise("Push Notecard Exception" + err)
 
 def restart(card):
     try:
