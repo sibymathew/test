@@ -651,3 +651,75 @@ def get_notify_data(motor_list, interval):
         error_msg = {"Status": "Failed to get for Motor List =" + str(motor_list), "Error": str(e)}
         return error_msg
 
+
+def check_rules(rules_json):
+    try:
+
+        # list of events occured
+        events = []
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        dbSession.edge_session.row_factory = pandas_factory
+        dbSession.edge_session.default_fetch_size = None
+
+        # from_query_timestamp = 1630609200000
+        # to_query_timestamp = 1630612800000
+
+        df_rules = pd.json_normalize(rules_json)
+
+        # check rule by rule
+        for i, r in df_rules.iterrows():
+
+            event_uuid = r['event_uuid']
+            motor_uuid = r['motor_uuid']
+            # motor_uuid='3898072346710690'
+            key = r['key']
+            rcondition = r['rcondition']
+            value = r['value']
+            event_seconds = r['event_seconds']
+
+            now = datetime.datetime.now(timezone.utc)
+            query_timestamp = now - datetime.timedelta(seconds=event_seconds)
+            epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
+            # epoch_query_timestamp = 1630609200000
+
+            # query for given query_timestamp interval. Should be an hour
+            # TO DO:iteration for multiple hours, loop by hour
+            rule_query = "SELECT edge_uuid,motor_uuid,query_timestamp, motor_data, vfd_status FROM edge_core.crane_details where motor_uuid ='" + motor_uuid + "' and query_timestamp >= " + str(
+                epoch_query_timestamp) + " ALLOW FILTERING"
+            rule_df = pd.DataFrame(dbSession.edge_session.execute(rule_query, timeout=None))
+
+            # Check any data returned
+            if len(rule_df.index) > 0:
+
+                # Remove empty motor_data
+                rule_df = rule_df[rule_df.motor_data.apply(lambda x: len(str(x)) > 5)]
+                # Convert motor_data string column with double quotes
+                rule_df['motor_data'] = rule_df['motor_data'].str.replace("'", '"')
+
+                # rule_df0 = rule_df
+                # Column names that contain JSON
+                json_cols = ['motor_data']
+
+                # Apply the function column wise to each column of interest
+                for x in json_cols:
+                    rule_df[x] = rule_df[x].apply(clean_json)
+
+                rule_df[key] = rule_df.apply(lambda row: add_column(row, key), axis=1)
+                rule_filter = 'motor_uuid == "' + motor_uuid + '" and ' + key + rcondition + value
+                # print(rule_filter )
+                rule_df_filter = rule_df.query(rule_filter)
+                row_kount = len(rule_df_filter.index)
+                # print(row_kount)
+
+                if row_kount > 0:
+                    events.append(event_uuid)
+
+        dbSession.shutCluster()
+        return events
+
+
+    except Exception as e:
+        error_msg = {"Status": "Failed to check rules for Event UUID=" + event_uuid, "Error": str(e)}
+        return error_msg
