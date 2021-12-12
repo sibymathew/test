@@ -209,6 +209,16 @@ def main():
 
                 result = result + temp_tmpl
 
+                cmd = "sudo python3 rules.py"
+                name = "Rules"
+                dirs = "/home/utopia/test/edge/edge_push"
+
+                temp_tmpl = supervisor_tmpl.replace("name", name)
+                temp_tmpl = temp_tmpl.replace("dirs", dirs)
+                temp_tmpl = temp_tmpl.replace("cmd", cmd)
+
+                result = result + temp_tmpl
+
                 cmd = "sudo python3 daq.py -mu {}".format(all_motor_list)
                 name = "DAQ_Status"
                 dirs = "/home/utopia/test/edge/edge_host/daq"
