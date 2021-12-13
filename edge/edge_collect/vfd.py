@@ -726,7 +726,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     ingest_stream(data)
                     previous_state = vfd_status
 
-        time.sleep(4)
+        time.sleep(29)
 
         read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, reduction_factor, labels, load_cell, previous_state, test)
 

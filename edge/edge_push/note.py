@@ -118,16 +118,16 @@ def push(card, motor_uuid, edge_uuid, send_email):
                             h_time = timestamp
                             interval = h_time - 180000
 
-                            if l_time <= interval:
+                            if l_time >= interval:
                                 l_time = interval
 
                 if h_time != 0:
                     push_mode = 5
                     start_time = time.time()
-                    to_send["route"] = "datapush"
+                    to_send["route"] = "datapushrt"
 
                     for m in motor_uuid:
-                        da = get_motor_data("crane_details", [m], None, h_time, l_time)
+                        da = get_motor_data("crane_details", [m], None, l_time, h_time)
                         if da != "[]":
                             log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
                             push_blues(card, da, to_send)
@@ -231,15 +231,15 @@ def push(card, motor_uuid, edge_uuid, send_email):
                                 h_time = timestamp
                                 interval = h_time - 180000
 
-                                if l_time <= interval:
+                                if l_time >= interval:
                                     l_time = interval
 
                     if h_time != 0:
                         push_mode = 4
                         start_time = time.time()
-                        to_send["route"] = "datapush"
+                        to_send["route"] = "datapushrt"
 
-                        da = get_motor_data("crane_details", [m], None, h_time, l_time)
+                        da = get_motor_data("crane_details", [m], None, l_time, h_time)
                         if da != "[]":
                             log_hdlr.info("Push Mode {}. Push Data for Motor {}".format(push_mode, m))
                             push_blues(card, da, to_send)
@@ -306,7 +306,7 @@ def push_blues(card, da, to_send):
             time.sleep(5)
     except Exception as err:
         time.sleep(5)
-        raise("Push Notecard Exception" + err)
+        raise(err)
 
 def restart(card):
     try:

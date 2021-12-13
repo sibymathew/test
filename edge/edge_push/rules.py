@@ -44,6 +44,7 @@ def rules_check(edge_uuid, rules, rules_md):
             log_hdlr.info("Adding to Notification DB: {}".format(notify_json))
             resp = ingest_notifications(notify_json)
             log_hdlr.info("DB add response for event {} : {}".format(notify_json["event_uuid"], resp))
+        time.sleep(SLEEP)
 
 if __name__ == "__main__":
 
@@ -71,6 +72,7 @@ if __name__ == "__main__":
                             rule["rcondition"] = event["event_formula"]["condition"]
                             rule["value"] = event["event_formula"]["value"]
                             rule["event_seconds"] = event["event_seconds"]
+                            rule["motor_uuid"] = event["event_formula"]["motor_uuid"]
 
                             rule_md["event_name"] = event["event_name"]
                             rule_md["event_action"] = 0
@@ -82,9 +84,9 @@ if __name__ == "__main__":
                                 if action == 2:
                                     rule_md["event_action"] += 2
 
-                            for motor in motor_conf:
+                            """for motor in motor_conf:
                                 if motor["uuid"] == event["event_formula"]["motor_uuid"]:
-                                    rule["motor_uuid"] = motor["name"]
+                                    rule["motor_uuid"] = motor["name"]"""
 
                             rules.append(rule)
                             rules_md.append(rule_md)
