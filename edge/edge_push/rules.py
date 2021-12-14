@@ -5,7 +5,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import json
 
-LOG_PATH = "/var/log/sync.log"
+LOG_PATH = "/var/log/rules.log"
 log_hdlr = logging.getLogger(__name__)
 log_hdlr.setLevel(logging.DEBUG)
 
@@ -18,8 +18,9 @@ log_hdlr.addHandler(hdlr)
 SLEEP = 5
 
 def rules_check(edge_uuid, rules, rules_md):
+    log_hdlr.info("Rules to be checked are: {}".format(rules))
+    log_hdlr.info("Rules MD to be checked are: {}".format(rules_md))
     while True:
-        log_hdlr.info("Rules to be checked are: {}".format(rules))
         triggered_rules = None
         check_time = round(time.time() * 1000)
         triggered_rules = check_rules(rules)

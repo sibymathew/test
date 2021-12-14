@@ -605,8 +605,8 @@ def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
 
     except Exception as e:
         error_msg = {"Status": "Failed to update for Event UUID =" + event_uuid, "Error": str(e)}
-        # return error_msg
-        return update_query
+        return error_msg
+        #return update_query
 
 
 def get_notify_data(motor_list, interval):

@@ -102,7 +102,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
             # Read Active System Events
             try:
                 active_notifications = ast.literal_eval(get_notify_data([edge_uuid], 10))
-                log_hdlr.info("System Notifications: {}".format(active_notifications))
+                log_hdlr.info("System Active Events: {}".format(active_notifications))
 
                 h_time = 0
                 l_time = round(time.time() * 1000)
@@ -110,10 +110,10 @@ def push(card, motor_uuid, edge_uuid, send_email):
                     notif = json.loads(notif)
                     log_hdlr.info(notif)
                     resp = cloud_notification("add", notif, card)
-                    log_hdlr.info("Add Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
+                    log_hdlr.info("Add Notif to Cloud: {} -> {}".format(notif["event_uuid"], resp))
                     if notif["event_action"] == "1" or notif["event_action"] == "3":
                         resp = send_mail(notif["event_uuid"], send_email)
-                        log_hdlr.info("Send Email: {} -> {}".format(notif["event_uuid"]), resp)
+                        log_hdlr.info("Send Email: {} -> {}".format(notif["event_uuid"], resp))
                     if notif["event_action"] == "2" or notif["event_action"] == "3":
                         utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
                         timestamp = int((utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
@@ -144,9 +144,9 @@ def push(card, motor_uuid, edge_uuid, send_email):
                 for notif in active_notifications:
                     notif = json.loads(notif)
                     resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
-                    log_hdlr.info("Update Notif to Edge: {} -> {}".format(notif["event_uuid"]), resp)
+                    log_hdlr.info("Update Notif to Edge: {} -> {}".format(notif["event_uuid"], resp))
                     resp = cloud_notification("update", notif, card)
-                    log_hdlr.info("Update Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
+                    log_hdlr.info("Update Notif to Cloud: {} -> {}".format(notif["event_uuid"], resp))
             except Exception as err:
                 log_hdlr.info("Failed Checking Active System Alerts: {}".format(err))
 
@@ -220,17 +220,18 @@ def push(card, motor_uuid, edge_uuid, send_email):
             try:
                 for m in motor_uuid:
                     active_notifications = ast.literal_eval(get_notify_data([m], 10))
+                    log_hdlr.info("User Active Events: {}".format(active_notifications))
 
                     h_time = 0
                     l_time = round(time.time() * 1000)
                     for notif in active_notifications:
                         notif = json.loads(notif)
                         log_hdlr.info(notif)
-                        resp = loud_notification("add", notif, card)
-                        log_hdlr.info("Add Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
+                        resp = cloud_notification("add", notif, card)
+                        log_hdlr.info("Add Notif to Cloud: {} -> {}".format(notif["event_uuid"], resp))
                         if notif["event_action"] == "1" or notif["event_action"] == "3":
                             resp = send_mail(notif["event_uuid"], send_email)
-                            log_hdlr.info("Send Email: {} -> {}".format(notif["event_uuid"]), resp)
+                            log_hdlr.info("Send Email: {} -> {}".format(notif["event_uuid"], resp))
                         if notif["event_action"] == "2" or notif["event_action"] == "3":
                             utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
                             timestamp = int((utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
@@ -259,9 +260,9 @@ def push(card, motor_uuid, edge_uuid, send_email):
                     for notif in active_notifications:
                         notif = json.loads(notif)
                         resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
-                        log_hdlr.info("Update Notif to Edge: {} -> {}".format(notif["event_uuid"]), resp)
+                        log_hdlr.info("Update Notif to Edge: {} -> {}".format(notif["event_uuid"], resp))
                         resp = cloud_notification("update", notif, card)
-                        log_hdlr.info("Update Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
+                        log_hdlr.info("Update Notif to Cloud: {} -> {}".format(notif["event_uuid"], resp))
             except Exception as err:
                 log_hdlr.info("Failed Checking Active User Alerts: {}".format(err))
 
@@ -359,20 +360,13 @@ def send_mail(event_uuid, send_email):
                         event_val = event["event_formula"]["value"]
                         event_sec = event["event_seconds"]
 
-                    html_content = f"""
-                                    <h1> Alert from {event_motor_name} </h1>
-                                    
-                                    <h4> ----------------------------------------- </h4>
-                                    <h4> Event {event_nam} has occurred </h4>
-                                    <h4> ----------------------------------------- </h4>
-                                    <h4> {event_key} was {event_con} {event_val} for past {event_sec} seconds </h4>
-
-                                    <b> Thank You, </b>
-                                    <b> Predictive Maintenance Team from ACECO</b>
-                                    """
-
-        if not notify_json["event_uuid"]:
-            raise Exception("Configuration Missing")
+                        html_content = f"""
+                                        <h1 style="color:DodgerBlue;"> Alert from {event_motor_name} </h1>
+                                        <h4 style="padding: 10px; border: 2px solid red;">Event for <i style="color:DodgerBlue;">"{event_nam}" </i> has occurred</h4>
+                                        <h4> Event Rule: {event_key} was {event_con} {event_val} for past {event_sec} seconds </h4>
+                                        <br><b> Thank You, </b>
+                                        <br><b> Predictive Maintenance Team from ACECO</b>
+                                        """
 
     message = Mail(
         from_email='predictive_maintenance@americancrane.com',

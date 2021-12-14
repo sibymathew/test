@@ -96,10 +96,12 @@ def config_pull_status_index():
 def notification():
     try:
         req = json.loads(request.data.decode('utf-8'))
+        log_hdlr.info(req)
         if req["method"] == "add":
             resp = ingest_notifications(req["notif"])
         elif req["method"] == "update":
             resp = update_notify_data(req["notif"]["motor_uuid"], req["notif"]["event_uuid"], True, req["notif"]["created_on"])
+        log_hdlr.info(resp)
     except Exception as err:
         log_hdlr.info("{} \n {} \n".format(req["notif"]["edge_uuid"], err))
         return {"status": 0, "msg": err}
