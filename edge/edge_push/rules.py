@@ -38,7 +38,7 @@ def rules_check(edge_uuid, rules, rules_md):
             for rule_md in rules_md:
                 if rule_md["event_uuid"] == event_uuid:
                     notify_json["event_name"] = rule_md["event_name"]
-                    notify_json["event_action"] = rules_md["event_action"]
+                    notify_json["event_action"] = rule_md["event_action"]
                     break
 
             log_hdlr.info("Adding to Notification DB: {}".format(notify_json))

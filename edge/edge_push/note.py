@@ -101,16 +101,19 @@ def push(card, motor_uuid, edge_uuid, send_email):
 
             # Read Active System Events
             try:
-                active_notifications = ast.literal_eval(get_notify_data([edge_uuid], 30))
+                active_notifications = ast.literal_eval(get_notify_data([edge_uuid], 10))
+                log_hdlr.info("System Notifications: {}".format(active_notifications))
 
                 h_time = 0
                 l_time = round(time.time() * 1000)
                 for notif in active_notifications:
                     notif = json.loads(notif)
                     log_hdlr.info(notif)
-                    cloud_notification("add", notif, card)
+                    resp = cloud_notification("add", notif, card)
+                    log_hdlr.info("Add Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
                     if notif["event_action"] == "1" or notif["event_action"] == "3":
-                        send_mail(notif["event_uuid"], send_email)
+                        resp = send_mail(notif["event_uuid"], send_email)
+                        log_hdlr.info("Send Email: {} -> {}".format(notif["event_uuid"]), resp)
                     if notif["event_action"] == "2" or notif["event_action"] == "3":
                         utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
                         timestamp = int((utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
@@ -140,8 +143,10 @@ def push(card, motor_uuid, edge_uuid, send_email):
 
                 for notif in active_notifications:
                     notif = json.loads(notif)
-                    update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
-                    cloud_notification("update", notif, card)
+                    resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
+                    log_hdlr.info("Update Notif to Edge: {} -> {}".format(notif["event_uuid"]), resp)
+                    resp = cloud_notification("update", notif, card)
+                    log_hdlr.info("Update Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
             except Exception as err:
                 log_hdlr.info("Failed Checking Active System Alerts: {}".format(err))
 
@@ -214,16 +219,18 @@ def push(card, motor_uuid, edge_uuid, send_email):
             # Read Active User Events
             try:
                 for m in motor_uuid:
-                    active_notifications = ast.literal_eval(get_notify_data([m], 30))
+                    active_notifications = ast.literal_eval(get_notify_data([m], 10))
 
                     h_time = 0
                     l_time = round(time.time() * 1000)
                     for notif in active_notifications:
                         notif = json.loads(notif)
                         log_hdlr.info(notif)
-                        cloud_notification("add", notif, card)
+                        resp = loud_notification("add", notif, card)
+                        log_hdlr.info("Add Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
                         if notif["event_action"] == "1" or notif["event_action"] == "3":
-                            send_mail(notif["event_uuid"], send_email)
+                            resp = send_mail(notif["event_uuid"], send_email)
+                            log_hdlr.info("Send Email: {} -> {}".format(notif["event_uuid"]), resp)
                         if notif["event_action"] == "2" or notif["event_action"] == "3":
                             utc_created_on = datetime.datetime.strptime(notif["created_on"], "%Y-%m-%d %H:%M:%S.%fZ")
                             timestamp = int((utc_created_on - datetime.datetime(1970, 1, 1)).total_seconds() * 1000)
@@ -251,8 +258,10 @@ def push(card, motor_uuid, edge_uuid, send_email):
 
                     for notif in active_notifications:
                         notif = json.loads(notif)
-                        update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
-                        cloud_notification("update", notif, card)
+                        resp = update_notify_data(notif["motor_uuid"], notif["event_uuid"], True, notif["created_on"])
+                        log_hdlr.info("Update Notif to Edge: {} -> {}".format(notif["event_uuid"]), resp)
+                        resp = cloud_notification("update", notif, card)
+                        log_hdlr.info("Update Notif to Cloud: {} -> {}".format(notif["event_uuid"]), resp)
             except Exception as err:
                 log_hdlr.info("Failed Checking Active User Alerts: {}".format(err))
 
@@ -271,15 +280,21 @@ def push(card, motor_uuid, edge_uuid, send_email):
         push(card, motor_uuid, edge_uuid, send_email)
 
 def cloud_notification(method, notif, card):
-    to_send = {}
-    to_send["req"] = "web.post"
-    to_send["route"] = "notification"
-    data = {}
-    data["method"] = method
-    data["notif"] = notif
-    to_send["body"] = data
+    try:
+        to_send = {}
+        to_send["req"] = "web.post"
+        to_send["route"] = "notification"
+        data = {}
+        data["method"] = method
+        data["notif"] = notif
+        to_send["body"] = data
 
-    push_blues(card, None, to_send)
+        resp = push_blues(card, None, to_send)
+    except Exception as err:
+        time.sleep(5)
+        raise(err)
+    else:
+        return resp
 
 def push_blues(card, da, to_send):
 
@@ -307,6 +322,8 @@ def push_blues(card, da, to_send):
     except Exception as err:
         time.sleep(5)
         raise(err)
+    else:
+        return resp
 
 def restart(card):
     try:
@@ -370,7 +387,9 @@ def send_mail(event_uuid, send_email):
         print(response.body)
         print(response.headers)
     except Exception as e:
-        print(e.message)
+        return e
+    else:
+        return response.status_code
 
 def main():
 

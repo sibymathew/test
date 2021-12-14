@@ -70,7 +70,7 @@ __FAULT_STRINGS__ = {
             "LC - Load Check Error",
             "BE1 - Rollback Detected",
             "BE2 - No Current",
-            "BE3 - Brake Relase No Good",
+            "BE3 - Brake Release No Good",
             "BE7 - Brake Welded",
             "UL3 - Upper Limit 3",
             "Not Used",
@@ -117,6 +117,33 @@ try:
             raise Exception("Configuration Missing")
 except Exception as err:
     log_hdlr.info("Read E-stop Event Failed: {}".format(err))
+    sys.exit(2)
+
+#Power Shutdown UUID
+try:
+    notify_json_power = {}
+    with open("/etc/yconfig.json", "r") as hdlr:
+        content = json.loads(hdlr.read())
+        config_content = json.loads(content["config_data"])
+
+        notify_json_power["edge_uuid"] = content["edge_uuid"]
+        # As this event is global event, motor_uuid is replaced with edge_uuid
+        notify_json_power["motor_uuid"] = content["edge_uuid"]
+        notify_json_power["event_name"] = "Power-Shutdown"
+        notify_json_power["event_action"] = 2
+        notify_json_power["event_uuid"] = None
+        if "event_details" in config_content:
+            events = config_content["event_details"]
+
+            if events:
+                for event in events:
+                    if event["event_name"] == "Power-Shutdown":
+                        notify_json_power["event_uuid"] = event["event_uuid"]
+
+        if not notify_json_power["event_uuid"]:
+            raise Exception("Configuration Missing")
+except Exception as err:
+    log_hdlr.info("Read Power-Shutdown Event Failed: {}".format(err))
     sys.exit(2)
 
 class Connect_Modbus:
@@ -352,7 +379,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                     content = json.loads(hdlr.read())
 
                 if "status" in content:
-                    if content["status"] == 8:
+                    if content["status"] == 8 and previous_state !=8:
                         error = 1
                         log_hdlr.info("May Day... May Day..\n")
             except FileNotFoundError:
@@ -378,8 +405,14 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                                     i = json.loads(row)
                                     if "vfd_status" in i:
                                         k = i["vfd_status"]
+                                        d = i["motor_data"]
+                                        speed = 0
                                         if k == 3 or k == 6:
-                                            error = 2
+                                            for dp in d:
+                                                if dp["k"] == "motor_speed":
+                                                    speed = dp["v"]
+                                            if speed > 0:
+                                                error = 2
                                             if k == 3:
                                                 msg["status"] = 6
                                                 msg["timestamp"] = o_start_time
@@ -407,6 +440,9 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
 
             if error == 1:
+                notify_json_power["created_on"] = round(time.time() * 1000)
+                notify_json_power["action_status"] = False
+                ingest_notifications(notify_json_power)
                 raise Exception("Edge Box power is down!!!!")
             elif error == 2:
                 notify_json["created_on"] = round(time.time() * 1000)
