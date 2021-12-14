@@ -313,7 +313,7 @@ def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
         #    sync_flag = True
 
         # single update Statement
-        update_query = "update cloud_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "' and created_on = " + str(epoch_created_on)
+        update_query = "update cloud_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and created_on = " + str(epoch_created_on)
         dbSession.cosmos_session.execute(update_query)
 
         dbSession.shutCluster()

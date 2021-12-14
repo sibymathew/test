@@ -387,7 +387,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         # hourly_calc_df2 = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg({'motor_in_rpm': ['mean']})
         # only when Drive is running, so select only motor_in_rpm > 0  and only absolute values
         hourly_calc_df2 = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(['edge_uuid', 'motor_uuid']).agg(
-            {'motor_in_rpm': ['mean', lambda x: abs(x.mean())]})
+            {'motor_in_rpm': [('mean', lambda x : abs(x.mean())),('max', lambda x : abs(x.max()))]})
         # hourly_calc_df2.head()
 
         # only when Drive is running,
@@ -439,7 +439,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
             # datapoints.append(datapoint)
 
             if not math.isnan(r['motor_in_rpm']['mean']):
-                datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean']}, "u": "RPM",
+                datapoint = {"k": "motor_in_rpm", "v": {"avg": r['motor_in_rpm']['mean'],"max":r['motor_in_rpm']['max']}, "u": "RPM",
                          "d": "Motor In RPM"}
                 datapoints.append(datapoint)
 
@@ -596,7 +596,7 @@ def update_notify_data(motor_uuid, event_uuid, action_status, created_on):
         #    sync_flag = True
 
         # single update Statement
-        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid + "' and event_uuid = '" + event_uuid + "' and created_on = " + str(epoch_created_on)
+        update_query = "update edge_core.crane_notifications set action_status = " + str(action_status) + "  where motor_uuid='" + motor_uuid +  "' and created_on = " + str(epoch_created_on)
         dbSession.edge_session.execute(update_query)
 
         dbSession.shutCluster()
