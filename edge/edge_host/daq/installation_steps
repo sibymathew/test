@@ -1,0 +1,163 @@
+Advantech DAQNavi Linux Drivers Installation Guide
+Date: 11/2020
+
+=======
+|Steps|
+=======
+
+(1) Please make sure that the kernel source and gcc are installed.
+(2) Please make sure that the source of system software is up-to-date.
+(3) Disable comedi driver, please refer to Driver note.
+(4) Uninstall the adsapi32 driver, please refer to Driver note.
+(5) Copy the driver compression package to home folder and decompression it.
+(6) Get root permissions and run executable file. (example: ./linux_driver_source_4.0.0.0_64bit.run)
+Notes: There are three parameters for silent installation, the first parameter means silent installation;
+the second means installer or uninstaller; the last means which driver to be installed, it can be null when the second parameter is uninstall.(example:./linux_driver_source_4.0.0.0_64bit.run silent install pcie1840)
+(7) Please reboot the system.
+
+Through above steps, the SDK and device driver have been installed successfully, and the drivers will be loaded automatically when reboot the system. If the DAQ device is ISA device, such as PCM-3718, PCM-3725, PCM3730, you must perform the following additional steps.
+(8) Set jumper and switch to config the io port address, irq, dma of PCM-3718HO. (example: PCM-3718HO)
+(9) Config the resource by isa_tools and make sure the resource is consistent with the hardware configuration. (example: cd tools/isa_tool; ./isa_tool -a -n bio3718 -m pcm3718ho -p 0x200 -i 3 -d 1)
+
+
+========================
+|Supported distribution|
+========================
+
+ ------------------------------------------ -------------- ----------------
+|             Distribution                 |     Kernel version            |
+ ------------------------------------------ -------------------------------
+|  Ubuntu 20.4                             |         5.4.0                 |
+ ------------------------------------------ -------------------------------
+|  Redhat Enterprise Linux Server 8.1      |         4.18.0                |
+ ------------------------------------------ -------------------------------
+|  OpenSUSE 15.2                           |         5.3.18                |
+ ------------------------------------------ -------------------------------
+|  Debian 10.5                             |         4.19.0                |
+ ------------------------------------------ -------------------------------
+|  CentOS 8.2                              |         4.18.0                |
+ ------------------------------------------ -------------------------------
+
+
+=============
+|Driver note|
+=============
+
+Please disable comedi driver, because this driver will conflict with some of DAQNavi's driver.
+----------------------------------------------
+(1) Please get root permissions.
+(2) Open /etc/modprobe.d/blacklist.conf file.
+(3) Add "blacklist comedi" "blacklist adv_pci_dio" "blacklist adv_pci1710" at end of the file.
+(4) reboot system.
+
+Please uninstall adsapi32 driver, because this driver will conflict with some of DAQNavi's driver.
+----------------------------------------------
+If needed to uninstall adsapi32 driver, please refer to their own uninstall instructions.
+
+User manual
+----------------------------------------------
+Linux User Interface Manaul has been included in the development plan.If needed,please refer to
+\Documents\DAQNavi_User_Interface_Manual_EN\DAQNavi_User_Interface.chm. You can install gnochm to browse
+chm manual in linux OS.
+
+==================
+|Hardware Support|
+==================
+
+Advantech DAQNavi Linux Drivers supports the following devices:
+--------------------------------------------------------------------------------
+PCI-1706U
+ECUP-1706
+PCI-1710/L/HG/HGL
+PCI-1711/U
+PCI-1711L/UL
+PCI-1713U
+PCI-1714U
+PCI-1714UL
+PCI-1715U
+PCI-1716
+PCI-1716L
+PCI-1720U
+PCI-1721
+PCI-1723
+PCI-1724U
+PCI-1727U
+PCI-1730/U
+PCI-1733
+PCI-1734
+PCI-1737
+PCI-1739
+PCI-1747U
+PCI-1750
+PCI-1751
+PCI-1752U/USO
+PCI-1753
+PCI-1754
+PCI-1756
+PCI-1757UP
+PCI-1758 series
+PCI-1761
+PCI-1762
+PCI-1780
+PCI-1784
+PCIE-1730
+PCIE-1744
+PCIE-1750U
+PCIE-1750UH
+PCIE-1752
+PCIE-1753
+PCIE-1756
+PCIE-1756H
+PCIE-1760
+PCIE-1802
+PCIE-1803
+PCIE-1805
+PCIE-1810
+PCIE-1824
+PCIE-1840
+PCIE-1884
+MIC-1810
+PCIE-1816
+MIC-1816
+PCM-3718
+PCM-3725
+PCM-3730
+PCM-3761I
+PCM-3753I
+PCM-3810I
+PCM-2731
+USB-4702
+USB-4704
+USB-4711A
+USB-4716
+USB-4718
+USB-4750
+USB-4751
+USB-4761
+USB-5801
+USB-5817
+USB-5830
+USB-5850
+USB-5855
+USB-5856
+USB-5860
+USB-5862
+MIC-3714
+MIC-3716
+MIC-3723
+MIC-3753
+MIC-3756
+MOS-1110Y-01
+
+AMAX-5000 series module
+WISE-5000 series module
+
+
+=====================
+|System requirements|
+=====================
+
+Advantech DAQNavi Linux Drivers system requirements:
+--------------------------------------------------------------------------------
+1. Kernel version must be higher than 2.6.18.
+2. The glibc version must be higner than 2.11

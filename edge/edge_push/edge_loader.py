@@ -651,6 +651,47 @@ def get_notify_data(motor_list, interval):
         error_msg = {"Status": "Failed to get for Motor List =" + str(motor_list), "Error": str(e)}
         return error_msg
 
+def get_notify_data_all(event_uuid, interval):
+    # TODO: Log
+    # TODO: CONFIG
+
+    try:
+
+        # Create a DB connection instance
+        dbSession = DatabaseConnection()
+
+        #if table_name is None:
+        #    table_name = 'edge_core.crane_details2'
+
+        if interval is None:
+            interval = 5
+
+        #edge_uuid = 'b03108db-65f2-4d7c-b884-bb908d111400'
+
+        now = datetime.datetime.now(timezone.utc)
+        query_timestamp = now - datetime.timedelta(minutes=interval)
+        epoch_query_timestamp = str(calendar.timegm(query_timestamp.timetuple())) + '000'
+
+
+        motor_rows = []
+
+        for motor_id in motor_list:
+
+            motor_query = "select json motor_uuid, event_uuid, action_status, created_on, edge_uuid, event_action, event_name from edge_core.crane_notifications where  event_uuid = '" + event_uuid + "' and created_on >= " + epoch_query_timestamp + " ALLOW FILTERING "
+
+
+            for motor_row in dbSession.edge_session.execute(motor_query):
+                #motor_rows.append(motor_row[0].replace("'", '"'))
+                motor_rows.append(motor_row[0])
+                # print( motor_rows)
+                # print(json.dumps( motor_rows))
+                #
+
+        dbSession.shutCluster()
+        return json.dumps(motor_rows)
+    except Exception as e:
+        error_msg = {"Status": "Failed to get for Motor List =" + str(motor_list), "Error": str(e)}
+        return error_msg
 
 def check_rules(rules_json):
     try:

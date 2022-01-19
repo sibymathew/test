@@ -405,7 +405,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
                                     i = json.loads(row)
                                     if "vfd_status" in i:
                                         k = i["vfd_status"]
-                                        d = i["motor_data"]
+                                        d = ast.literal_eval(i["motor_data"])
                                         speed = 0
                                         if k == 3 or k == 6:
                                             for dp in d:

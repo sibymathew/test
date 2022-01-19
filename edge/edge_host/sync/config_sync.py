@@ -22,8 +22,30 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 hdlr.setFormatter(formatter)
 log_hdlr.addHandler(hdlr)
 
-#__EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
-__EDGE_MAC__ = "00:0a:bb:11:22:22"
+is_wireless_on = False
+while not is_wireless_on:
+    wireless = ""
+    wireless = os.popen("awk 'NR==3{print $1}' /proc/net/wireless | tr -d :").read().rstrip()
+
+    if wireless:
+        is_wireless_on = True
+    else:
+        log_hdlr.info("Wireless Interface is not up and runnning.. Retrying..")
+        time.sleep(5)
+
+usb_to_serial_mapper = {}
+try:
+    with open("/etc/ymapper.json", "r") as hdlr:
+        usb_to_serial_mapper = json.loads(hdlr.read())
+        log_hdlr.info("Mapping file found to {}".format(usb_to_serial_mapper))
+except:
+    usb_to_serial_mapper = {"1":"/dev/ttyUSB", "5":"/dev/ttyACM0"}
+    log_hdlr.info("As mapping file is not present, defaulting to {}".format(usb_to_serial_mapper))
+
+
+__EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
+__EDGE_IP__ = "ENTER_WIRELESS_INTERFACE_IP"
+#__EDGE_MAC__ = "00:0a:bb:11:22:22"
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -123,6 +145,7 @@ def main():
                 config = ast.literal_eval(edge_config["config_data"])
                 with open("config.supervisor") as hdlr:
                     supervisor_conf = hdlr.read()
+                    supervisor_conf = supervisor_conf.replace("EDGEWIRELESSIP", __EDGE_IP__)
                 with open("config.supervisor.template") as hdlr:
                     supervisor_tmpl = hdlr.read()
 
@@ -139,7 +162,7 @@ def main():
 
                 for port in port_map:
                     if port_map[port]:
-                        port_name = "/dev/ttyUSB0"
+                        port_name = usb_to_serial_mapper[port]
                         address = []
                         speciality = []
                         types = []
@@ -199,7 +222,7 @@ def main():
 
                         all_motor_list = " ".join([i.split(":")[1] for i in motor_list.split(" ")])
 
-                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0  -rate 9600 -mu {} -eu {} -se {}".format(all_motor_list, edge_uuid, rx_email_list)
+                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port {} -rate 9600 -mu {} -eu {} -se {}".format(usb_to_serial_mapper["5"], all_motor_list, edge_uuid, rx_email_list)
                 name = "Cloud_Push_Service"
                 dirs = "/home/utopia/test/edge/edge_push"
 
@@ -229,7 +252,7 @@ def main():
 
                 result = result + temp_tmpl
 
-                cmd = "sudo python3 config_sync.py -puuid world.youtopian.siby.mathew:drill_bit -port /dev/ttyACM0  -rate 9600"
+                cmd = "sudo python3 config_sync.py -puuid world.youtopian.siby.mathew:drill_bit -port {}  -rate 9600".format(usb_to_serial_mapper["5"])
                 name = "Config_Sync"
                 dirs = "/home/utopia/test/edge/edge_host/sync"
 

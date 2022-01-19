@@ -6,6 +6,7 @@ port=0.0.0.0:9001
 
 [supervisord]
 nodaemon=true
+environment=CASSANDRA_IP=EDGEWIRELESSIP
 logfile=/var/log/supervisord.log
 loglevel=debug
 logfile_maxbytes=5000000

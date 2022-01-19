@@ -3,3 +3,4 @@ requests==2.24.0
 note-python==1.3.5
 pyserial==3.5
 dse-driver==2.11.1
+pandas==1.1.1
