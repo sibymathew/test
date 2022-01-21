@@ -47,7 +47,7 @@ def rules_check(edge_uuid, rules, rules_md):
             log_hdlr.info("DB add response for event {} : {}".format(notify_json["event_uuid"], resp))
         time.sleep(SLEEP)
 
-if __name__ == "__main__":
+def main():
 
     rule = {}
     rules = []
@@ -101,3 +101,8 @@ if __name__ == "__main__":
 
     except Exception as err:
         log_hdlr.info(err)
+        main()
+
+if __name__ == "__main__":
+
+    main()
