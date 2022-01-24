@@ -64,6 +64,36 @@ def add_column(row,col_name):
                 else:
                     return(data['v'])
 
+def add_column2(row,crane_total_weight):
+    for data in row['motor_data']:
+         if (data['k']) == 'loadcell':
+                load_pct = (((data['v']['crane_weight'])/crane_total_weight)*100)
+                if  load_pct >= -99 and load_pct < 5 :
+                    return 0
+                elif load_pct >= 5 and load_pct < 15 :
+                    return '10%'
+                elif load_pct >= 15 and load_pct < 25 :
+                    return '20%'
+                elif load_pct >= 25 and load_pct < 35 :
+                    return '30%'
+                elif load_pct >= 35 and load_pct < 45 :
+                    return '40%'
+                elif load_pct >= 45 and load_pct < 55 :
+                    return '50%'
+                elif load_pct >= 55 and load_pct < 65 :
+                    return '60%'
+                elif load_pct >= 65 and load_pct < 75 :
+                    return '70%'
+                elif load_pct >= 75 and load_pct < 85 :
+                    return '80%'
+                elif load_pct >= 85 and load_pct < 95 :
+                    return '90%'
+                elif load_pct >= 95 and load_pct < 105 :
+                    return '100%'
+                elif load_pct >= 105 :
+                    return '110%'
+                else:
+                    return 'NA'
 
 def ingest_stream(crane_query_json):
     #TODO: Log
@@ -267,7 +297,7 @@ def update_config_data(edge_mac, version, sync_flag):
         error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
         return error_msg
 
-def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
+def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight, pull_interval):
     try:
 
         ingest_status = []
@@ -329,12 +359,19 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
         # TO DO: “absolute” values - Motor RPM  == DONE
         # Prepare the required columns and append to the dataframe
 
+        crane_total_weight = crane_weight
+
         hourly_df['motor_amps'] = hourly_df.apply(lambda row: add_column(row, 'motor_amps'), axis=1)
         hourly_df['motor_in_rpm'] = hourly_df.apply(lambda row: add_column(row, 'motor_in_rpm'), axis=1)
         hourly_df['loadcell'] = hourly_df.apply(lambda row: add_column(row, 'loadcell'), axis=1)
         hourly_df['run_time'] = hourly_df.apply(lambda row: add_column(row, 'run_time'), axis=1)
         hourly_df['number_of_start_stop'] = hourly_df.apply(lambda row: add_column(row, 'number_of_start_stop'),
                                                                 axis=1)
+
+        hourly_df['load_pct_range'] = hourly_df.apply(lambda row: add_column2(row, crane_total_weight), axis=1)
+        # only when Drive is running,
+        hourly_odometer = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(
+            ['edge_uuid', 'motor_uuid', 'load_pct_range']).agg({'load_pct_range': ['count'], 'motor_in_rpm': ['mean']})
 
         # prepare the motor_data for the hour, back to be ingested
         data = {}
@@ -449,6 +486,59 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp):
                 datapoints.append(datapoint)
             # datapoint = {"k": "loadcell_weight_max", "v": r['loadcell']['max'], "d": "Loadcell Crane Weight Max"}
             # datapoints.append(datapoint)
+
+            load_pct_dict = {}
+            load_pct_avail = []
+
+            for i, r in hourly_odometer.iterrows():
+                load_pct_dict1 = {}
+
+                odo_edge_uuid = i[0]
+                odo_motor_uuid = i[1]
+                load_pct_range = i[2]
+
+                if this_motor_uuid == odo_motor_uuid:
+                    # pull_interval = 60
+                    odometer_runtime = ((r['load_pct_range']['count']) * pull_interval) / 60
+                    load_pct_desc = "Below " + load_pct_range
+
+                    load_pct_dict1 = {load_pct_range: {"records": r['load_pct_range']['count'],
+                                                       "motor_speed_avg": r['motor_in_rpm']['mean'],
+                                                       "run_time": odometer_runtime, "desc": load_pct_desc}}
+                    load_pct_avail.append(load_pct_range)
+
+                    # print(load_pct_avail)
+
+                    load_pct_dict.update(load_pct_dict1)
+                    # print(load_pct_dict)
+
+            iMissing = 0
+            load_pct_ranges = ['0%', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%', '110%']
+            load_pct_ranges_set = set(load_pct_ranges)
+            load_pct_avail_set = set(load_pct_avail)
+
+            load_pct_missing_set = list(sorted(load_pct_ranges_set - load_pct_avail_set))
+            # print(load_pct_missing_set)
+            # print(load_pct_dict)
+            # odometer_dict = {"k": "crane_odometer", "v":{load_pct_dict}}
+
+            # Iterating thru missing range
+            while iMissing < len(load_pct_missing_set):
+                load_pct_desc = "Below " + load_pct_missing_set[iMissing]
+                load_pct_dict1 = {load_pct_missing_set[iMissing]: {"records": 0, "motor_speed_avg": 0, "run_time": 0,
+                                                                   "desc": load_pct_desc}}
+                load_pct_dict.update(load_pct_dict1)
+                iMissing += 1
+
+            # print(load_pct_avail)
+            # print(datapoints)
+
+            # print(odometer_dict)
+            odometer_dict = {"k": "crane_odometer", "v": {}}
+            odometer_dict['v'] = load_pct_dict
+
+            datapoint = odometer_dict
+            datapoints.append(datapoint)
 
             data["motor_data"] = datapoints
             # print(json.dumps(data, indent=4, sort_keys=True))
