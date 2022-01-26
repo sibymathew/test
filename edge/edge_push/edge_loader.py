@@ -69,7 +69,7 @@ def add_column2(row,crane_total_weight):
          if (data['k']) == 'loadcell':
                 load_pct = (((data['v']['crane_weight'])/crane_total_weight)*100)
                 if  load_pct >= -99 and load_pct < 5 :
-                    return 0
+                    return '0%'
                 elif load_pct >= 5 and load_pct < 15 :
                     return '10%'
                 elif load_pct >= 15 and load_pct < 25 :
@@ -497,20 +497,23 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
                 odo_motor_uuid = i[1]
                 load_pct_range = i[2]
 
-                if this_motor_uuid == odo_motor_uuid:
-                    # pull_interval = 60
-                    odometer_runtime = ((r['load_pct_range']['count']) * pull_interval) / 60
-                    load_pct_desc = "Below " + load_pct_range
+                if load_pct_range =='NA':
+                    prin('skip')
+                else:
+                    if this_motor_uuid == odo_motor_uuid:
+                        # pull_interval = 60
+                        odometer_runtime = ((r['load_pct_range']['count']) * pull_interval) / 60
+                        load_pct_desc = "Below " + load_pct_range
 
-                    load_pct_dict1 = {load_pct_range: {"records": r['load_pct_range']['count'],
-                                                       "motor_speed_avg": r['motor_in_rpm']['mean'],
-                                                       "run_time": odometer_runtime, "desc": load_pct_desc}}
-                    load_pct_avail.append(load_pct_range)
+                        load_pct_dict1 = {load_pct_range: {"records": r['load_pct_range']['count'],
+                                                           "motor_speed_avg": r['motor_in_rpm']['mean'],
+                                                           "run_time": odometer_runtime, "desc": load_pct_desc}}
+                        load_pct_avail.append(load_pct_range)
 
-                    # print(load_pct_avail)
+                        # print(load_pct_avail)
 
-                    load_pct_dict.update(load_pct_dict1)
-                    # print(load_pct_dict)
+                        load_pct_dict.update(load_pct_dict1)
+                        # print(load_pct_dict)
 
             iMissing = 0
             load_pct_ranges = ['0%', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%', '110%']
