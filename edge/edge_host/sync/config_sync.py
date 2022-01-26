@@ -39,7 +39,7 @@ try:
         usb_to_serial_mapper = json.loads(hdlr.read())
         log_hdlr.info("Mapping file found to {}".format(usb_to_serial_mapper))
 except:
-    usb_to_serial_mapper = {"1":"/dev/ttyUSB", "5":"/dev/ttyACM0"}
+    usb_to_serial_mapper = {"1":"/dev/ttyUSB0", "5":"/dev/ttyACM0"}
     log_hdlr.info("As mapping file is not present, defaulting to {}".format(usb_to_serial_mapper))
 
 
