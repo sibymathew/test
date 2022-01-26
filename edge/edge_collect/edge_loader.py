@@ -498,7 +498,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
                 load_pct_range = i[2]
 
                 if load_pct_range =='NA':
-                    prin('skip')
+                    print('skip')
                 else:
                     if this_motor_uuid == odo_motor_uuid:
                         # pull_interval = 60
