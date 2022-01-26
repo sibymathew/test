@@ -44,7 +44,7 @@ except:
 
 
 __EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
-__EDGE_IP__ = "ENTER_WIRELESS_INTERFACE_IP"
+__EDGE_IP__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/inet /{print $2}' | awk -F"/" '{print $1}'").read().rstrip()
 #__EDGE_MAC__ = "00:0a:bb:11:22:22"
 
 def getargs():
@@ -126,6 +126,7 @@ def main():
             to_send["body"] = data
             log_hdlr.info("Config Change Check Req: {}".format(to_send))
             resp = card.Transaction(to_send)
+            log_hdlr.info(resp)
 
             try:
                 main_config = ast.literal_eval(resp["body"]["msg"])
@@ -287,6 +288,7 @@ def main():
                         version = edge_config["version"]
 
     except Exception as exception:
+        log_hdlr.info("Sync Exception: {}".format(exception))
         raise Exception("error opening notecard: {}".format(exception))
 
 main()

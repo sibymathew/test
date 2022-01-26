@@ -2,6 +2,7 @@ from edge_loader import get_motor_data, ingest_hourly_stream
 import time
 import ast
 import logging
+import json
 from logging.handlers import RotatingFileHandler
 
 LOG_PATH = "/var/log/push.log"
@@ -24,9 +25,9 @@ try:
 except:
     log_hdlr.info("Hourly Push: Configuration JSON or Crane Weight is Missing")
 else:
-	try:
-	    to_time = round(time.time() * 1000)
-    	from_time = to_time - 3600000
-	    ingest_hourly_stream(from_time, to_time, crane_weight, __PULL_INTERVAL__/1000)
+    try:
+        to_time = round(time.time() * 1000)
+        from_time = to_time - 3600000
+        ingest_hourly_stream(from_time, to_time, crane_weight, __PULL_INTERVAL__/1000)
     except Exception as err:
-	    log_hdlr.info("Hourly Push Exception: {}".format(err))
+        log_hdlr.info("Hourly Push Exception: {}".format(err))
