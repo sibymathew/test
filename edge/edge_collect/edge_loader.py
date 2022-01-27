@@ -428,7 +428,12 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
         # hourly_calc_df2.head()
 
         # only when Drive is running,
-        hourly_calc_df3 = hourly_df[hourly_df['loadcell'] > 0].groupby(['edge_uuid', 'motor_uuid']).agg(
+        #hourly_calc_df3 = hourly_df[hourly_df['loadcell'] > 0].groupby(['edge_uuid', 'motor_uuid']).agg(
+        #    {'loadcell': ['mean', 'max']})
+        # We would want to consider static loads
+        # into the hourly load cell average (so that if the crane is sitting idle with a 10 ton load suspended, that load would still contribute to the hourly average load).
+        # For the odometer run_time, however, static load would not be included (because a static load does not contribute to bearing/ component wear).
+        hourly_calc_df3 = hourly_df.groupby(['edge_uuid', 'motor_uuid']).agg(
             {'loadcell': ['mean', 'max']})
 
         hourly_final_df = pd.merge(hourly_calc_df1, hourly_calc_df2, on=['edge_uuid', 'motor_uuid'], how="outer")
