@@ -452,6 +452,9 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
             data["timestamp"] = to_query_timestamp
             data["vfd_status"] = int(r['vfd_status']['mean'])
 
+            this_edge_uuid = i[0]
+            this_motor_uuid = i[1]
+
             dt = datetime.datetime.now(timezone.utc)
             utc_time = dt.replace(tzinfo=timezone.utc)
             # utc_timestamp = utc_time.timestamp()
