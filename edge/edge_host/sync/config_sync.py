@@ -39,13 +39,24 @@ try:
         usb_to_serial_mapper = json.loads(hdlr.read())
         log_hdlr.info("Mapping file found to {}".format(usb_to_serial_mapper))
 except:
-    usb_to_serial_mapper = {"1":"/dev/ttyUSB0", "5":"/dev/ttyACM0"}
+    usb_to_serial_mapper = {"1":"/dev/ttyUSB0", "2":"/dev/ttyUSB1", "3":"/dev/ttyUSB2", "4":"/dev/ttyUSB3", "5":"/dev/ttyACM0"}
     log_hdlr.info("As mapping file is not present, defaulting to {}".format(usb_to_serial_mapper))
 
 
-__EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
-__EDGE_IP__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/inet /{print $2}' | awk -F"/" '{print $1}'").read().rstrip()
-#__EDGE_MAC__ = "00:0a:bb:11:22:22"
+__EDGE_MAC__ = ""
+__EDGE_IP__ = ""
+
+while __EDGE_MAC__ = "" or __EDGE_IP__ = "": 
+    try:
+        __EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
+        __EDGE_IP__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/inet /{print $2}' | awk -F'/' '{print $1}'").read().rstrip()
+        #__EDGE_MAC__ = "00:0a:bb:11:22:22"
+        #__EDGE_IP__ = "1.1.1.1"
+    except:
+        log_hdlr.info("Not able to find edge mac or ip {} {}".format(__EDGE_MAC__, __EDGE_IP__))
+        __EDGE_MAC__ = ""
+        __EDGE_IP__ = ""
+
 
 def getargs():
     parser = argparse.ArgumentParser()

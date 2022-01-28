@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# regex to validate in commit msg
+commit_regex='\[(IOTC|IOTE|ER)-\d+\]:'
+
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+error_msg="${RED}Aborting commit. Please follow the commit message pattern \
+.${NC}\n[(IOTC|IOTE|ER)-\d+]: msg"
+
+if ! grep -qE "$commit_regex" "$1"; then
+    echo -e "$error_msg" >&2
+    exit 1
+fi
