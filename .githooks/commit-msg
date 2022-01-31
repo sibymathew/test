@@ -3,6 +3,9 @@
 # regex to validate in commit msg
 commit_regex='\[(IOTC|IOTE|ER)-\d+\]:'
 
+echo $1
+echo $commit_regex
+
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 error_msg="${RED}Aborting commit. Please follow the commit message pattern \
