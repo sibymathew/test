@@ -44,6 +44,8 @@ __CLOUD_PUSH__ = 60
 # DB Check time, in seconds
 __PUSH_COUNTER__ = (__CLOUD_PUSH__ * 60) / __SLEEP__
 
+log_hdlr.info("Global Counters {} {} {}".format(__SLEEP__, __CLOUD_PUSH__, __PUSH_COUNTER__))
+
 def getargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)
@@ -102,7 +104,8 @@ def push(card, motor_uuid, edge_uuid, send_email):
             # Read Active System Events
             try:
                 active_notifications = ast.literal_eval(get_notify_data([edge_uuid], 10))
-                log_hdlr.info("System Active Events: {}".format(active_notifications))
+                if active_notifications:
+                    log_hdlr.info("System Active Events: {}".format(active_notifications))
 
                 h_time = 0
                 l_time = round(time.time() * 1000)
@@ -171,6 +174,7 @@ def push(card, motor_uuid, edge_uuid, send_email):
 
                     counter +=1 
                 elif counter >= __PUSH_COUNTER__:
+                    log_hdlr.info("Hourly Counter is restted back to Zero.")
                     counter = 0
                 else:
                     counter +=1
@@ -220,7 +224,8 @@ def push(card, motor_uuid, edge_uuid, send_email):
             try:
                 for m in motor_uuid:
                     active_notifications = ast.literal_eval(get_notify_data([m], 10))
-                    log_hdlr.info("User Active Events: {}".format(active_notifications))
+                    if active_notifications:
+                        log_hdlr.info("User Active Events: {}".format(active_notifications))
 
                     h_time = 0
                     l_time = round(time.time() * 1000)
@@ -313,6 +318,7 @@ def push_blues(card, da, to_send):
 
             log_hdlr.info("Sending {} bytes of data".format(compressed_body.getbuffer().nbytes))
         while try_send < 3:
+            resp = None
             resp = card.Transaction(to_send)
             log_hdlr.info("Push Notecard Response {} {}".format(to_send[route], resp))
             if "err" in resp:
@@ -321,8 +327,10 @@ def push_blues(card, da, to_send):
                 break
             time.sleep(5)
     except Exception as err:
-        time.sleep(5)
-        raise(err)
+        log_hdlr.info("Notecard Error... Passing")
+        time.sleep(1)
+        #raise(err)
+        return resp
     else:
         return resp
 

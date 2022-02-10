@@ -654,6 +654,7 @@ def read(drive_obj, vfd_addrs, edge_uuid, motor_uuid, motor_type, motor_spl, red
 
                             resp = drive_obj[vfd_addr].read(int(lc[0]), 1)
                             analog_data = resp[0]
+                            rawdata[int(lc[0])] = resp
                             status = 0
 
                             if len(lc) > 1:

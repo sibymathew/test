@@ -20,7 +20,7 @@ __PULL_INTERVAL__ = 1000
 try:
     with open("/etc/yconfig.json", "r") as hdlr:
         config = json.loads(hdlr.read())
-        config_content = json.loads(content["config_data"])
+        config_content = json.loads(config["config_data"])
         crane_weight = config_content["crane_details"]["total_crane_weight"]
 except:
     log_hdlr.info("Hourly Push: Configuration JSON or Crane Weight is Missing")
@@ -28,6 +28,8 @@ else:
     try:
         to_time = round(time.time() * 1000)
         from_time = to_time - 3600000
-        ingest_hourly_stream(from_time, to_time, crane_weight, __PULL_INTERVAL__/1000)
+        interval = int(__PULL_INTERVAL__/1000)
+        log_hdlr.info("Hourly is called {} {} {} {}".format(from_time, to_time, crane_weight, interval))
+        ingest_hourly_stream(from_time, to_time, crane_weight, interval)
     except Exception as err:
         log_hdlr.info("Hourly Push Exception: {}".format(err))
