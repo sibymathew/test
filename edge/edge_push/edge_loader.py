@@ -95,6 +95,57 @@ def add_column2(row,crane_total_weight):
                 else:
                     return 'NA'
 
+
+def add_loadcell(row, hourly_df, lc_motor_id):
+    if row['motor_uuid'] == lc_motor_id:
+        for data in row['motor_data']:
+            if (data['k']) == 'loadcell':
+                return (data['v']['crane_weight'])
+    else:
+        lc_timestamp = row['query_timestamp']
+
+        from_lc_timestamp = lc_timestamp - datetime.timedelta(seconds=1)
+        to_lc_timestamp = lc_timestamp + datetime.timedelta(seconds=1)
+        lc_where2 = (hourly_df['motor_uuid'] == lc_motor_id) & (hourly_df['query_timestamp'] >= from_lc_timestamp) & (
+                    hourly_df['query_timestamp'] <= to_lc_timestamp)
+
+        loadcell = hourly_df[lc_where2]['motor_data'].iloc[0]
+        for data in loadcell:
+            if (data['k']) == 'loadcell':
+                return (data['v']['crane_weight'])
+
+
+def add_loadrange(row, crane_total_weight):
+    loadcell = row['loadcell']
+
+    load_pct = ((loadcell / crane_total_weight) * 100)
+    if load_pct >= -99 and load_pct < 5:
+        return '0%'
+    elif load_pct >= 5 and load_pct < 15:
+        return '10%'
+    elif load_pct >= 15 and load_pct < 25:
+        return '20%'
+    elif load_pct >= 25 and load_pct < 35:
+        return '30%'
+    elif load_pct >= 35 and load_pct < 45:
+        return '40%'
+    elif load_pct >= 45 and load_pct < 55:
+        return '50%'
+    elif load_pct >= 55 and load_pct < 65:
+        return '60%'
+    elif load_pct >= 65 and load_pct < 75:
+        return '70%'
+    elif load_pct >= 75 and load_pct < 85:
+        return '80%'
+    elif load_pct >= 85 and load_pct < 95:
+        return '90%'
+    elif load_pct >= 95 and load_pct < 105:
+        return '100%'
+    elif load_pct >= 105:
+        return '110%'
+    else:
+        return 'NA'
+
 def ingest_stream(crane_query_json):
     #TODO: Log
     
@@ -297,7 +348,7 @@ def update_config_data(edge_mac, version, sync_flag):
         error_msg = {"Status": "Failed to ingest for Edge MAC=" + edge_mac, "Error": str(e)}
         return error_msg
 
-def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight, pull_interval):
+def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight, pull_interval,lc_motor_id):
     try:
 
         ingest_status = []
@@ -363,15 +414,22 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
 
         hourly_df['motor_amps'] = hourly_df.apply(lambda row: add_column(row, 'motor_amps'), axis=1)
         hourly_df['motor_in_rpm'] = hourly_df.apply(lambda row: add_column(row, 'motor_in_rpm'), axis=1)
-        hourly_df['loadcell'] = hourly_df.apply(lambda row: add_column(row, 'loadcell'), axis=1)
+
+       #hourly_df['loadcell'] = hourly_df.apply(lambda row: add_column(row, 'loadcell'), axis=1)
+        hourly_df['loadcell'] = hourly_df.apply(lambda row: add_loadcell(row, hourly_df, lc_motor_id), axis=1)
+
         hourly_df['run_time'] = hourly_df.apply(lambda row: add_column(row, 'run_time'), axis=1)
         hourly_df['number_of_start_stop'] = hourly_df.apply(lambda row: add_column(row, 'number_of_start_stop'),
                                                                 axis=1)
 
-        hourly_df['load_pct_range'] = hourly_df.apply(lambda row: add_column2(row, crane_total_weight), axis=1)
+        #hourly_df['load_pct_range'] = hourly_df.apply(lambda row: add_column2(row, crane_total_weight), axis=1)
+        hourly_df['load_pct_range'] = hourly_df.apply(lambda row: add_loadrange(row, crane_total_weight), axis=1)
+
         # only when Drive is running,
-        hourly_odometer = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(
-            ['edge_uuid', 'motor_uuid', 'load_pct_range']).agg({'load_pct_range': ['count'], 'motor_in_rpm': ['mean']})
+        # hourly_odometer = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(
+        #    ['edge_uuid', 'motor_uuid', 'load_pct_range']).agg({'load_pct_range': ['count'], 'motor_in_rpm': ['mean']})
+        hourly_odometer = hourly_df.groupby(['edge_uuid', 'motor_uuid', 'load_pct_range']).agg(
+            {'load_pct_range': ['count'], 'motor_in_rpm': ['mean']})
 
         # prepare the motor_data for the hour, back to be ingested
         data = {}
@@ -522,6 +580,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
 
                         load_pct_dict.update(load_pct_dict1)
                         # print(load_pct_dict)
+
 
             iMissing = 0
             load_pct_ranges = ['0%', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%', '110%']
