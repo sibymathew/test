@@ -428,7 +428,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
         # only when Drive is running,
         # hourly_odometer = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(
         #    ['edge_uuid', 'motor_uuid', 'load_pct_range']).agg({'load_pct_range': ['count'], 'motor_in_rpm': ['mean']})
-        hourly_odometer = hourly_df.groupby(['edge_uuid', 'motor_uuid', 'load_pct_range']).agg(
+        hourly_odometer = hourly_df[hourly_df['motor_in_rpm'] > 0].groupby(['edge_uuid', 'motor_uuid', 'load_pct_range']).agg(
             {'load_pct_range': ['count'], 'motor_in_rpm': ['mean']})
 
         # prepare the motor_data for the hour, back to be ingested
