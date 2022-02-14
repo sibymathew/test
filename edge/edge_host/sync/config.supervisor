@@ -7,6 +7,7 @@ port=0.0.0.0:9001
 [supervisord]
 nodaemon=true
 environment=CASSANDRA_IP=EDGEWIRELESSIP
+environment=SENDGRID_API_KEY=SENDGRIDAPIKEY
 logfile=/var/log/supervisord.log
 loglevel=debug
 logfile_maxbytes=5000000

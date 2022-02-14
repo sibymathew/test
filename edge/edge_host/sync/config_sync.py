@@ -43,20 +43,21 @@ except:
     log_hdlr.info("As mapping file is not present, defaulting to {}".format(usb_to_serial_mapper))
 
 
-__EDGE_MAC__ = ""
-__EDGE_IP__ = ""
-
-while __EDGE_MAC__ = "" or __EDGE_IP__ = "": 
+__EDGE_MAC__ = None
+__EDGE_IP__ = None
+while __EDGE_MAC__ == None or __EDGE_IP__ == None: 
     try:
         __EDGE_MAC__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/ether/{print $2}'").read().rstrip()
         __EDGE_IP__ = os.popen("ip addr show $(awk 'NR==3{print $1}' /proc/net/wireless | tr -d :) | awk '/inet /{print $2}' | awk -F'/' '{print $1}'").read().rstrip()
         #__EDGE_MAC__ = "00:0a:bb:11:22:22"
         #__EDGE_IP__ = "1.1.1.1"
+        log_hdlr.info("Edge mac and ip : {} {}".format(__EDGE_MAC__, __EDGE_IP__))
     except:
         log_hdlr.info("Not able to find edge mac or ip {} {}".format(__EDGE_MAC__, __EDGE_IP__))
-        __EDGE_MAC__ = ""
-        __EDGE_IP__ = ""
+        __EDGE_MAC__ = None
+        __EDGE_IP__ = None
 
+__SENDGRID__ = None
 
 def getargs():
     parser = argparse.ArgumentParser()
@@ -114,6 +115,11 @@ def main():
         update_flag = False
         card = notecard.OpenSerial(port)
 
+        req = {"req": "hub.set"}
+        req["product"] = productUID
+        req["mode"] = "continuous"
+        resp = card.Transaction(req)
+
         to_send = {}
         to_send["req"] = "web.post"
         to_send["route"] = "configpull"
@@ -158,6 +164,7 @@ def main():
                 with open("config.supervisor") as hdlr:
                     supervisor_conf = hdlr.read()
                     supervisor_conf = supervisor_conf.replace("EDGEWIRELESSIP", __EDGE_IP__)
+                    #supervisor_conf = supervisor_conf.replace("SENDGRIDAPIKEY", __SENDGRID__)
                 with open("config.supervisor.template") as hdlr:
                     supervisor_tmpl = hdlr.read()
 
@@ -165,6 +172,8 @@ def main():
                 all_motor_list = ""
 
                 edge_uuid = config["edge_uuid"]
+                #Get Blues UUID
+                blues_uuid = config["edge_details"]["wireless_product_uuid"]
                 port_map = {"1":[], "2":[], "3":[], "4": []}
                 tx_email_list = config["edge_details"]["sender_email_id"]
                 rx_email_list = " ".join(config["edge_details"]["recipient_email_ids"])
@@ -234,7 +243,7 @@ def main():
 
                         all_motor_list = " ".join([i.split(":")[1] for i in motor_list.split(" ")])
 
-                cmd = "sudo python3 note.py -puuid world.youtopian.siby.mathew:drill_bit -port {} -rate 9600 -mu {} -eu {} -se {}".format(usb_to_serial_mapper["5"], all_motor_list, edge_uuid, rx_email_list)
+                cmd = "sudo python3 note.py -puuid {} -port {} -rate 9600 -mu {} -eu {} -se {}".format(blues_uuid, usb_to_serial_mapper["5"], all_motor_list, edge_uuid, rx_email_list)
                 name = "Cloud_Push_Service"
                 dirs = "/home/utopia/test/edge/edge_push"
 
@@ -264,7 +273,7 @@ def main():
 
                 result = result + temp_tmpl
 
-                cmd = "sudo python3 config_sync.py -puuid world.youtopian.siby.mathew:drill_bit -port {}  -rate 9600".format(usb_to_serial_mapper["5"])
+                cmd = "sudo python3 config_sync.py -puuid {} -port {}  -rate 9600".format(blues_uuid, usb_to_serial_mapper["5"])
                 name = "Config_Sync"
                 dirs = "/home/utopia/test/edge/edge_host/sync"
 
