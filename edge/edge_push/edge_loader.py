@@ -369,6 +369,9 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
 
         hourly_df = pd.DataFrame(dbSession.edge_session.execute(hourly_query, timeout=None))
 
+        if hourly_df.empty:
+            raise Exception("No data. Skipping")
+
         # Remove empty motor_data
         hourly_df = hourly_df[hourly_df.motor_data.apply(lambda x: len(str(x)) > 5)]
         # Convert motor_data string column with double quotes
@@ -518,14 +521,16 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
             # utc_timestamp = utc_time.timestamp()
             data["load_timestamp"] = utc_time.timestamp()
 
-            hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+            #hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+            hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']))
 
             datapoint = {"k": "run_time", "v": {"cumulative": r['run_time']['max'], "hourly": hourly_runtime},
                          'u': 'Minutes', "d": "Run Time"}
             # print(datapoint)
             datapoints.append(datapoint)
 
-            hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']) + 1)
+            #hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']) + 1)
+            hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']))
 
             datapoint = {"k": "number_of_start_stop",
                          "v": {"cumulative": r['number_of_start_stop']['max'], "hourly": hourly_starts},
@@ -613,7 +618,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
             data["motor_data"] = datapoints
             # print(json.dumps(data, indent=4, sort_keys=True))
 
-            stream_status = {"motor_uuid": data["motor_uuid"], "msg": ingest_stream2(data)}
+            stream_status = {"motor_uuid": data["motor_uuid"], "msg": ingest_stream2(data), "data": data["motor_data"]}
             ingest_status.append(stream_status)
 
         return ingest_status
