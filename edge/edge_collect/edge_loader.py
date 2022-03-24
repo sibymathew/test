@@ -1,3 +1,4 @@
+
 # pip install dse-driver
 from dse.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT
 from dse.query import tuple_factory
@@ -518,12 +519,20 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
             # utc_timestamp = utc_time.timestamp()
             data["load_timestamp"] = utc_time.timestamp()
 
-            hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+            # fixed convert float NaN to integer
+            if not math.isnan(r['run_time']['max']):
+                hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+                datapoint = {"k": "run_time", "v": {"cumulative": r['run_time']['max'], "hourly": hourly_runtime},
+                             'u': 'Minutes', "d": "Run Time"}
+                # print(datapoint)
+                datapoints.append(datapoint)
 
-            datapoint = {"k": "run_time", "v": {"cumulative": r['run_time']['max'], "hourly": hourly_runtime},
-                         'u': 'Minutes', "d": "Run Time"}
-            # print(datapoint)
-            datapoints.append(datapoint)
+            # hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+            #
+            # datapoint = {"k": "run_time", "v": {"cumulative": r['run_time']['max'], "hourly": hourly_runtime},
+            #              'u': 'Minutes', "d": "Run Time"}
+            # # print(datapoint)
+            # datapoints.append(datapoint)
 
             hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']) + 1)
 
