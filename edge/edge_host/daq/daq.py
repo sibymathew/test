@@ -37,6 +37,9 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
             # Overriding Port0 as per ACECO we should read Power status from 02BH register.
             t0 = s[0]
             s = t0+"2"
+            log_hdlr.info("S0 {}".format(s[0]))
+            log_hdlr.info("S1 {}".format(s[1]))
+
             if s[1] == "0":
                 # If pstate_port0 is already 6, then stop checking.
                 if pstate_port0 == 0 or pstate_port0 == 5:
@@ -83,8 +86,10 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                 else:
                     with open("/etc/daq_port1", "r") as hdlr:
                         content = json.loads(hdlr.read())
+                        log_hdlr.info("Data is being pushed to cloud")
                         if "state" in content:
                             if content["state"] == "Pushed":
+                                log_hdlr.info("Data Pushed to Cloud successfully")
                                 resp = Popen(["supervisorctl stop API_Int"], stdout=PIPE, stderr=PIPE, shell=True)
                                 o, e = resp.communicate()
                                 resp = Popen(["supervisorctl stop Cloud_Push_Service"], stdout=PIPE, stderr=PIPE, shell=True)
@@ -97,13 +102,18 @@ def check_signal(motor_list, pstate_port0, pstate_port1):
                                 o, e = resp.communicate()
                                 resp = Popen(["systemctl restart sshd"], stdout=PIPE, stderr=PIPE, shell=True)
                                 o, e = resp.communicate()
+                                log_hdlr.info("All Application Stopped")
+                                resp = Popen(["sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=180/' /etc/default/grub.default"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
+                                log_hdlr.info("Shutdown Initiated")
+                                resp = Popen(["reboot --reboot"], stdout=PIPE, stderr=PIPE, shell=True)
+                                o, e = resp.communicate()
             elif s[0] == "1":
                 resp = Popen(["rm", "-rf", "/etc/daq_port1"], stdout=PIPE, stderr=PIPE)
                 o, e = resp.communicate()
-                if pstate_port1 == 8:
-                    pstate_port1 = 0
-                    resp = Popen(["reboot --reboot"], stdout=PIPE, stderr=PIPE, shell=True)
-                    o, e = resp.communicate()
+                resp = Popen(["sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=5/' /etc/default/grub.default"], stdout=PIPE, stderr=PIPE, shell=True)
+                o, e = resp.communicate()
+                pstate_port1 = 0
 
         time.sleep(0.1)
 

@@ -24,7 +24,7 @@ try:
         crane_weight = config_content["crane_details"]["total_crane_weight"]
 
         #Get the motor_uuid where load cell is configured
-        for mapping in config_content["crane_details"]["vfd_mapping"]
+        for mapping in config_content["crane_details"]["vfd_mapping"]:
             if 'loadcell' in mapping:
                 motor_uuid = mapping["vfd_motor_mapping"][0]
 except:

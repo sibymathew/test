@@ -625,7 +625,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
 
 
     except Exception as e:
-        error_msg = {"Status": "Failed to ingest for Edge UUID=" + edge_uuid, "Error": str(e)}
+        error_msg = {"Status": "Failed to ingest\n", "Error": str(e)}
         return error_msg
 
 def del_motor_data(table_name,motor_list, interval):

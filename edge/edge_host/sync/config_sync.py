@@ -39,7 +39,7 @@ try:
         usb_to_serial_mapper = json.loads(hdlr.read())
         log_hdlr.info("Mapping file found to {}".format(usb_to_serial_mapper))
 except:
-    usb_to_serial_mapper = {"1":"/dev/ttyUSB0", "2":"/dev/ttyUSB1", "3":"/dev/ttyUSB2", "4":"/dev/ttyUSB3", "5":"/dev/ttyACM0"}
+    usb_to_serial_mapper = {"0":"/dev/ttyUSB0", "1":"/dev/ttyUSB1", "2":"/dev/ttyUSB2", "3":"/dev/ttyUSB3", "4":"/dev/ttyUSB4", "100":"/dev/ttyACM0"}
     log_hdlr.info("As mapping file is not present, defaulting to {}".format(usb_to_serial_mapper))
 
 
@@ -57,8 +57,6 @@ while __EDGE_MAC__ == None or __EDGE_IP__ == None:
         __EDGE_MAC__ = None
         __EDGE_IP__ = None
 
-__SENDGRID__ = None
-
 def getargs():
     parser = argparse.ArgumentParser()
     parser.add_argument('-puuid', action='store', help='Notecard Product UUID', type=str)
@@ -70,12 +68,12 @@ def getargs():
 def store(card, data, current_version):
 
     applied_version = data["version"]
-    print(ingest_config(data))
-    log_hdlr.info("Ingested Config to DB")
-    res = requests.post("http://10.0.1.20:5000/cranes/version/update", json={"token": "def05f77d7541bfa8a9c61f551d45639"})
-
-    print(res)
+    resp = ingest_config(data)
+    log_hdlr.info("Ingest Config to DB Status: {}".format(resp))
+    URL = "http://" + __EDGE_IP__ + ":5000/cranes/version/update"
+    res = requests.post(URL, json={"token": "def05f77d7541bfa8a9c61f551d45639"})
     log_hdlr.info("FE API Call {}".format(res.content))
+
     if res.status_code == 400 or res.status_code == 401 or res.status_code == 500:
         return False
 
@@ -163,8 +161,6 @@ def main():
                 config = ast.literal_eval(edge_config["config_data"])
                 with open("config.supervisor") as hdlr:
                     supervisor_conf = hdlr.read()
-                    supervisor_conf = supervisor_conf.replace("EDGEWIRELESSIP", __EDGE_IP__)
-                    #supervisor_conf = supervisor_conf.replace("SENDGRIDAPIKEY", __SENDGRID__)
                 with open("config.supervisor.template") as hdlr:
                     supervisor_tmpl = hdlr.read()
 
@@ -174,7 +170,7 @@ def main():
                 edge_uuid = config["edge_uuid"]
                 #Get Blues UUID
                 blues_uuid = config["edge_details"]["wireless_product_uuid"]
-                port_map = {"1":[], "2":[], "3":[], "4": []}
+                port_map = {"0": [], "1":[], "2":[], "3":[], "4": []}
                 tx_email_list = config["edge_details"]["sender_email_id"]
                 rx_email_list = " ".join(config["edge_details"]["recipient_email_ids"])
                 for mapping in config["crane_details"]["vfd_mapping"]:
@@ -192,36 +188,37 @@ def main():
                         motors = []
                         loadcell = []
                         for mapping in config["crane_details"]["vfd_mapping"]:
-                            addr = mapping["network"]["address"]
-                            address.append(addr[2:])
-                            rate = mapping["network"]["baud_rate"]
-                            for m in mapping["vfd_motor_mapping"]:
-                                motors.append(addr + ":" + m)
-                            speciality.append(addr+":"+str(mapping["vfd_speciality"]))
-                            types.append(addr+":"+str(mapping["vfd_type"]))
+                            if mapping["network"]["usb_port"] == int(port):
+                                addr = mapping["network"]["address"]
+                                address.append(addr[2:])
+                                rate = mapping["network"]["baud_rate"]
+                                for m in mapping["vfd_motor_mapping"]:
+                                    motors.append(addr + ":" + m)
+                                speciality.append(addr+":"+str(mapping["vfd_speciality"]))
+                                types.append(addr+":"+str(mapping["vfd_type"]))
 
-                            if 'loadcell' in mapping and mapping["loadcell"]["mode"] == 2:
-                                params = str(mapping["loadcell"]["register"]) + "," + \
-                                            str(mapping["loadcell"]["mode"]) + "," + \
-                                            str(mapping["loadcell"]["calibration"]["a"]) + "," + \
-                                            str(mapping["loadcell"]["calibration"]["b"]) + "," + \
-                                            str(mapping["loadcell"]["calibration"]["c"]) + "," + \
-                                            str(mapping["loadcell"]["unit"])
-                                loadcell.append(addr+":"+params)
-                            elif 'loadcell' in mapping and mapping["loadcell"]["mode"] == 1:
-                                params = str(mapping["loadcell"]["register"]) + "," + \
-                                            str(mapping["loadcell"]["mode"]) + ",0," + \
-                                            str(mapping["loadcell"]["calibration"]["a"]) + "," + \
-                                            str(mapping["loadcell"]["calibration"]["b"]) + "," + \
-                                            str(mapping["loadcell"]["unit"])
-                                loadcell.append(addr+":"+params) 
+                                if 'loadcell' in mapping and mapping["loadcell"]["mode"] == 2:
+                                    params = str(mapping["loadcell"]["register"]) + "," + \
+                                                str(mapping["loadcell"]["mode"]) + "," + \
+                                                str(mapping["loadcell"]["calibration"]["a"]) + "," + \
+                                                str(mapping["loadcell"]["calibration"]["b"]) + "," + \
+                                                str(mapping["loadcell"]["calibration"]["c"]) + "," + \
+                                                str(mapping["loadcell"]["unit"])
+                                    loadcell.append(addr+":"+params)
+                                elif 'loadcell' in mapping and mapping["loadcell"]["mode"] == 1:
+                                    params = str(mapping["loadcell"]["register"]) + "," + \
+                                                str(mapping["loadcell"]["mode"]) + ",0," + \
+                                                str(mapping["loadcell"]["calibration"]["a"]) + "," + \
+                                                str(mapping["loadcell"]["calibration"]["b"]) + "," + \
+                                                str(mapping["loadcell"]["unit"])
+                                    loadcell.append(addr+":"+params) 
 
-                            for motor in config["crane_details"]["motor_config"]:
-                                if addr+":"+motor["uuid"] in motors:
-                                    red_factor.append(addr+":"+str(motor["motor_reduction_factor"]))
-                                    label.append(addr+":" + motor["drive_direction"]["forward_label"] + " " + addr + ":" + motor["drive_direction"]["backward_label"])
-                                    to_apply = True
-                                    break             
+                                for motor in config["crane_details"]["motor_config"]:
+                                    if addr+":"+motor["uuid"] in motors:
+                                        red_factor.append(addr+":"+str(motor["motor_reduction_factor"]))
+                                        label.append(addr+":" + motor["drive_direction"]["forward_label"] + " " + addr + ":" + motor["drive_direction"]["backward_label"])
+                                        to_apply = True
+                                        break             
 
                         address_list = " ".join(address)
                         speciality_list = " ".join(speciality)
@@ -229,6 +226,9 @@ def main():
                         red_factor_list = " ".join(red_factor)
                         label_list = " ".join(label)
                         motor_list = " ".join(motors)
+
+                        if not loadcell:
+                            loadcell = ["0x00:0,0,0,0,0"]
                         loadcell_list = " ".join(loadcell)
 
                         name = "Collect_Service_" + port
@@ -243,7 +243,7 @@ def main():
 
                         all_motor_list = " ".join([i.split(":")[1] for i in motor_list.split(" ")])
 
-                cmd = "sudo python3 note.py -puuid {} -port {} -rate 9600 -mu {} -eu {} -se {}".format(blues_uuid, usb_to_serial_mapper["5"], all_motor_list, edge_uuid, rx_email_list)
+                cmd = "sudo python3 note.py -puuid {} -port {} -rate 9600 -mu {} -eu {} -se {}".format(blues_uuid, usb_to_serial_mapper["100"], all_motor_list, edge_uuid, rx_email_list)
                 name = "Cloud_Push_Service"
                 dirs = "/home/utopia/test/edge/edge_push"
 
@@ -273,7 +273,7 @@ def main():
 
                 result = result + temp_tmpl
 
-                cmd = "sudo python3 config_sync.py -puuid {} -port {}  -rate 9600".format(blues_uuid, usb_to_serial_mapper["5"])
+                cmd = "sudo python3 config_sync.py -puuid {} -port {}  -rate 9600".format(blues_uuid, usb_to_serial_mapper["100"])
                 name = "Config_Sync"
                 dirs = "/home/utopia/test/edge/edge_host/sync"
 
