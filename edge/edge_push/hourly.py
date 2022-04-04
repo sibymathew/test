@@ -33,7 +33,7 @@ else:
     try:
         to_time = round(time.time() * 1000)
         from_time = to_time - 3600000
-        interval = int(__PULL_INTERVAL__/1000)
+        interval = int(__PULL_INTERVAL__/1000) * 60
         log_hdlr.info("Hourly is called {} {} {} {} {}".format(from_time, to_time, crane_weight, interval, motor_uuid))
         resp = ingest_hourly_stream(from_time, to_time, crane_weight, interval, motor_uuid)
         log_hdlr.info("Hourly Data: {}".format(resp))
