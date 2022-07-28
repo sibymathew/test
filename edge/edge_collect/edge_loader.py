@@ -110,11 +110,16 @@ def add_loadcell(row, hourly_df, lc_motor_id):
         lc_where2 = (hourly_df['motor_uuid'] == lc_motor_id) & (hourly_df['query_timestamp'] >= from_lc_timestamp) & (
                     hourly_df['query_timestamp'] <= to_lc_timestamp)
 
-        loadcell = hourly_df[lc_where2]['motor_data'].iloc[0]
-        for data in loadcell:
-            if (data['k']) == 'loadcell':
-                return (data['v']['crane_weight'])
+        if hourly_df[lc_where2].empty:
+            return 0
 
+        try:
+            loadcell = hourly_df[lc_where2]['motor_data'].iloc[0]
+            for data in loadcell:
+                if (data['k']) == 'loadcell':
+                    return (data['v']['crane_weight'])
+        except IndexError:
+            return 0
 
 def add_loadrange(row, crane_total_weight):
     loadcell = row['loadcell']
@@ -370,6 +375,9 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
 
         hourly_df = pd.DataFrame(dbSession.edge_session.execute(hourly_query, timeout=None))
 
+        if hourly_df.empty:
+            raise Exception("No data. Skipping")
+
         # Remove empty motor_data
         hourly_df = hourly_df[hourly_df.motor_data.apply(lambda x: len(str(x)) > 5)]
         # Convert motor_data string column with double quotes
@@ -521,7 +529,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
 
             # fixed convert float NaN to integer
             if not math.isnan(r['run_time']['max']):
-                hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']) + 1)
+                hourly_runtime = int((r['run_time']['max'] - r['run_time']['min']))
                 datapoint = {"k": "run_time", "v": {"cumulative": r['run_time']['max'], "hourly": hourly_runtime},
                              'u': 'Minutes', "d": "Run Time"}
                 # print(datapoint)
@@ -534,7 +542,7 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
             # # print(datapoint)
             # datapoints.append(datapoint)
 
-            hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']) + 1)
+            hourly_starts = int((r['number_of_start_stop']['max'] - r['number_of_start_stop']['min']))
 
             datapoint = {"k": "number_of_start_stop",
                          "v": {"cumulative": r['number_of_start_stop']['max'], "hourly": hourly_starts},
@@ -622,14 +630,14 @@ def ingest_hourly_stream(from_query_timestamp, to_query_timestamp, crane_weight,
             data["motor_data"] = datapoints
             # print(json.dumps(data, indent=4, sort_keys=True))
 
-            stream_status = {"motor_uuid": data["motor_uuid"], "msg": ingest_stream2(data)}
+            stream_status = {"motor_uuid": data["motor_uuid"], "msg": ingest_stream2(data), "data": data["motor_data"]}
             ingest_status.append(stream_status)
 
         return ingest_status
 
 
     except Exception as e:
-        error_msg = {"Status": "Failed to ingest for Edge UUID=" + edge_uuid, "Error": str(e)}
+        error_msg = {"Status": "Failed to ingest", "Error": str(e)}
         return error_msg
 
 def del_motor_data(table_name,motor_list, interval):

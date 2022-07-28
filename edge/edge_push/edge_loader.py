@@ -111,13 +111,15 @@ def add_loadcell(row, hourly_df, lc_motor_id):
                     hourly_df['query_timestamp'] <= to_lc_timestamp)
 
         if hourly_df[lc_where2].empty:
-            return
+            return 0
 
-        loadcell = hourly_df[lc_where2]['motor_data'].iloc[0]
-        for data in loadcell:
-            if (data['k']) == 'loadcell':
-                return (data['v']['crane_weight'])
-
+        try:
+            loadcell = hourly_df[lc_where2]['motor_data'].iloc[0]
+            for data in loadcell:
+                if (data['k']) == 'loadcell':
+                    return (data['v']['crane_weight'])
+        except IndexError:
+            return 0
 
 def add_loadrange(row, crane_total_weight):
     loadcell = row['loadcell']
